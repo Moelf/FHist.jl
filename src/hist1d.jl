@@ -164,7 +164,7 @@ function Hist1D(
 end
 
 function Base.show(io::IO, h::Hist1D)
-    show(io, UnicodePlots.histogram(h.hist))
+    show(io, UnicodePlots.histogram(h.hist; width=30))
     println()
     println(io, "edges: ", h.hist.edges[1])
     println(io, "bin counts: ", h.hist.weights)
