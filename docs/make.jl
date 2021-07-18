@@ -8,6 +8,7 @@ makedocs(;
     ),
     pages=[
         "Introduction" => "index.md",
+        "APIs" => "api.md",
     ],
     repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
     sitename="FHist.jl",
