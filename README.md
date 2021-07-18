@@ -1,1 +1,5 @@
 # FHist
+
+```@autodocs
+Modules = [FHist]
+```
