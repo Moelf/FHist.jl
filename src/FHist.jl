@@ -3,6 +3,7 @@ module FHist
 export Hist1D, update_error!
 
 using StatsBase, RecipesBase
+import UnicodePlots
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
