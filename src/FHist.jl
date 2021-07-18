@@ -1,9 +1,10 @@
 module FHist
 
-export Hist1D
+export Hist1D, update_error!
 
-using StatsBase, RecipesBase
+using StatsBase, RecipesBase, LoopVectorization
 import LinearAlgebra: normalize, normalize!
+using Base.Threads: SpinLock
 
 @inline function pearson_err(n::Real)
     s = sqrt(n+0.25)
@@ -17,16 +18,18 @@ end
 @inline function _is_uniform_bins(A::AbstractVector{T}) where T<:Real
     diffs = diff(A)
     diff1 = first(diffs)
-    all(isapprox.(diff1, diffs; atol = 1e-6)) #hack
+    all(isapprox.(diff1, diffs; atol = 1e-9)) #hack
 end
 
-function _make_error(f, A::Array)
-    e_up = similar(A, Float64)
-    e_down = similar(e_up)
-    @inbounds for i in eachindex(A)
+function _make_error!(f, A::AbstractArray, e_up::T, e_down::T) where T<:Vector{Float64}
+    @turbo for i in eachindex(A)
         e_up[i], e_down[i] = f(A[i])
     end
     e_up, e_down
+end
+
+function _make_error(f, A::AbstractArray{T}) where T<:Real
+    _make_error!(f, A, similar(A, Float64), similar(A, Float64))
 end
 
 function _make_error(A, error_mode::Symbol)
