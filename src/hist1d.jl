@@ -1,45 +1,49 @@
 struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     hist::Histogram{T,1,E}
-    errors_up::Vector{Float64}
-    errors_down::Vector{Float64}
-    error_mode::Symbol #default is :sqrt
+    sumw2::Vector{Float64}
     hlock::SpinLock
     # most concrete inner constructor
-    function Hist1D(
-        h::Histogram{T,1,E}, errors_up, errors_down, error_mode=:sqrt
-    ) where {T,E}
-        h.closed == :left || error("Hist1D must be only closed on :left")
-        size(errors_up) == size(errors_down) == size(h.weights) ||
-            error("Bin shapes don't match")
-        return new{T,E}(h, errors_up, errors_down, error_mode, SpinLock())
+    function Hist1D(h::Histogram{T,1,E}, sw2 = zeros(Float64, size(h.weights))) where {T,E}
+        return new{T,E}(h, sw2, SpinLock())
     end
 end
 Base.lock(h::Hist1D) = lock(h.hlock)
 Base.unlock(h::Hist1D) = unlock(h.hlock)
 
 """
-    update_error!(h::Hist1D, error_fun = sqrt_err)
+    sample(h::Hist1D)
+    sample(h::Hist1D, n::Int)
 
-Update the error (up and down) of a histogram according to a specific error_mode.
-Remember to call this function after updaing a histogram with `push!()` in a loop.
+Sample a histogram's with weights equal to bin count, one or `n` times.
+The returned sample value will be one of the bin's left edge.
 """
-function update_error!(h::Hist1D, error_fun=sqrt_err)
-    lock(h)
-    _make_error!(error_fun, h.hist.weights, h.errors_up, h.errors_down)
-    unlock(h)
-    return h
+function sample(h::Hist1D)
+    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights))
+end
+function sample(h::Hist1D, n::Int)
+    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights), n)
 end
 
 """
+    push!(h::Hist1D, val::Real)
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
 
-Adding one value at a time into histogram. Remember to call [`update_error!`](@ref) after
-if you need errors.
+Adding one value at a time into histogram. If `wgt` is supplied
+, this operation will accumulate `sumw2`
+(sum of weights^2) in the Hist automatically.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=one(T)) where {T,E}
+function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real) where {T,E}
     @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
+    @inbounds h.sumw2[binidx] += wgt^2
+    unlock(h)
+    return h
+end
+function Base.push!(h::Hist1D{T,E}, val::Real) where {T,E}
+    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
+    lock(h)
+    @inbounds h.hist.weights[binidx] += one(T)
     unlock(h)
     return h
 end
@@ -52,30 +56,17 @@ To be used with [`push!`](@ref)
 """
 function Hist1D(elT::Type{T}=Float64; bins) where {T}
     counts = zeros(elT, length(bins) - 1)
-    e_up = similar(counts, Float64)
-    e_down = similar(counts, Float64)
-    return Hist1D(Histogram(bins, counts), e_up, e_down)
+    return Hist1D(Histogram(bins, counts))
 end
 
 """
-    Hist1D(h::Histogram{T, 1, E}; error_mode=:sqrt) where {T,E}
-
-Convert an existing 1D `StatsBase.Histogram` to a `Hist1D`. Adds
-error according to `error_mode`.
-"""
-function Hist1D(h::Histogram{T,1,E}; error_mode=:sqrt) where {T,E}
-    e_up, e_down = _make_error(h.weights, error_mode)
-    return Hist1D(h, e_up, e_down, error_mode)
-end
-
-"""
-    Hist1D(array, edges::AbstractRange; kwgs...)
-    Hist1D(array, edges::AbstractVector; error_mode=:sqrt)
+    Hist1D(array, edges::AbstractRange)
+    Hist1D(array, edges::AbstractVector)
 
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A, r::AbstractRange; kwgs...)
+function Hist1D(A::AbstractVector, r::AbstractRange)
     s = step(r)
     start = first(r)
     start2 = start + 0.5s
@@ -90,26 +81,26 @@ function Hist1D(A, r::AbstractRange; kwgs...)
         id = round(Int, (i - start2) / s) + 1
         counts[clamp(id, 1, L)] += c
     end
-    return Hist1D(Histogram(r, counts); kwgs...)
+    return Hist1D(Histogram(r, counts))
 end
-function Hist1D(A, edges::AbstractVector; error_mode=:sqrt)
+function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
         s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
-        Hist1D(A, r; error_mode=error_mode)
+        Hist1D(A, r)
     else
-        Hist1D(fit(Histogram, A, edges); error_mode=error_mode)
+        Hist1D(fit(Histogram, A, edges))
     end
 end
 
 """
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange, ; kwgs...)
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqrt)
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange)
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector)
 
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. `wgts` should have the same `size` as `array`.
 """
-function Hist1D(A, wgts::AbstractWeights, r::AbstractRange, ; kwgs...)
+function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
     @boundscheck @assert size(A) == size(wgts)
     s = step(r)
     start = first(r)
@@ -124,52 +115,45 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange, ; kwgs...)
         id = round(Int, (A[i] - start2) / s) + 1
         counts[clamp(id, 1, L)] += c
     end
-    return Hist1D(Histogram(r, counts); kwgs...)
+    return Hist1D(Histogram(r, counts))
 end
-function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqrt)
+function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
         s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
-        Hist1D(A, wgts, r; error_mode=error_mode)
+        Hist1D(A, wgts, r)
     else
-        Hist1D(fit(Histogram, A, wgts, edges); error_mode=error_mode)
+        Hist1D(fit(Histogram, A, wgts, edges))
     end
 end
 
 """
-    Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt) where T
-    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt) where T
+    Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where T
+    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=StatsBase.sturges(length(A))) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-function Hist1D(
-    A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt
-) where {T}
+function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where {T}
     F = float(T)
     lo, hi = extrema(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, r; error_mode=error_mode)
+    return Hist1D(A, r)
 end
 
 function Hist1D(
     A::AbstractVector{T},
     wgts::AbstractWeights;
     nbins::Integer=StatsBase.sturges(length(A)),
-    error_mode=:sqrt,
 ) where {T}
     F = float(T)
     lo, hi = extrema(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, wgts, r; error_mode=error_mode)
+    return Hist1D(A, wgts, r)
 end
 
 function Base.show(io::IO, h::Hist1D)
     show(io, UnicodePlots.histogram(h.hist; width=30))
     println()
     println(io, "edges: ", h.hist.edges[1])
-    println(io, "bin counts: ", h.hist.weights)
-    println(io, "errors: ")
-    println(io, "  up  : ", round.(h.errors_up; sigdigits=3))
-    println(io, "  down: ", round.(h.errors_down; sigdigits=3))
-    return print(io, "error_mode: ", h.error_mode)
+    print(io, "bin counts: ", h.hist.weights)
 end

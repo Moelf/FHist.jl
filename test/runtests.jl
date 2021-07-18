@@ -5,14 +5,9 @@ using Test
     a = rand(10^3)
     sth1 = fit(Histogram, a)
     h1sqrt = Hist1D(sth1)
-    h1p = Hist1D(sth1; error_mode=:pearson)
+    h1p = Hist1D(sth1)
     @test h1sqrt.hist == sth1
     @test h1p.hist == sth1
-    @test h1sqrt.errors_up == sqrt.(sth1.weights)
-    @test h1p.errors_up != sqrt.(sth1.weights)
-    p_errs = FHist.pearson_err.(sth1.weights)
-    pe_up = [x[1] for x in p_errs]
-    @test h1p.errors_up == pe_up
 
     h1 = Hist1D(a)
     sth1 = fit(Histogram, a)
@@ -50,8 +45,6 @@ end
 
     @test all(h1.hist.weights .≈ sth1.weights)
     @test all(h1.hist.weights .≈ h2.hist.weights)
-    update_error!(h2)
-    @test h1 == h2
 end
 
 @testset "Weighted" begin
