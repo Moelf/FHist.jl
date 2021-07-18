@@ -1,21 +1,20 @@
-using Documenter, UnROOT
+using Documenter, FHist
 
 makedocs(;
-    modules=[UnROOT],
+    modules=[FHist],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         # assets = ["assets/logo.ico"],
     ),
     pages=[
         "Introduction" => "index.md",
-        "API" => "api.md",
     ],
-    repo="https://github.com/tamasgal/UnROOT.jl/blob/{commit}{path}#L{line}",
-    sitename="UnROOT.jl",
-    authors="Tamas Gal",
+    repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
+    sitename="FHist.jl",
+    authors="Jerry Ling",
     assets=String[],
 )
 
 deploydocs(;
-    repo="github.com/tamasgal/UnROOT.jl",
+    repo="github.com/Moelf/FHist.jl",
 )

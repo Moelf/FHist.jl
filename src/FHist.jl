@@ -2,7 +2,7 @@ module FHist
 
 export Hist1D, update_error!
 
-using StatsBase, RecipesBase, LoopVectorization
+using StatsBase, RecipesBase
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
@@ -22,7 +22,7 @@ end
 end
 
 function _make_error!(f, A::AbstractArray, e_up::T, e_down::T) where T<:Vector{Float64}
-    @turbo for i in eachindex(A)
+    @inbounds @simd for i in eachindex(A)
         e_up[i], e_down[i] = f(A[i])
     end
     e_up, e_down

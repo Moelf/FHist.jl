@@ -91,7 +91,7 @@ function Hist1D(A, r::AbstractRange; kwgs...)
 end
 function Hist1D(A, edges::AbstractVector; error_mode=:sqrt)
     if _is_uniform_bins(edges)
-        s = edges[begin+1] - first(edges)
+        s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
         Hist1D(A, r; error_mode = error_mode)
     else
@@ -124,8 +124,8 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange, ; kwgs...)
     Hist1D(Histogram(r, counts); kwgs...)
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqrt)
-    if _is_uniform_bins(edges)
-        s = edges[begin+1] - first(edges)
+    @inbounds if _is_uniform_bins(edges)
+        s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
         Hist1D(A, wgts, r; error_mode = error_mode)
     else
