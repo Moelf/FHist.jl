@@ -21,7 +21,9 @@ function merge!(h1::Hist1D, h2::Hist1D)
     h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("The dimension doesn't match"))
     h1.error_mode != h2.error_mode && error("Error mode doesn't exit")
 
+    lock(h1)
     h1.hist.weights .+= h2.hist.weights
+    unlock(h1)
     Hist1D(h1.hist; error_mode = h1.error_mode)
 end
 

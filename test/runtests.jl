@@ -2,7 +2,6 @@ using FHist, StatsBase
 using Test
 
 @testset "The basics" begin
-    # Write your tests here.
     a = rand(10^3)
     sth1 = fit(Histogram, a)
     h1sqrt = Hist1D(sth1)
@@ -17,7 +16,7 @@ using Test
 
     h1 = Hist1D(a)
     sth1 = fit(Histogram, a)
-    @test all(h1.hist.weights .== sth1.weights)
+    @test h1.hist.weights ≈ sth1.weights
 end
 
 @testset "Fast route" begin
@@ -37,6 +36,22 @@ end
     h1 = Hist1D(a, r1)
     sth1 = fit(Histogram, a, r1)
     @test all(h1.hist.weights .≈ sth1.weights)
+end
+
+@testset "push! route" begin
+    a = rand(10^5)
+    r1 = [0, 0.3, 0.4, 0.8, 1]
+    h1 = Hist1D(a, r1)
+    h2 = Hist1D(Int; bins = r1)
+    sth1 = fit(Histogram, a, r1)
+    for ele in a
+        push!(h2, ele)
+    end
+
+    @test all(h1.hist.weights .≈ sth1.weights)
+    @test all(h1.hist.weights .≈ h2.hist.weights)
+    update_error!(h2)
+    @test h1 == h2
 end
 
 @testset "Weighted" begin

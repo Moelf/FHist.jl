@@ -1,30 +1,77 @@
-mutable struct Hist1D{T<:Real, E} <: AbstractHistogram{T,1,E}
+struct Hist1D{T<:Real, E} <: AbstractHistogram{T,1,E}
     hist::Histogram{T,1,E}
     errors_up::Vector{Float64}
     errors_down::Vector{Float64}
     error_mode::Symbol #default is :sqrt
+    hlock::SpinLock
     # most concrete inner constructor
     function Hist1D(h::Histogram{T,1,E}, errors_up, errors_down, error_mode=:sqrt) where {T,E}
         h.closed == :left || error("Hist1D must be only closed on :left")
         size(errors_up) == size(errors_down) == size(h.weights) || error("Bin shapes don't match")
-        new{T,E}(h, errors_up, errors_down, error_mode)
+        new{T,E}(h, errors_up, errors_down, error_mode, SpinLock())
     end
 end
+Base.lock(h::Hist1D) = lock(h.hlock)
+Base.unlock(h::Hist1D) = unlock(h.hlock)
 
+"""
+    update_error!(h::Hist1D, error_fun = sqrt_err)
 
-# add error to StatsBase histogram
-function Hist1D(h::Histogram; error_mode=:sqrt)
+Update the error (up and down) of a histogram according to a specific error_mode.
+Remember to call this function after updaing a histogram with `push!()` in a loop.
+"""
+function update_error!(h::Hist1D, error_fun = sqrt_err)
+    lock(h)
+    _make_error!(error_fun, h.hist.weights, h.errors_up, h.errors_down)
+    unlock(h)
+    h
+end
+
+"""
+    push!(h::Hist1D, val::Real, wgt::Real=one{T})
+
+Adding one value at a time into histogram. Remember to call [`update_error!`](@ref) after
+if you need errors.
+"""
+function Base.push!(h::Hist1D{T, E}, val::Real, wgt::Real=one(T)) where {T,E}
+    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
+    lock(h)
+    @inbounds h.hist.weights[binidx] += wgt
+    unlock(h)
+    h
+end
+
+"""
+    Hist1D(elT::Type{T}=Float64; binedges) where {T}
+
+Initialize an empty histogram with bin content typed as `T` and bin edges.
+To be used with [`push!`](@ref)
+"""
+function Hist1D(elT::Type{T}=Float64; bins) where {T}
+    counts = zeros(elT, length(bins)-1)
+    e_up = similar(counts, Float64)
+    e_down = similar(counts, Float64)
+    Hist1D(Histogram(bins, counts), e_up, e_down)
+end
+
+"""
+    Hist1D(h::Histogram{T, 1, E}; error_mode=:sqrt) where {T,E}
+
+Convert an existing 1D `StatsBase.Histogram` to a `Hist1D`. Adds
+error according to `error_mode`.
+"""
+function Hist1D(h::Histogram{T, 1, E}; error_mode=:sqrt) where {T,E}
     e_up, e_down = _make_error(h.weights, error_mode)
     Hist1D(h, e_up, e_down, error_mode)
 end
 
-# TODO this is too confusing, don't include
-# function Hist1D(edges, weights; error_mode=:sqrt)
-#     h1 = Histogram(edges, weights)
-#     Hist1D(h1; error_mode = error_mode)
-# end
+"""
+    Hist1D(array, edges::AbstractRange; kwgs...)
+    Hist1D(array, edges::AbstractVector; error_mode=:sqrt)
 
-# fast uniform
+Create a `Hist1D` with given bin `edges` and vlaues from
+array. Weight for each value is assumed to be 1.
+"""
 function Hist1D(A, r::AbstractRange; kwgs...)
     s = step(r)
     start = first(r)
@@ -32,33 +79,16 @@ function Hist1D(A, r::AbstractRange; kwgs...)
     stop = last(r)
     L = length(r) - 1
     counts = zeros(Int, L)
-    @inbounds for i in A
+    @inbounds for idx in eachindex(A)
         # skip overflow
-        c = ifelse(i < start || i > stop, 0, 1)
+        i = A[idx]
+        c = ifelse(i > stop, 0, 1)
+        c = ifelse(i < start, 0, c)
         id = round(Int, (i-start2)/s) + 1
         counts[clamp(id,1,L)] += c
     end
     Hist1D(Histogram(r, counts); kwgs...)
 end
-
-function Hist1D(A, wgts::AbstractWeights, r::AbstractRange, ; kwgs...)
-    @assert size(A) == size(wgts)
-    s = step(r)
-    start = first(r)
-    start2 = start+0.5s
-    stop = last(r)
-    L = length(r) - 1
-    counts = zeros(L)
-    @inbounds for i in eachindex(A)
-        # skip overflow
-        c = ifelse(A[i] < start || A[i] > stop, 0.0, wgts[i])
-        id = round(Int, (A[i]-start2)/s) + 1
-        counts[clamp(id,1,L)] += c
-    end
-    Hist1D(Histogram(r, counts); kwgs...)
-end
-
-# fit then wrap
 function Hist1D(A, edges::AbstractVector; error_mode=:sqrt)
     if _is_uniform_bins(edges)
         s = edges[begin+1] - first(edges)
@@ -69,6 +99,30 @@ function Hist1D(A, edges::AbstractVector; error_mode=:sqrt)
     end
 end
 
+"""
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange, ; kwgs...)
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqrt)
+
+Create a `Hist1D` with given bin `edges` and vlaues from
+array. `wgts` should have the same `size` as `array`.
+"""
+function Hist1D(A, wgts::AbstractWeights, r::AbstractRange, ; kwgs...)
+    @boundscheck @assert size(A) == size(wgts)
+    s = step(r)
+    start = first(r)
+    start2 = start + s/2
+    stop = last(r)
+    wgt_zero = zero(eltype(wgts))
+    L = length(r) - 1
+    counts = zeros(L)
+    @inbounds for i in eachindex(A)
+        # skip overflow
+        c = ifelse(A[i] < start || A[i] > stop, wgt_zero, wgts[i])
+        id = round(Int, (A[i]-start2)/s) + 1
+        counts[clamp(id,1,L)] += c
+    end
+    Hist1D(Histogram(r, counts); kwgs...)
+end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqrt)
     if _is_uniform_bins(edges)
         s = edges[begin+1] - first(edges)
@@ -79,6 +133,12 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; error_mode=:sqr
     end
 end
 
+"""
+    Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt) where T
+    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt) where T
+
+Automatically determine number of bins based on `Sturges` algo.
+"""
 function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A)), error_mode=:sqrt) where T
     F = float(T)
     lo,hi = extrema(A)
@@ -93,12 +153,11 @@ function Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=Stat
     Hist1D(A, wgts, r; error_mode=error_mode)
 end
 
-function Base.show(io::IO, h::Hist1D)                                        
-    # println(io, typeof(h))
+function Base.show(io::IO, h::Hist1D)
     show(io, h.hist)
     println()
-    println(io,"errors: ")                                                   
-    println(io,"  up  : ",h.errors_up)                                         
-    println(io,"  down: ",h.errors_down)                                       
-    print(io,"error_mode: ",h.error_mode)                                      
-end                                                                          
+    println(io,"errors: ")
+    println(io,"  up  : ",h.errors_up)
+    println(io,"  down: ",h.errors_down)
+    print(io,"error_mode: ",h.error_mode)
+end
