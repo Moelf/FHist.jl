@@ -3,6 +3,7 @@ module FHist
 export Hist1D, sample
 
 using StatsBase, RecipesBase
+import MakieCore
 import UnicodePlots
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
@@ -23,6 +24,11 @@ end
 end
 
 include("./hist1d.jl")
+function binerrors(f::Function, h::Hist1D)
+    f.(h.hist.weights)
+end
+
 include("./arithmatics.jl")
 include("./plot.jl")
+include("./utils.jl")
 end

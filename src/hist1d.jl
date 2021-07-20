@@ -25,6 +25,16 @@ function sample(h::Hist1D, n::Int)
 end
 
 """
+    bincenters(h::Hist1D)
+
+Get the bin centers of a histogram.
+"""
+function bincenters(h::Hist1D)
+    edges = h.hist.edges
+    @. edges[2:end] - diff(edges) / 2
+end
+
+"""
     push!(h::Hist1D, val::Real)
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
 
@@ -66,7 +76,7 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange)
+function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: AbstractFloat
     s = step(r)
     start = first(r)
     start2 = start + 0.5s
@@ -79,6 +89,22 @@ function Hist1D(A::AbstractVector, r::AbstractRange)
         c = ifelse(i > stop, 0, 1)
         c = ifelse(i < start, 0, c)
         id = round(Int, (i - start2) / s) + 1
+        counts[clamp(id, 1, L)] += c
+    end
+    return Hist1D(Histogram(r, counts))
+end
+function Hist1D(A::AbstractVector, r::UnitRange{T}) where T <: Integer
+    s = step(r)
+    start = first(r)
+    stop = last(r)
+    L = length(r) - 1
+    counts = zeros(Int, L)
+    @inbounds for idx in eachindex(A)
+        # skip overflow
+        i = A[idx]
+        c = ifelse(i > stop, 0, 1)
+        c = ifelse(i < start, 0, c)
+        id = Int(fld(i-start, s)) + 1
         counts[clamp(id, 1, L)] += c
     end
     return Hist1D(Histogram(r, counts))

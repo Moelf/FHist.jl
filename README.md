@@ -31,15 +31,12 @@ bin counts: [8, 16, 51, 95, 152, 207, 194, 133, 84, 42, 11, 7]
 errors: 
   up  : [2.83, 4.0, 7.14, 9.75, 12.3, 14.4, 13.9, 11.5, 9.17, 6.48, 3.32, 2.65]
   down: [2.83, 4.0, 7.14, 9.75, 12.3, 14.4, 13.9, 11.5, 9.17, 6.48, 3.32, 2.65]
-error_mode: sqrt
 
 julia> h2 = Hist1D(Int; bins=-3:0.5:3)
 
 julia> Threads.@threads for i in a
            push!(h2, i)
        end
-
-julia> update_error!(h2);
 
 julia> h1 == h2
 true

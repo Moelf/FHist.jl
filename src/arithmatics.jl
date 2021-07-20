@@ -54,6 +54,12 @@ function merge!(h1::Hist1D, h2::Hist1D)
 end
 
 merge(h1::Hist1D, h2::Hist1D) = merge!(deepcopy(h1), h2)
+function merge(hist1ds...)
+    h = deepcopy(first(hist1ds))
+    length(hist1ds) == 1 && return h
+    foreach(x-> merge!(h, x), hist1ds[2:end])
+    h
+end
 
 function ==(h1::Hist1D, h2::Hist1D)
     h1.hist == h2.hist &&
