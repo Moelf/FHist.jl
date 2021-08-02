@@ -13,7 +13,6 @@ for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))
             h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("Edges don't match"))
             _f(counts) = any(x -> x<0, counts)
-            (_f(h1.hist.weights) || _f(h2.hist.weights)) && error("Can't do + or - when bin count is negative")
             _hist = ($op)(h1.hist,  h2.hist)
             ($T)(_hist, h1.sumw2 + h2.sumw2)
         end
