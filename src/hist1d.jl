@@ -30,8 +30,8 @@ end
 Get the bin centers of a histogram.
 """
 function bincenters(h::Hist1D)
-    edges = h.hist.edges
-    @. edges[2:end] - diff(edges) / 2
+    edges = h.hist.edges[1]
+    edges[2:end] - diff(edges) ./ 2
 end
 
 """
@@ -175,11 +175,4 @@ function Hist1D(
     lo, hi = extrema(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, wgts, r)
-end
-
-function Base.show(io::IO, h::Hist1D)
-    show(io, UnicodePlots.histogram(h.hist; width=30))
-    println()
-    println(io, "edges: ", h.hist.edges[1])
-    print(io, "bin counts: ", h.hist.weights)
 end

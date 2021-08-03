@@ -3,8 +3,6 @@ module FHist
 export Hist1D, sample
 
 using StatsBase, RecipesBase
-import MakieCore
-import UnicodePlots
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
