@@ -176,3 +176,8 @@ function Hist1D(
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, wgts, r)
 end
+
+function Base.show(io::IO, h::Hist1D)
+    println(io, "edges: ", h.hist.edges[1])
+    print(io, "bin counts: ", h.hist.weights)
+end
