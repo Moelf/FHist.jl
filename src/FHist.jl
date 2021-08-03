@@ -2,7 +2,7 @@ module FHist
 
 export Hist1D, sample
 
-using StatsBase, RecipesBase
+using StatsBase, RecipesBase, UnicodePlots
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
@@ -19,6 +19,9 @@ end
     diffs = diff(A)
     diff1 = first(diffs)
     all(isapprox.(diff1, diffs; atol = 1e-9)) #hack
+end
+function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
+    true
 end
 
 include("./hist1d.jl")
