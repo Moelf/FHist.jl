@@ -24,6 +24,23 @@ function sample(h::Hist1D, n::Int)
     @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights), n)
 end
 
+
+@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  AbstractFloat
+    s = step(r)
+    start = first(r) + 0.5s
+    return round(Int, (x - start) / s) + 1
+end
+
+@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  Integer
+    s = step(r)
+    start = first(r)
+    return Int(fld(x-start, s)) + 1
+end
+
+@inline function _edge_binindex(v::AbstractVector, x::Real)
+    return searchsortedlast(v, x)
+end
+
 """
     bincenters(h::Hist1D)
 
@@ -35,18 +52,36 @@ function bincenters(h::Hist1D)
 end
 
 """
-    push!(h::Hist1D, val::Real, wgt::Real=one{T})
+    empty!(h::Hist1D)
+
+Resets a histogram's bin counts and `sumw2`.
+"""
+function Base.empty!(h::Hist1D{T,E}) where {T,E}
+    h.hist.weights .= zero(T)
+    h.sumw2 .= zero(T)
+    return h
+end
+
+"""
+    push!(h::Hist1D, val::Real, wgt::Real=1.0)
+    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1.0)
 
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
+`unsafe_push!` is a faster version of `push!` that is not thread-safe.
 """
 function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
-    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
+    @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
     unlock(h)
-    return h
+end
+
+function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+    @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
+    @inbounds h.hist.weights[binidx] += wgt
+    @inbounds h.sumw2[binidx] += wgt^2
 end
 
 """
@@ -67,24 +102,7 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: AbstractFloat
-    s = step(r)
-    start = first(r)
-    start2 = start + 0.5s
-    stop = last(r)
-    L = length(r) - 1
-    counts = zeros(Int, L)
-    @inbounds for idx in eachindex(A)
-        # skip overflow
-        i = A[idx]
-        c = ifelse(i > stop, 0, 1)
-        c = ifelse(i < start, 0, c)
-        id = round(Int, (i - start2) / s) + 1
-        counts[clamp(id, 1, L)] += c
-    end
-    return Hist1D(Histogram(r, counts))
-end
-function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Integer
+function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Union{AbstractFloat,Integer}
     s = step(r)
     start = first(r)
     stop = last(r)
@@ -95,7 +113,7 @@ function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Integer
         i = A[idx]
         c = ifelse(i > stop, 0, 1)
         c = ifelse(i < start, 0, c)
-        id = Int(fld(i-start, s)) + 1
+        id = _edge_binindex(r, i)
         counts[clamp(id, 1, L)] += c
     end
     return Hist1D(Histogram(r, counts))
