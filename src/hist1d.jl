@@ -35,12 +35,10 @@ function bincenters(h::Hist1D)
 end
 
 """
-    push!(h::Hist1D, val::Real)
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
 
-Adding one value at a time into histogram. If `wgt` is supplied
-, this operation will accumulate `sumw2`
-(sum of weights^2) in the Hist automatically.
+Adding one value at a time into histogram. 
+`sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 """
 function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=one(T)) where {T,E}
     @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
