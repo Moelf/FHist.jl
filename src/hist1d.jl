@@ -40,7 +40,7 @@ end
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=one(T)) where {T,E}
+function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
     @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
