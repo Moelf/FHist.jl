@@ -64,6 +64,29 @@ end
     end
 end
 
+@testset "Empty" begin
+    a = rand(10^5)
+    r = 0:0.1:1
+    h1 = Hist1D(a, r)
+    empty!(h1)
+    @test maximum(h1.hist.weights) == 0
+    @test maximum(h1.sumw2) == 0
+    @test h1.hist.edges[1] == r
+end
+
+@testset "Unsafe push" begin
+    a = randn(10^5)
+    h1 = Hist1D(a, -3:0.2:3)
+    h2 = Hist1D(Int; bins=-3:0.2:3)
+    h3 = Hist1D(Int; bins=-3:0.2:3)
+    for i in a
+        push!(h2, i)
+        FHist.unsafe_push!(h3, i)
+    end
+    @test h1 == h2
+    @test h1 == h3
+end
+
 @testset "Arithmetic" begin
     @testset "Unweighted regular binning" begin
         h1 = Hist1D([0.5,1.5,1.5,2.5], 0:3)
