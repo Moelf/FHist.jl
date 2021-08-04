@@ -128,13 +128,16 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
     wgt_zero = zero(eltype(wgts))
     L = length(r) - 1
     counts = zeros(L)
+    sumw2 = zeros(L)
     @inbounds for i in eachindex(A)
         # skip overflow
         c = ifelse(A[i] < start || A[i] > stop, wgt_zero, wgts[i])
         id = round(Int, (A[i] - start2) / s) + 1
-        counts[clamp(id, 1, L)] += c
+        idx = clamp(id, 1, L)
+        counts[idx] += c
+        sumw2[idx] += c^2
     end
-    return Hist1D(Histogram(r, counts))
+    return Hist1D(Histogram(r, counts), sumw2)
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
@@ -142,7 +145,9 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
         r = first(edges):s:last(edges)
         Hist1D(A, wgts, r)
     else
-        Hist1D(fit(Histogram, A, wgts, edges))
+        hist = Hist1D(fit(Histogram, A, wgts, edges)).hist
+        sw2 = Hist1D(fit(Histogram, A, Weights(wgts.^2), edges)).hist.weights
+        Hist1D(hist, sw2)
     end
 end
 
