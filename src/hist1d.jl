@@ -58,7 +58,7 @@ Resets a histogram's bin counts and `sumw2`.
 """
 function Base.empty!(h::Hist1D{T,E}) where {T,E}
     h.hist.weights .= zero(T)
-    h.sumw2 .= zero(T)
+    h.sumw2 .= 0.0
     return h
 end
 
