@@ -71,17 +71,23 @@ Adding one value at a time into histogram.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 """
 function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
-    @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
+    r = h.hist.edges[1]
+    !(first(r) <= val <= last(r)) && return nothing
+    @inbounds binidx = _edge_binindex(r, val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
     unlock(h)
+    return nothing
 end
 
 function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
-    @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
+    r = h.hist.edges[1]
+    !(first(r) <= val <= last(r)) && return nothing
+    @inbounds binidx = _edge_binindex(r, val)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
+    return nothing
 end
 
 """
