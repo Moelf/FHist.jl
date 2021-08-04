@@ -18,11 +18,25 @@ Sample a histogram's with weights equal to bin count, one or `n` times.
 The returned sample value will be one of the bin's left edge.
 """
 function sample(h::Hist1D)
-    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights))
+    @inbounds StatsBase.sample(bincenters(h), Weights(bincounts(h)))
 end
 function sample(h::Hist1D, n::Int)
-    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights), n)
+    @inbounds StatsBase.sample(bincenters(h), Weights(bincounts(h)), n)
 end
+
+"""
+    bincounts(h::Hist1D)
+
+Get the bin counts of a histogram.
+"""
+@inline bincounts(h::Hist1D) = h.hist.weights
+
+"""
+    binedges(h::Hist1D)
+
+Get the bin edges of a histogram.
+"""
+@inline binedges(h::Hist1D) = h.hist.edges[1]
 
 """
     bincenters(h::Hist1D)
@@ -30,9 +44,10 @@ end
 Get the bin centers of a histogram.
 """
 function bincenters(h::Hist1D)
-    edges = h.hist.edges[1]
+    edges = binedges(h)
     edges[2:end] - diff(edges) ./ 2
 end
+
 
 """
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
@@ -171,6 +186,18 @@ function Hist1D(
     lo, hi = extrema(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, wgts, r)
+end
+
+# TODO write doc
+Statistics.mean(h::Hist1D) = sum(bincounts(h) .* bincenters(h))/sum(bincounts(h))
+# TODO write doc
+Statistics.std(h::Hist1D) = sqrt(sum(bincounts(h) .* (bincenters(h) .- mean(h)).^2)/sum(bincounts(h)))
+# TODO write doc
+function lookup(h::Hist1D, value) 
+    r = binedges(h)
+    !(first(r) <= value <= last(r)) && return missing
+    binidx = searchsortedlast(r, value) # TODO replace with `_edges_binindex`
+    return bincounts(h)[binidx]
 end
 
 function Base.show(io::IO, h::Hist1D)
