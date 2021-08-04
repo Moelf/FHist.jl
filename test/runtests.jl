@@ -87,6 +87,19 @@ end
     @test h1 == h3
 end
 
+@testset "Broadcasted push" begin
+    lookup(h::Hist1D, value) = h.hist.weights[FHist._edge_binindex(h.hist.edges[1], value)]
+
+    h1 = Hist1D(Int; bins=0:3)
+
+    push!.(h1, [0.5, 1.5])
+    @test lookup.(h1, [0.5,1.5,2.5]) == [1, 1, 0]
+
+    empty!(h1)
+    push!.(h1, [0.5, 1.5], 2)
+    @test lookup.(h1, [0.5,1.5,2.5]) == [2, 2, 0]
+end
+
 @testset "Arithmetic" begin
     @testset "Unweighted regular binning" begin
         h1 = Hist1D([0.5,1.5,1.5,2.5], 0:3)
