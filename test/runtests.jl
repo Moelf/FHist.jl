@@ -66,7 +66,6 @@ end
 
 @testset "Arithmetic" begin
     @testset "Unweighted regular binning" begin
-        # Unweighted
         h1 = Hist1D([0.5,1.5,1.5,2.5], 0:3)
         h2 = Hist1D([0.5,1.5,2.5,2.5], 0:3)
 
@@ -92,7 +91,6 @@ end
     end
 
     @testset "Weighted regular binning" begin
-        # Weighted
         h1 = Hist1D([0.5,1.5,1.5,2.5], weights([3,3,2,1]), 0:3)
         h2 = Hist1D([0.5,1.5,2.5,2.5], weights([3,3,2,1]), 0:3)
 
@@ -102,7 +100,6 @@ end
     end
 
     @testset "Weighted irregular binning" begin
-        # Weighted nonuniform binning
         h1 = Hist1D([0.5,1.5,1.5,2.5], weights([3,3,2,1]), [0,1,2,4])
         h2 = Hist1D([0.5,1.5,2.5,2.5], weights([3,3,2,1]), [0,1,2,4])
 
