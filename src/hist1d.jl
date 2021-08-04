@@ -3,7 +3,7 @@ struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     sumw2::Vector{Float64}
     hlock::SpinLock
     # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = h.weights.^2) where {T,E}
+    function Hist1D(h::Histogram{T,1,E}, sw2 = h.weights) where {T,E}
         return new{T,E}(h, sw2, SpinLock())
     end
 end
