@@ -3,7 +3,7 @@ struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     sumw2::Vector{Float64}
     hlock::SpinLock
     # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = zeros(Float64, size(h.weights))) where {T,E}
+    function Hist1D(h::Histogram{T,1,E}, sw2 = h.weights) where {T,E}
         return new{T,E}(h, sw2, SpinLock())
     end
 end
@@ -35,25 +35,16 @@ function bincenters(h::Hist1D)
 end
 
 """
-    push!(h::Hist1D, val::Real)
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
 
-Adding one value at a time into histogram. If `wgt` is supplied
-, this operation will accumulate `sumw2`
-(sum of weights^2) in the Hist automatically.
+Adding one value at a time into histogram. 
+`sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real) where {T,E}
+function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
     @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
-    unlock(h)
-    return h
-end
-function Base.push!(h::Hist1D{T,E}, val::Real) where {T,E}
-    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
-    lock(h)
-    @inbounds h.hist.weights[binidx] += one(T)
     unlock(h)
     return h
 end
@@ -135,13 +126,16 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
     wgt_zero = zero(eltype(wgts))
     L = length(r) - 1
     counts = zeros(L)
+    sumw2 = zeros(L)
     @inbounds for i in eachindex(A)
         # skip overflow
         c = ifelse(A[i] < start || A[i] > stop, wgt_zero, wgts[i])
         id = round(Int, (A[i] - start2) / s) + 1
-        counts[clamp(id, 1, L)] += c
+        idx = clamp(id, 1, L)
+        counts[idx] += c
+        sumw2[idx] += c^2
     end
-    return Hist1D(Histogram(r, counts))
+    return Hist1D(Histogram(r, counts), sumw2)
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
@@ -149,7 +143,9 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
         r = first(edges):s:last(edges)
         Hist1D(A, wgts, r)
     else
-        Hist1D(fit(Histogram, A, wgts, edges))
+        hist = Hist1D(fit(Histogram, A, wgts, edges)).hist
+        sw2 = Hist1D(fit(Histogram, A, Weights(wgts.^2), edges)).hist.weights
+        Hist1D(hist, sw2)
     end
 end
 

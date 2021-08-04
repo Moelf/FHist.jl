@@ -63,3 +63,49 @@ end
         @test all(h1.hist.weights .≈ sth1.weights)
     end
 end
+
+@testset "Arithmetic" begin
+    @testset "Unweighted regular binning" begin
+        h1 = Hist1D([0.5,1.5,1.5,2.5], 0:3)
+        h2 = Hist1D([0.5,1.5,2.5,2.5], 0:3)
+
+        h = h1 + h2
+        @test h.hist.weights == [2.0, 3.0, 3.0]
+        @test h.sumw2 == [2.0, 3.0, 3.0]
+
+        h = h1 - h2
+        @test h.hist.weights == [0.0, 1.0, -1.0]
+        @test h.sumw2 == [2.0, 3.0, 3.0]
+
+        h = h1 / h2
+        @test h.hist.weights == [1.0, 2.0, 0.5]
+        @test h.sumw2 == [2.0, 6.0, 0.375]
+
+        h = h1 * 2
+        @test h.hist.weights == [2.0, 4.0, 2.0]
+        @test h.sumw2 == [4.0, 8.0, 4.0]
+
+        h = h1/(h1+h2*2)
+        @test h.hist.weights ≈ [0.333333, 0.5, 0.2] atol=1e-6
+        @test h.sumw2 ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
+    end
+
+    @testset "Weighted regular binning" begin
+        h1 = Hist1D([0.5,1.5,1.5,2.5], weights([3,3,2,1]), 0:3)
+        h2 = Hist1D([0.5,1.5,2.5,2.5], weights([3,3,2,1]), 0:3)
+
+        h = h1/(h1+h2*2)
+        @test h.hist.weights ≈ [0.333333, 0.454545, 0.142857] atol=1e-6
+        @test h.sumw2 ≈ [0.17284, 0.191107, 0.029155] atol=1e-6
+    end
+
+    @testset "Weighted irregular binning" begin
+        h1 = Hist1D([0.5,1.5,1.5,2.5], weights([3,3,2,1]), [0,1,2,4])
+        h2 = Hist1D([0.5,1.5,2.5,2.5], weights([3,3,2,1]), [0,1,2,4])
+
+        h = h1/(h1+h2*2)
+        @test h.hist.weights ≈ [0.333333, 0.454545, 0.142857] atol=1e-6
+        @test h.sumw2 ≈ [0.17284, 0.191107, 0.029155] atol=1e-6
+    end
+
+end

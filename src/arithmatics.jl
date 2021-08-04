@@ -36,8 +36,8 @@ for T in (:Hist1D,)
         _f(counts) = any(x -> x<0, counts)
         (_f(h1.hist.weights) || _f(h2.hist.weights)) && error("Can't do / when bin count is negative")
         _hist = /(h1.hist, h2.hist)
-        _sumw2 =  h1.sumw2 / (h2.hist.weights .^ 2) +
-                (sqrt.(h2.sumw2) * h1.hist.weights / (h2.hist.weights .^ 2)) .^ 2
+        _sumw2 =  @. h1.sumw2 / (h2.hist.weights ^ 2) +
+                (sqrt(h2.sumw2) * h1.hist.weights / (h2.hist.weights ^ 2)) ^ 2
                        
         ($T)(_hist, _sumw2)
     end
