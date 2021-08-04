@@ -3,7 +3,7 @@ struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     sumw2::Vector{Float64}
     hlock::SpinLock
     # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = zeros(Float64, size(h.weights))) where {T,E}
+    function Hist1D(h::Histogram{T,1,E}, sw2 = h.weights.^2) where {T,E}
         return new{T,E}(h, sw2, SpinLock())
     end
 end
@@ -42,18 +42,11 @@ Adding one value at a time into histogram. If `wgt` is supplied
 , this operation will accumulate `sumw2`
 (sum of weights^2) in the Hist automatically.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real) where {T,E}
+function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=one(T)) where {T,E}
     @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
-    unlock(h)
-    return h
-end
-function Base.push!(h::Hist1D{T,E}, val::Real) where {T,E}
-    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
-    lock(h)
-    @inbounds h.hist.weights[binidx] += one(T)
     unlock(h)
     return h
 end
