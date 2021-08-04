@@ -63,30 +63,40 @@ function Base.empty!(h::Hist1D{T,E}) where {T,E}
 end
 
 """
-    push!(h::Hist1D, val::Real, wgt::Real=1.0)
     unsafe_push!(h::Hist1D, val::Real, wgt::Real=1.0)
+    push!(h::Hist1D, val::Real, wgt::Real=1.0)
 
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
     r = h.hist.edges[1]
-    !(first(r) <= val <= last(r)) && return nothing
-    @inbounds binidx = _edge_binindex(r, val)
+    L = length(r) - 1
+    start = first(r)
+    stop = last(r)
+    c = ifelse(val > stop, 0, 1)
+    c = ifelse(val < start, 0, c)
+    binidx = clamp(_edge_binindex(r, val), 1, L)
     lock(h)
-    @inbounds h.hist.weights[binidx] += wgt
-    @inbounds h.sumw2[binidx] += wgt^2
+    @inbounds h.hist.weights[binidx] += c*wgt
+    @inbounds h.sumw2[binidx] += c*wgt^2
     unlock(h)
     return nothing
 end
 
-function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
     r = h.hist.edges[1]
-    !(first(r) <= val <= last(r)) && return nothing
-    @inbounds binidx = _edge_binindex(r, val)
-    @inbounds h.hist.weights[binidx] += wgt
-    @inbounds h.sumw2[binidx] += wgt^2
+    L = length(r) - 1
+    start = first(r)
+    stop = last(r)
+    c = ifelse(val > stop, 0, 1)
+    c = ifelse(val < start, 0, c)
+    binidx = _edge_binindex(r, val)
+    binidx = ifelse(binidx > L, L, binidx)
+    binidx = ifelse(binidx < 1, 1, binidx)
+    @inbounds h.hist.weights[binidx] += c*wgt
+    @inbounds h.sumw2[binidx] += c*wgt^2
     return nothing
 end
 
@@ -117,10 +127,12 @@ function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Union{Abstrac
     @inbounds for idx in eachindex(A)
         # skip overflow
         i = A[idx]
+        id = _edge_binindex(r, i)
+        id = ifelse(id > L, L, id)
+        id = ifelse(id < 1, 1, id)
         c = ifelse(i > stop, 0, 1)
         c = ifelse(i < start, 0, c)
-        id = _edge_binindex(r, i)
-        counts[clamp(id, 1, L)] += c
+        counts[id] += c
     end
     return Hist1D(Histogram(r, counts))
 end
