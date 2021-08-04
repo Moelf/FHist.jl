@@ -181,9 +181,10 @@ function Base.show(io::IO, h::Hist1D)
     _e = h.hist.edges[1]
     if _e isa AbstractRange && length(_e) < 50
         _h = Histogram(float(_e), h.hist.weights)
-        show(io, UnicodePlots.histogram(_h; width=30))
+        show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
     println()
     println(io, "edges: ", h.hist.edges[1])
-    print(io, "bin counts: ", h.hist.weights)
+    println(io, "bin counts: ", h.hist.weights)
+    print(io, "total count: ", sum(h.hist.weights))
 end
