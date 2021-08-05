@@ -44,8 +44,7 @@ Get the bin edges of a histogram.
 Get the bin centers of a histogram.
 """
 function bincenters(h::Hist1D)
-    edges = binedges(h)
-    edges[2:end] - diff(edges) ./ 2
+    StatsBase.midpoints(binedges(h))
 end
 
 
@@ -189,10 +188,14 @@ function Hist1D(
 end
 
 # TODO write doc
-Statistics.mean(h::Hist1D) = sum(bincounts(h) .* bincenters(h))/sum(bincounts(h))
+Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
 # TODO write doc
-Statistics.std(h::Hist1D) = sqrt(sum(bincounts(h) .* (bincenters(h) .- mean(h)).^2)/sum(bincounts(h)))
+Statistics.std(h::Hist1D) = sqrt(Statistics.var(bincenters(h), Weights(bincounts(h))))
 # TODO write doc
+Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincounts(h)))
+# TODO write doc
+Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
+
 function lookup(h::Hist1D, value) 
     r = binedges(h)
     !(first(r) <= value <= last(r)) && return missing
@@ -201,13 +204,13 @@ function lookup(h::Hist1D, value)
 end
 
 function Base.show(io::IO, h::Hist1D)
-    _e = h.hist.edges[1]
+    _e = binedges(h)
     if _e isa AbstractRange && length(_e) < 50
-        _h = Histogram(float(_e), h.hist.weights)
+        _h = Histogram(float(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
     println()
-    println(io, "edges: ", h.hist.edges[1])
-    println(io, "bin counts: ", h.hist.weights)
-    print(io, "total count: ", sum(h.hist.weights))
+    println(io, "edges: ", binedges(h))
+    println(io, "bin counts: ", bincounts(h))
+    print(io, "total count: ", sum(bincounts(h)))
 end
