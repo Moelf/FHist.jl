@@ -3,7 +3,7 @@ struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     sumw2::Vector{Float64}
     hlock::SpinLock
     # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = h.weights) where {T,E}
+    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights)) where {T,E}
         return new{T,E}(h, sw2, SpinLock())
     end
 end
@@ -143,9 +143,9 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Union{AbstractFloat,Integer}
+function Hist1D(A::AbstractVector, r::AbstractRange)
     h = Hist1D(Int; bins=r)
-    unsafe_push!.(Ref(h), A)
+    unsafe_push!.(h, A)
     return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
@@ -167,23 +167,9 @@ array. `wgts` should have the same `size` as `array`.
 """
 function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
     @boundscheck @assert size(A) == size(wgts)
-    s = step(r)
-    start = first(r)
-    start2 = start + s / 2
-    stop = last(r)
-    wgt_zero = zero(eltype(wgts))
-    L = length(r) - 1
-    counts = zeros(L)
-    sumw2 = zeros(L)
-    @inbounds for i in eachindex(A)
-        # skip overflow
-        c = ifelse(A[i] < start || A[i] > stop, wgt_zero, wgts[i])
-        id = round(Int, (A[i] - start2) / s) + 1
-        idx = clamp(id, 1, L)
-        counts[idx] += c
-        sumw2[idx] += c^2
-    end
-    return Hist1D(Histogram(r, counts), sumw2)
+    h = Hist1D(eltype(wgts); bins=r)
+    unsafe_push!.(h, A, wgts)
+    return h
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
