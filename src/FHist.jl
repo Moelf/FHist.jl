@@ -1,6 +1,7 @@
 module FHist
 
-export Hist1D, binedges, bincounts, bincenters, sample, lookup, cumulative
+export Hist1D, binedges, bincounts, bincenters, nbins, integral
+export sample, lookup, cumulative
 
 using StatsBase, RecipesBase, UnicodePlots, Statistics
 import LinearAlgebra: normalize, normalize!

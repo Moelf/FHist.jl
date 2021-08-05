@@ -49,6 +49,24 @@ end
 
 
 """
+    nbins(h::Hist1D)
+
+Get the number of bins of a histogram.
+"""
+function nbins(h::Hist1D)
+    length(bincounts(h))
+end
+
+"""
+    integral(h::Hist1D)
+
+Get the integral a histogram.
+"""
+function integral(h::Hist1D)
+    sum(bincounts(h))
+end
+
+"""
     push!(h::Hist1D, val::Real, wgt::Real=one{T})
 
 Adding one value at a time into histogram. 
@@ -204,6 +222,7 @@ function lookup(h::Hist1D, value)
 end
 
 function cumulative(h::Hist1D; forward=true)::Hist1D
+    # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse
     h = deepcopy(h)
     h.hist.weights .= f(cumsum(h.hist.weights))
