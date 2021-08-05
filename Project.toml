@@ -1,7 +1,7 @@
 name = "FHist"
 uuid = "68837c9b-b678-4cd5-9925-8a54edc8f695"
-authors = ["Moelf <proton@jling.dev> and contributors"]
-version = "0.2.2"
+authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
+version = "0.2.3"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

@@ -20,6 +20,23 @@ function sample(h::Hist1D; n::Int=1)
     StatsBase.sample(bincenters(h), Weights(bincounts(h)), n)
 end
 
+
+@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  AbstractFloat
+    s = step(r)
+    start = first(r) + 0.5s
+    return round(Int, (x - start) / s) + 1
+end
+
+@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  Integer
+    s = step(r)
+    start = first(r)
+    return Int(fld(x-start, s)) + 1
+end
+
+@inline function _edge_binindex(v::AbstractVector, x::Real)
+    return searchsortedlast(v, x)
+end
+
 """
     bincounts(h::Hist1D)
 
@@ -63,19 +80,50 @@ function integral(h::Hist1D)
 end
 
 """
-    push!(h::Hist1D, val::Real, wgt::Real=one{T})
+    empty!(h::Hist1D)
+
+Resets a histogram's bin counts and `sumw2`.
+"""
+function Base.empty!(h::Hist1D{T,E}) where {T,E}
+    h.hist.weights .= zero(T)
+    h.sumw2 .= 0.0
+    return h
+end
+
+"""
+    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1)
+    push!(h::Hist1D, val::Real, wgt::Real=1)
 
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
+`unsafe_push!` is a faster version of `push!` that is not thread-safe.
+
+N.B. To append multiple values at once, use broadcasting via
+`push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
-    @inbounds binidx = searchsortedlast(h.hist.edges[1], val)
+@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     lock(h)
-    @inbounds h.hist.weights[binidx] += wgt
-    @inbounds h.sumw2[binidx] += wgt^2
+    unsafe_push!(h, val, wgt)
     unlock(h)
-    return h
+    return nothing
 end
+
+@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+    r = @inbounds h.hist.edges[1]
+    L = length(r) - 1
+    start = first(r)
+    stop = last(r)
+    c = ifelse(val > stop, 0, 1)
+    c = ifelse(val < start, 0, c)
+    binidx = _edge_binindex(r, val)
+    binidx = ifelse(binidx > L, L, binidx)
+    binidx = ifelse(binidx < 1, 1, binidx)
+    @inbounds h.hist.weights[binidx] += c*wgt
+    @inbounds h.sumw2[binidx] += c*wgt^2
+    return nothing
+end
+
+Base.broadcastable(h::Hist1D) = Ref(h)
 
 """
     Hist1D(elT::Type{T}=Float64; binedges) where {T}
@@ -95,38 +143,10 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: AbstractFloat
-    s = step(r)
-    start = first(r)
-    start2 = start + 0.5s
-    stop = last(r)
-    L = length(r) - 1
-    counts = zeros(Int, L)
-    @inbounds for idx in eachindex(A)
-        # skip overflow
-        i = A[idx]
-        c = ifelse(i > stop, 0, 1)
-        c = ifelse(i < start, 0, c)
-        id = round(Int, (i - start2) / s) + 1
-        counts[clamp(id, 1, L)] += c
-    end
-    return Hist1D(Histogram(r, counts))
-end
-function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Integer
-    s = step(r)
-    start = first(r)
-    stop = last(r)
-    L = length(r) - 1
-    counts = zeros(Int, L)
-    @inbounds for idx in eachindex(A)
-        # skip overflow
-        i = A[idx]
-        c = ifelse(i > stop, 0, 1)
-        c = ifelse(i < start, 0, c)
-        id = Int(fld(i-start, s)) + 1
-        counts[clamp(id, 1, L)] += c
-    end
-    return Hist1D(Histogram(r, counts))
+function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Union{AbstractFloat,Integer}
+    h = Hist1D(Int; bins=r)
+    unsafe_push!.(Ref(h), A)
+    return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
