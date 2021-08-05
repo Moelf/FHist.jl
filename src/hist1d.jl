@@ -74,16 +74,8 @@ N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
 @inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
-    r = h.hist.edges[1]
-    L = length(r) - 1
-    start = first(r)
-    stop = last(r)
-    c = ifelse(val > stop, 0, 1)
-    c = ifelse(val < start, 0, c)
-    binidx = clamp(_edge_binindex(r, val), 1, L)
     lock(h)
-    @inbounds h.hist.weights[binidx] += c*wgt
-    @inbounds h.sumw2[binidx] += c*wgt^2
+    unsafe_push!(h, val, wgt)
     unlock(h)
     return nothing
 end
