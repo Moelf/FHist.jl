@@ -11,17 +11,13 @@ Base.lock(h::Hist1D) = lock(h.hlock)
 Base.unlock(h::Hist1D) = unlock(h.hlock)
 
 """
-    sample(h::Hist1D)
-    sample(h::Hist1D, n::Int)
+    sample(h::Hist1D, n::Int=1)
 
-Sample a histogram's with weights equal to bin count, one or `n` times.
-The returned sample value will be one of the bin's left edge.
+Sample a histogram's with weights equal to bin count, `n` times.
+The sampled values are the bins' lower edges.
 """
-function sample(h::Hist1D)
-    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights))
-end
-function sample(h::Hist1D, n::Int)
-    @inbounds sample(@view(only(h.hist.edges)[1:end-1]), Weights(h.hist.weights), n)
+function sample(h::Hist1D; n::Int=1)
+    StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
 end
 
 
@@ -42,13 +38,45 @@ end
 end
 
 """
+    bincounts(h::Hist1D)
+
+Get the bin counts of a histogram.
+"""
+@inline bincounts(h::Hist1D) = h.hist.weights
+
+"""
+    binedges(h::Hist1D)
+
+Get the bin edges of a histogram.
+"""
+@inline binedges(h::Hist1D) = h.hist.edges[1]
+
+"""
     bincenters(h::Hist1D)
 
 Get the bin centers of a histogram.
 """
 function bincenters(h::Hist1D)
-    edges = h.hist.edges[1]
-    edges[2:end] - diff(edges) ./ 2
+    StatsBase.midpoints(binedges(h))
+end
+
+
+"""
+    nbins(h::Hist1D)
+
+Get the number of bins of a histogram.
+"""
+function nbins(h::Hist1D)
+    length(bincounts(h))
+end
+
+"""
+    integral(h::Hist1D)
+
+Get the integral a histogram.
+"""
+function integral(h::Hist1D)
+    sum(bincounts(h))
 end
 
 """
@@ -193,14 +221,66 @@ function Hist1D(
     return Hist1D(A, wgts, r)
 end
 
+
+"""
+    Statistics.mean(h::Hist1D)
+    Statistics.std(h::Hist1D)
+    Statistics.median(h::Hist1D)
+    Statistics.quantile(h::Hist1D, p)
+
+Compute statistical quantities based on the bin centers weighted
+by the bin counts.
+"""
+Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
+Statistics.std(h::Hist1D) = sqrt(Statistics.var(bincenters(h), Weights(bincounts(h))))
+Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincounts(h)))
+Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
+
+"""
+    function lookup(h::Hist1D, v) 
+
+For given x-axis value`v`, find the corresponding bin and return the bin content.
+If a value is out of the histogram range, return `missing`.
+"""
+function lookup(h::Hist1D, v)
+    r = binedges(h)
+    !(first(r) <= v <= last(r)) && return missing
+    binidx = searchsortedlast(r, v) # TODO replace with `_edges_binindex`
+    return bincounts(h)[binidx]
+end
+
+"""
+    normalize(h::Hist1D)
+
+Create a normalized histogram via division by `integral(h)`.
+"""
+function normalize(h::Hist1D)
+    return h*(1/integral(h))
+end
+
+"""
+    cumulative(h::Hist1D; forward=true)::Hist1D
+
+Create a cumulative histogram. If `forward`, start
+summing from the left.
+"""
+function cumulative(h::Hist1D; forward=true)::Hist1D
+    # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
+    f = forward ? identity : reverse
+    h = deepcopy(h)
+    h.hist.weights .= f(cumsum(h.hist.weights))
+    h.sumw2 .= f(cumsum(h.sumw2))
+    return h
+end
+
 function Base.show(io::IO, h::Hist1D)
-    _e = h.hist.edges[1]
+    _e = binedges(h)
     if _e isa AbstractRange && length(_e) < 50
-        _h = Histogram(float(_e), h.hist.weights)
+        _h = Histogram(float(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
     println()
-    println(io, "edges: ", h.hist.edges[1])
-    println(io, "bin counts: ", h.hist.weights)
-    print(io, "total count: ", sum(h.hist.weights))
+    println(io, "edges: ", binedges(h))
+    println(io, "bin counts: ", bincounts(h))
+    print(io, "total count: ", sum(bincounts(h)))
 end
