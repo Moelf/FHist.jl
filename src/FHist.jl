@@ -1,6 +1,7 @@
 module FHist
 
 export Hist1D, sample
+export unsafe_push!
 
 using StatsBase, RecipesBase, UnicodePlots
 import LinearAlgebra: normalize, normalize!
