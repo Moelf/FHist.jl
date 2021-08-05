@@ -81,7 +81,7 @@ N.B. To append multiple values at once, use broadcasting via
 end
 
 @inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
-    r = h.hist.edges[1]
+    r = @inbounds h.hist.edges[1]
     L = length(r) - 1
     start = first(r)
     stop = last(r)
@@ -116,22 +116,9 @@ Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A::AbstractVector, r::AbstractRange{T}) where T <: Union{AbstractFloat,Integer}
-    s = step(r)
-    start = first(r)
-    stop = last(r)
-    L = length(r) - 1
-    counts = zeros(Int, L)
-    @inbounds for idx in eachindex(A)
-        # skip overflow
-        i = A[idx]
-        id = _edge_binindex(r, i)
-        id = ifelse(id > L, L, id)
-        id = ifelse(id < 1, 1, id)
-        c = ifelse(i > stop, 0, 1)
-        c = ifelse(i < start, 0, c)
-        counts[id] += c
-    end
-    return Hist1D(Histogram(r, counts))
+    h = Hist1D(Int; bins=r)
+    unsafe_push!.(Ref(h), A)
+    return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
