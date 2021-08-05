@@ -17,7 +17,7 @@ Sample a histogram's with weights equal to bin count, `n` times.
 The sampled values are the bin centers.
 """
 function sample(h::Hist1D; n::Int=1)
-    StatsBase.sample(bincenters(h), Weights(bincounts(h)), n)
+    StatsBase.sample(binedges(h)[begin:end-1], Weights(bincounts(h)), n)
 end
 
 

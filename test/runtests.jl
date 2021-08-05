@@ -103,7 +103,7 @@ end
 end
 
 @testset "Sample" begin
-    @test mean(FHist.sample(Hist1D(rand(10^5)), n=10^5)) ≈ 0.5 atol=0.01
+    @test mean(FHist.sample(Hist1D(rand(10^5), 0:0.1:1), n=10^5)) ≈ 0.5 atol=0.1
 end
 
 @testset "Empty" begin
