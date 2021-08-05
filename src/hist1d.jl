@@ -152,9 +152,11 @@ function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
         s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
-        Hist1D(A, r)
+        return Hist1D(A, r)
     else
-        Hist1D(fit(Histogram, A, edges))
+        h = Hist1D(Int; bins=edges)
+        unsafe_push!.(h, A)
+        return h
     end
 end
 
@@ -175,11 +177,11 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
         s = edges[2] - first(edges)
         r = first(edges):s:last(edges)
-        Hist1D(A, wgts, r)
+        return Hist1D(A, wgts, r)
     else
-        hist = Hist1D(fit(Histogram, A, wgts, edges)).hist
-        sw2 = Hist1D(fit(Histogram, A, Weights(wgts.^2), edges)).hist.weights
-        Hist1D(hist, sw2)
+        h = Hist1D(eltype(wgts); bins=edges)
+        unsafe_push!.(h, A, wgts)
+        return h
     end
 end
 
