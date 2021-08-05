@@ -11,17 +11,13 @@ Base.lock(h::Hist1D) = lock(h.hlock)
 Base.unlock(h::Hist1D) = unlock(h.hlock)
 
 """
-    sample(h::Hist1D)
-    sample(h::Hist1D, n::Int)
+    sample(h::Hist1D, n::Int=1)
 
-Sample a histogram's with weights equal to bin count, one or `n` times.
-The returned sample value will be one of the bin's left edge.
+Sample a histogram's with weights equal to bin count, `n` times.
+The sampled values are the bin centers.
 """
-function sample(h::Hist1D)
-    @inbounds StatsBase.sample(bincenters(h), Weights(bincounts(h)))
-end
-function sample(h::Hist1D, n::Int)
-    @inbounds StatsBase.sample(bincenters(h), Weights(bincounts(h)), n)
+function sample(h::Hist1D; n::Int=1)
+    StatsBase.sample(bincenters(h), Weights(bincounts(h)), n)
 end
 
 """
@@ -205,22 +201,50 @@ function Hist1D(
     return Hist1D(A, wgts, r)
 end
 
-# TODO write doc
+
+"""
+    Statistics.mean(h::Hist1D)
+    Statistics.std(h::Hist1D)
+    Statistics.median(h::Hist1D)
+    Statistics.quantile(h::Hist1D, p)
+
+Compute statistical quantities based on the bin centers weighted
+by the bin counts.
+"""
 Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
-# TODO write doc
 Statistics.std(h::Hist1D) = sqrt(Statistics.var(bincenters(h), Weights(bincounts(h))))
-# TODO write doc
 Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincounts(h)))
-# TODO write doc
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
-function lookup(h::Hist1D, value) 
+"""
+    function lookup(h::Hist1D, v) 
+
+For given x-axis value`v`, find the corresponding bin and return the bin content.
+If a value is out of the histogram range, return `missing`.
+"""
+function lookup(h::Hist1D, v)
     r = binedges(h)
-    !(first(r) <= value <= last(r)) && return missing
-    binidx = searchsortedlast(r, value) # TODO replace with `_edges_binindex`
+    !(first(r) <= v <= last(r)) && return missing
+    binidx = searchsortedlast(r, v) # TODO replace with `_edges_binindex`
     return bincounts(h)[binidx]
 end
 
+"""
+    normalize(h::Hist1D)
+
+Create a normalized histogram via division by `integral(h)`.
+"""
+function normalize(h::Hist1D)
+    h = deepcopy(h)
+    return h*(1/integral(h))
+end
+
+"""
+    cumulative(h::Hist1D; forward=true)::Hist1D
+
+Create a cumulative histogram. If `forward`, start
+summing from the left.
+"""
 function cumulative(h::Hist1D; forward=true)::Hist1D
     # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse

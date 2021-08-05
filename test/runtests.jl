@@ -1,4 +1,4 @@
-using FHist, StatsBase
+using FHist, StatsBase, Statistics
 using Test
 
 @testset "The basics" begin
@@ -62,6 +62,48 @@ end
         sth1 = fit(Histogram, a, weights(wgts), r)
         @test all(h1.hist.weights .≈ sth1.weights)
     end
+end
+
+@testset "Normalize" begin
+    a = rand(10^5)
+    wgts1 = 2 .* ones(10^5) |> weights
+    h1 = Hist1D(a, wgts1)
+    @test integral(h1) ≈ sum(wgts1) atol=1e-8
+    @test integral(normalize(h1)) ≈ 1 atol=1e-8
+end
+
+
+@testset "Cumulative" begin
+    a = rand(10^5)
+    wgts1 = 2 .* ones(10^5) |> weights
+    h1 = Hist1D(a, wgts1)
+    @test argmax(bincounts(cumulative(h1; forward=true))) == nbins(h1)
+    @test argmax(bincounts(cumulative(h1; forward=false))) == 1
+end
+
+
+@testset "Statistics" begin
+    r = -3:0.1:3
+    N = 10^5
+    h1 = Hist1D(randn(N), r)
+    @test mean(h1) ≈ 0 atol=0.05
+    @test std(h1) ≈ 1 atol=0.1
+    @test nbins(h1) == length(r)-1
+    @test median(h1) == quantile(h1, 0.5)
+    @test quantile(h1, 0.0) == first(bincenters(h1))
+    @test quantile(h1, 1.0) == last(bincenters(h1))
+
+end
+
+@testset "Lookup" begin
+    h1 = Hist1D(randn(100))
+    @test lookup.(Ref(h1), bincenters(h1)) == bincounts(h1)
+    @test ismissing(lookup(h1, last(binedges(h1)) + 0.1))
+    @test ismissing(lookup(h1, first(binedges(h1)) - 0.1))
+end
+
+@testset "Sample" begin
+    @test mean(FHist.sample(Hist1D(rand(10^5)), n=10^5)) ≈ 0.5 atol=0.01
 end
 
 @testset "Arithmetic" begin
