@@ -255,7 +255,6 @@ end
 Create a normalized histogram via division by `integral(h)`.
 """
 function normalize(h::Hist1D)
-    h = deepcopy(h)
     return h*(1/integral(h))
 end
 
