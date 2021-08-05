@@ -203,6 +203,14 @@ function lookup(h::Hist1D, value)
     return bincounts(h)[binidx]
 end
 
+function cumulative(h::Hist1D; forward=true)::Hist1D
+    f = forward ? identity : reverse
+    h = deepcopy(h)
+    h.hist.weights .= f(cumsum(h.hist.weights))
+    h.sumw2 .= f(cumsum(h.sumw2))
+    return h
+end
+
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
     if _e isa AbstractRange && length(_e) < 50
