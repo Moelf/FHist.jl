@@ -63,8 +63,8 @@ function Base.empty!(h::Hist1D{T,E}) where {T,E}
 end
 
 """
-    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1.0)
-    push!(h::Hist1D, val::Real, wgt::Real=1.0)
+    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1)
+    push!(h::Hist1D, val::Real, wgt::Real=1)
 
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
@@ -73,7 +73,7 @@ Adding one value at a time into histogram.
 N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     r = h.hist.edges[1]
     L = length(r) - 1
     start = first(r)
@@ -88,7 +88,7 @@ N.B. To append multiple values at once, use broadcasting via
     return nothing
 end
 
-@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     r = h.hist.edges[1]
     L = length(r) - 1
     start = first(r)
