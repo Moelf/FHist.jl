@@ -196,6 +196,6 @@ end
 
 @testset "Repr" begin
     h1 = Hist1D(randn(100), -3:3)
-    @test all(occursin(repr(h1)).(["edges:", "total count:", "bin counts:"]))
+    @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
 end
 
