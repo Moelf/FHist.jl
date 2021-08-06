@@ -20,17 +20,8 @@ function sample(h::Hist1D; n::Int=1)
     StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
 end
 
-
-@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  AbstractFloat
-    s = step(r)
-    start = first(r) + 0.5s
-    return round(Int, (x - start) / s) + 1
-end
-
-@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  Integer
-    s = step(r)
-    start = first(r)
-    return Int(fld(x-start, s)) + 1
+@inline function _edge_binindex(r::AbstractRange, x::Real)
+    return floor(Int, (x - first(r)) / step(r)) + 1
 end
 
 @inline function _edge_binindex(v::AbstractVector, x::Real)
