@@ -20,17 +20,8 @@ function sample(h::Hist1D; n::Int=1)
     StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
 end
 
-
-@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  AbstractFloat
-    s = step(r)
-    start = first(r) + 0.5s
-    return round(Int, (x - start) / s) + 1
-end
-
-@inline function _edge_binindex(r::AbstractRange{T}, x::Real) where T <:  Integer
-    s = step(r)
-    start = first(r)
-    return Int(fld(x-start, s)) + 1
+@inline function _edge_binindex(r::AbstractRange, x::Real)
+    return floor(Int, (x - first(r)) / step(r)) + 1
 end
 
 @inline function _edge_binindex(v::AbstractVector, x::Real)
@@ -111,15 +102,11 @@ end
 @inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     r = @inbounds h.hist.edges[1]
     L = length(r) - 1
-    start = first(r)
-    stop = last(r)
-    c = ifelse(val > stop, 0, 1)
-    c = ifelse(val < start, 0, c)
     binidx = _edge_binindex(r, val)
-    binidx = ifelse(binidx > L, L, binidx)
-    binidx = ifelse(binidx < 1, 1, binidx)
-    @inbounds h.hist.weights[binidx] += c*wgt
-    @inbounds h.sumw2[binidx] += c*wgt^2
+    if 1 <= binidx <= L
+        @inbounds h.hist.weights[binidx] += wgt
+        @inbounds h.sumw2[binidx] += wgt^2
+    end
     return nothing
 end
 
@@ -267,7 +254,7 @@ function Base.show(io::IO, h::Hist1D)
         _h = Histogram(float(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
-    println()
+    println(io)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
     print(io, "total count: ", sum(bincounts(h)))
