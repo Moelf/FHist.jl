@@ -102,15 +102,11 @@ end
 @inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     r = @inbounds h.hist.edges[1]
     L = length(r) - 1
-    start = first(r)
-    stop = last(r)
-    c = ifelse(val > stop, 0, 1)
-    c = ifelse(val < start, 0, c)
     binidx = _edge_binindex(r, val)
-    binidx = ifelse(binidx > L, L, binidx)
-    binidx = ifelse(binidx < 1, 1, binidx)
-    @inbounds h.hist.weights[binidx] += c*wgt
-    @inbounds h.sumw2[binidx] += c*wgt^2
+    if 1 <= binidx <= L
+        @inbounds h.hist.weights[binidx] += wgt
+        @inbounds h.sumw2[binidx] += wgt^2
+    end
     return nothing
 end
 
