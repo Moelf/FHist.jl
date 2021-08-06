@@ -5,8 +5,9 @@ export sample, lookup, cumulative, normalize
 export unsafe_push!
 
 using StatsBase, RecipesBase, UnicodePlots, Statistics
+using ThreadsX
 import LinearAlgebra: normalize, normalize!
-using Base.Threads: SpinLock
+using Base.Threads: SpinLock, nthreads
 
 @inline function pearson_err(n::Real)
     s = sqrt(n+0.25)

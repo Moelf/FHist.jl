@@ -131,9 +131,13 @@ Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A::AbstractVector, r::AbstractRange)
-    h = Hist1D(Int; bins=r)
-    unsafe_push!.(h, A)
-    return h
+    chunks = Iterators.partition(A, length(A)÷nthreads())
+    return ThreadsX.sum(begin
+                            h = Hist1D(Int; bins=r)
+                            unsafe_push!.(h, chunk)
+                            h
+                        end
+                        for chunk in chunks)
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
@@ -156,9 +160,14 @@ array. `wgts` should have the same `size` as `array`.
 """
 function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
     @boundscheck @assert size(A) == size(wgts)
-    h = Hist1D(eltype(wgts); bins=r)
-    unsafe_push!.(h, A, wgts)
-    return h
+    chunks_A = Iterators.partition(A, length(A)÷nthreads())
+    chunks_wgts = Iterators.partition(wgts, length(wgts)÷nthreads())
+    return ThreadsX.sum(begin
+                            h = Hist1D(eltype(wgts); bins=r)
+                            unsafe_push!.(h, chunk_A, chunk_wgt)
+                            h
+                        end
+                        for (chunk_A, chunk_wgt) in zip(chunks_A, chunks_wgts))
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
