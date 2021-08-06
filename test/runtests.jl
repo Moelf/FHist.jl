@@ -187,3 +187,15 @@ end
     end
 
 end
+
+@testset "Merging" begin
+    h1 = Hist1D(randn(100), -3:3)
+    h2 = Hist1D(randn(100), -3:3)
+    @test merge(h1,h2) == h1+h2
+end
+
+@testset "Repr" begin
+    h1 = Hist1D(randn(100), -3:3)
+    @test all(occursin(repr(h1)).(["edges:", "total count:", "bin counts:"]))
+end
+

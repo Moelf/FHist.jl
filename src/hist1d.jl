@@ -254,7 +254,7 @@ function Base.show(io::IO, h::Hist1D)
         _h = Histogram(float(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
-    println()
+    println(io)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
     print(io, "total count: ", sum(bincounts(h)))
