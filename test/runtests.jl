@@ -199,11 +199,13 @@ end
     @test h1 == rebin(h1, 1)
     @test integral(h1) == integral(rebin(h1, 5))
     @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
+    @test binedges(rebin(h1, 5)) == [0, 0.5, 1.0]
 
     h2 = Hist1D(rand(10^2), [0.0, 0.1, 0.7, 0.9, 1.0])
     @test h2 == rebin(h2, 1)
     @test integral(h2) == integral(rebin(h2, 2))
     @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
+    @test binedges(rebin(h2, 2)) == [0, 0.7, 1.0]
 
     @test rebin(h1, 2) == (h1 |> rebin(2))
 end
