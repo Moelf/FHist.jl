@@ -64,6 +64,14 @@ end
     end
 end
 
+@testset "Special binning cases" begin
+    # integer values and integer binning
+    a = floor.(Int,abs.(randn(10^6)))
+    h1 = Hist1D(a, 0:5)
+    h2 = Hist1D(fit(Histogram, a, 0:5))
+    @test h1 == h2
+end
+
 @testset "Normalize" begin
     a = rand(10^5)
     wgts1 = 2 .* ones(10^5) |> weights
