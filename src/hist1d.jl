@@ -24,6 +24,10 @@ end
     return floor(Int, (x - first(r)) / step(r)) + 1
 end
 
+@inline function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
+    return x - first(r) + 1
+end
+
 @inline function _edge_binindex(v::AbstractVector, x::Real)
     return searchsortedlast(v, x)
 end
