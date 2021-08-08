@@ -249,14 +249,15 @@ function cumulative(h::Hist1D; forward=true)
 end
 
 """
-    rebin(h::Hist1D, ngroup::Int=1)
-    rebin(ngroup::Int) = h::Hist1D -> rebin(h, ngroup)
+    rebin(h::Hist1D, n::Int=1)
+    rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
-Merges `ngroup` consecutive bins into one.
+Merges `n` consecutive bins into one.
+The returned histogram will have `nbins(h)/n` bins.
 """
-function rebin(h::Hist1D, ngroup::Int=1)
-    @assert nbins(h) % ngroup == 0
-    p = x->Iterators.partition(x, ngroup)
+function rebin(h::Hist1D, n::Int=1)
+    @assert nbins(h) % n == 0
+    p = x->Iterators.partition(x, n)
     counts = sum.(p(bincounts(h)))
     sumw2 = sum.(p(h.sumw2))
     edges = first.(p(binedges(h)))
@@ -266,7 +267,7 @@ function rebin(h::Hist1D, ngroup::Int=1)
     end
     return Hist1D(Histogram(edges, counts), sumw2)
 end
-rebin(ngroup::Int) = Base.Fix2(rebin, ngroup)
+rebin(n::Int) = Base.Fix2(rebin, n)
 
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
