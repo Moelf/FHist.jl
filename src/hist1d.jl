@@ -234,12 +234,12 @@ function normalize(h::Hist1D)
 end
 
 """
-    cumulative(h::Hist1D; forward=true)::Hist1D
+    cumulative(h::Hist1D; forward=true)
 
 Create a cumulative histogram. If `forward`, start
 summing from the left.
 """
-function cumulative(h::Hist1D; forward=true)::Hist1D
+function cumulative(h::Hist1D; forward=true)
     # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse
     h = deepcopy(h)
@@ -247,6 +247,26 @@ function cumulative(h::Hist1D; forward=true)::Hist1D
     h.sumw2 .= f(cumsum(h.sumw2))
     return h
 end
+
+"""
+    rebin(h::Hist1D, ngroup::Int=1)
+    rebin(ngroup::Int) = h::Hist1D -> rebin(h, ngroup)
+
+Merges `ngroup` consecutive bins into one.
+"""
+function rebin(h::Hist1D, ngroup::Int=1)
+    @assert nbins(h) % ngroup == 0
+    p = x->Iterators.partition(x, ngroup)
+    counts = sum.(p(bincounts(h)))
+    sumw2 = sum.(p(h.sumw2))
+    edges = first.(p(binedges(h)))
+    if _is_uniform_bins(edges)
+        s = edges[2] - first(edges)
+        edges = first(edges):s:last(edges)
+    end
+    return Hist1D(Histogram(edges, counts), sumw2)
+end
+rebin(ngroup::Int) = Base.Fix2(rebin, ngroup)
 
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)

@@ -194,6 +194,20 @@ end
     @test merge(h1,h2) == h1+h2
 end
 
+@testset "Rebinning" begin
+    h1 = Hist1D(rand(10^2), 0:0.1:1)
+    @test h1 == rebin(h1, 1)
+    @test integral(h1) == integral(rebin(h1, 5))
+    @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
+
+    h2 = Hist1D(rand(10^2), [0.0, 0.1, 0.7, 0.9, 1.0])
+    @test h2 == rebin(h2, 1)
+    @test integral(h2) == integral(rebin(h2, 2))
+    @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
+
+    @test rebin(h1, 2) == (h1 |> rebin(2))
+end
+
 @testset "Repr" begin
     h1 = Hist1D(randn(100), -3:3)
     @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
