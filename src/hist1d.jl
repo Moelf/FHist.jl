@@ -253,9 +253,8 @@ function cumulative(h::Hist1D; forward=true)::Hist1D
 end
 
 function Base.show(io::IO, h::Hist1D)
-    _e = binedges(h)
-    if _e isa AbstractRange && length(_e) < 50
-        _h = Histogram(float(_e), bincounts(h))
+    if nbins(h) < 50
+        _h = Histogram(float.(binedges(h)), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
     println(io)
