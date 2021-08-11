@@ -103,7 +103,7 @@ julia> mean(h1), std(h1)
 julia> median(h1), quantile(h1, 0.5)
 (1.7445284002084418, 1.7445284002084418)
 
-julia> lookup.(Ref(h1), [-1.5,0,2.5]) # find bin counts for given x-axis values
+julia> lookup.(h1, [-1.5,0,2.5]) # find bin counts for given x-axis values
 3-element Vector{Int64}:
    39
  1356
