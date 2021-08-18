@@ -205,5 +205,7 @@ end
 @testset "Repr" begin
     h1 = Hist1D(randn(100), -3:3)
     @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+    @test !occursin("<svg", repr(h1))
+    @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
 end
 

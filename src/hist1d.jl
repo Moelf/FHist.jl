@@ -252,6 +252,37 @@ function cumulative(h::Hist1D; forward=true)::Hist1D
     return h
 end
 
+function _svg(h::Hist1D)
+    paddingx, paddingy = 0.05, 0.10
+    framewidth, frameheight = 250, 200
+    fill = "#ffffff00" # 0 alpha
+    strokecolor, strokewidth = "black", 1
+    strokewidth = 1
+    _c, _e = bincounts(h), binedges(h)
+    ys = frameheight * ((2*paddingy-1)/maximum(_c) .* _c .+ (1-paddingy))
+    xs = framewidth * (
+        (1 - 2 * paddingx) / (maximum(_e) - minimum(_e))
+        .* (_e .- minimum(_e))
+        .+ paddingx
+    )
+    points = [(paddingx*framewidth, (1-paddingy)*frameheight)] # bottom left
+    for i in 1:(length(xs)-1)
+        push!(points, (xs[i],ys[i])) # left bin edge
+        push!(points, (xs[i+1],ys[i])) # right bin edge
+    end
+    push!(points, ((1-paddingx)*framewidth,(1-paddingy)*frameheight))
+    push!(points, points[1]) # close path
+    pathstr = join(["$(x),$(y)" for (x,y) in points],",")
+    return """
+    <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="$(pathstr)" stroke="$(strokecolor)" fill="$(fill)" stroke-width="$(strokewidth)"/>
+        <polyline points="$(framewidth*paddingx),$(frameheight*(1-paddingy)),$(framewidth*(1-paddingx)),$(frameheight*(1-paddingy))" stroke="black" stroke-width="1"/>
+        <text x="$(framewidth*paddingx)" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="start" fill="black">$(minimum(_e))</text>
+        <text x="$(framewidth*(1-paddingx))" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="end" fill="black">$(maximum(_e))</text>
+    </svg>
+    """
+end
+
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
     if nbins(h) < 50
@@ -262,4 +293,18 @@ function Base.show(io::IO, h::Hist1D)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
     print(io, "total count: ", sum(bincounts(h)))
+end
+
+function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
+    println(io, """
+    <div style="display: flex;">
+        <div style="float:left; margin:5px">$(_svg(h))</div>
+        <div style="float:left; margin:5px; display:flex; justify-content:center; align-items:center; text-overflow:ellipsis;">
+            edges: $(repr(binedges(h), context=:limit => true))<br>
+            bin counts: $(repr(bincounts(h), context=:limit => true))<br>
+            maximum count: $(maximum(bincounts(h)))<br>
+            total count: $(sum(bincounts(h)))
+        </div>
+    </div>
+    """)
 end
