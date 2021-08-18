@@ -299,11 +299,13 @@ function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
     println(io, """
     <div style="display: flex;">
         <div style="float:left; margin:5px">$(_svg(h))</div>
-        <div style="float:left; margin:5px; display:flex; justify-content:center; align-items:center; text-overflow:ellipsis;">
-            edges: $(repr(binedges(h), context=:limit => true))<br>
-            bin counts: $(repr(bincounts(h), context=:limit => true))<br>
-            maximum count: $(maximum(bincounts(h)))<br>
-            total count: $(sum(bincounts(h)))
+        <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
+            <ul>
+                <li>edges: $(repr(binedges(h), context=:limit => true))</li>
+                <li>bin counts: $(repr(bincounts(h), context=:limit => true))</li>
+                <li>maximum count: $(maximum(bincounts(h)))</li>
+                <li>total count: $(sum(bincounts(h)))</li>
+            </ul>
         </div>
     </div>
     """)
