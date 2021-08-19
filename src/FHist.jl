@@ -4,6 +4,8 @@ export Hist1D, binedges, bincounts, bincenters, nbins, integral
 export sample, lookup, cumulative, normalize, rebin
 export unsafe_push!
 
+export Hist2D
+
 using StatsBase, RecipesBase, UnicodePlots, Statistics
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
@@ -27,6 +29,7 @@ function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
 end
 
 include("./hist1d.jl")
+include("./hist2d.jl")
 function binerrors(f::Function, h::Hist1D)
     f.(h.hist.weights)
 end
