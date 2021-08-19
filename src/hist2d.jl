@@ -188,6 +188,30 @@ function normalize(h::Hist2D)
     return h*(1/integral(h))
 end
 
+# TODO lookup
+# TODO profile
+# TODO project
+
+"""
+    rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
+    rebin(nx::Int=1, ny::Int=nx) = h::Hist2D -> rebin(h, nx, ny)
+
+Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
+"""
+function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
+    sx, sy = nbins(h)
+    @assert sx % nx == sy % ny == 0
+    p1d = (x,n)->Iterators.partition(x, n)
+    p2d = x->(x[i:i+(nx-1),j:j+(ny-1)] for i=1:nx:sx, j=1:ny:sy)
+    counts = sum.(p2d(bincounts(h)))
+    sumw2 = sum.(p2d(h.sumw2))
+    ex = first.(p1d(binedges(h)[1], nx))
+    ey = first.(p1d(binedges(h)[2], ny))
+    _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
+    _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
+    return Hist2D(Histogram((ex,ey), counts), sumw2)
+end
+rebin(nx::Int=1, ny::Int=nx) = h::Hist2D -> rebin(h, nx, ny)
 
 function Base.show(io::IO, h::Hist2D)
     println(io)

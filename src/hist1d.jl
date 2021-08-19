@@ -273,6 +273,7 @@ function _svg(h::Hist1D)
     </svg>
     """
 end
+
 """
     rebin(h::Hist1D, n::Int=1)
     rebin(n::Int) = h::Hist1D -> rebin(h, n)
@@ -292,7 +293,7 @@ function rebin(h::Hist1D, n::Int=1)
     end
     return Hist1D(Histogram(edges, counts), sumw2)
 end
-rebin(n::Int) = Base.Fix2(rebin, n)
+rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
