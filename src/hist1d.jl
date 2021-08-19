@@ -141,8 +141,7 @@ function Hist1D(A::AbstractVector, r::AbstractRange)
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        r = first(edges):s:last(edges)
+        r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, r)
     else
         h = Hist1D(Int; bins=edges)
@@ -166,8 +165,7 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        r = first(edges):s:last(edges)
+        r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, wgts, r)
     else
         h = Hist1D(eltype(wgts); bins=edges)
@@ -271,18 +269,11 @@ function restrict(h::Hist1D, low=-Inf, high=Inf)
         edgesel[lastidx+1] = 1
     end
 
-    _is_uniform_bins = FHist._is_uniform_bins
     c = bincounts(h)[sel]
     edges = binedges(h)[edgesel]
     sumw2 = h.sumw2[sel]
     if _is_uniform_bins(edges)
-        s = edges[2]-first(edges)
-        # FIXME. Try to do
-        #     x = -3:0.1:3
-        #     x[1]:(x[2]-x[1]):x[end]
-        # and observe we lose the last bin
-        s = round(s; digits=10)
-        edges = first(edges):s:last(edges)
+        edges = range(first(edges), last(edges), length=length(edges))
     end
     Hist1D(Histogram(edges, c), sumw2)
 end

@@ -70,6 +70,13 @@ end
     h1 = Hist1D(a, 0:5)
     h2 = Hist1D(fit(Histogram, a, 0:5))
     @test h1 == h2
+
+    # test floating point rounding when
+    # coercing explicit bins into StepRange
+    bins = collect(-3:0.1:3.1)
+    h = Hist1D(rand(100), bins)
+    @test binedges(h) isa AbstractRange
+    @test collect(binedges(h)) == bins
 end
 
 @testset "Normalize" begin
