@@ -238,12 +238,12 @@ function normalize(h::Hist1D)
 end
 
 """
-    cumulative(h::Hist1D; forward=true)::Hist1D
+    cumulative(h::Hist1D; forward=true)
 
 Create a cumulative histogram. If `forward`, start
 summing from the left.
 """
-function cumulative(h::Hist1D; forward=true)::Hist1D
+function cumulative(h::Hist1D; forward=true)
     # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse
     h = deepcopy(h)
@@ -282,6 +282,26 @@ function _svg(h::Hist1D)
     </svg>
     """
 end
+"""
+    rebin(h::Hist1D, n::Int=1)
+    rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
+Merges `n` consecutive bins into one.
+The returned histogram will have `nbins(h)/n` bins.
+"""
+function rebin(h::Hist1D, n::Int=1)
+    @assert nbins(h) % n == 0
+    p = x->Iterators.partition(x, n)
+    counts = sum.(p(bincounts(h)))
+    sumw2 = sum.(p(h.sumw2))
+    edges = first.(p(binedges(h)))
+    if _is_uniform_bins(edges)
+        s = edges[2] - first(edges)
+        edges = first(edges):s:last(edges)
+    end
+    return Hist1D(Histogram(edges, counts), sumw2)
+end
+rebin(n::Int) = Base.Fix2(rebin, n)
 
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
