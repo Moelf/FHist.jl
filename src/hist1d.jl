@@ -1,12 +1,3 @@
-struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
-    hist::Histogram{T,1,E}
-    sumw2::Vector{Float64}
-    hlock::SpinLock
-    # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights)) where {T,E}
-        return new{T,E}(h, sw2, SpinLock())
-    end
-end
 Base.lock(h::Hist1D) = lock(h.hlock)
 Base.unlock(h::Hist1D) = unlock(h.hlock)
 

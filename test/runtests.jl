@@ -64,7 +64,7 @@ end
     end
 end
 
-@testset "Special binning cases" begin
+@testset "Special bins" begin
     # integer values and integer binning
     a = floor.(Int,abs.(randn(10^6)))
     h1 = Hist1D(a, 0:5)
@@ -137,7 +137,7 @@ end
     @test h1 == h3
 end
 
-@testset "Broadcasted push" begin
+@testset "Broadcast" begin
     lookup(h::Hist1D, value) = h.hist.weights[FHist._edge_binindex(h.hist.edges[1], value)]
 
     h1 = Hist1D(Int; bins=0:3)
