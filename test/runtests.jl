@@ -207,3 +207,18 @@ end
     @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
 end
 
+@testset "Restrict" begin
+    h = Hist1D(randn(500), -5:0.2:5)
+    hleft = restrict(h, -Inf, 0.0)
+    hright = restrict(h, 0.0, Inf)
+
+    @test h == restrict(h)
+    @test restrict(h, -1, 1) == (h |> restrict(-1,1))
+    @test integral(hleft) + integral(hright) == integral(h)
+    @test nbins(hleft) + nbins(hright) == nbins(h)
+    @test sum(hleft.sumw2) + sum(hright.sumw2) == sum(h.sumw2)
+
+    @test all(-1 .<= bincenters(restrict(h,-1,1)) .<= 1)
+    @test_throws AssertionError restrict(h, 10, Inf)
+end
+

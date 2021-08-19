@@ -252,6 +252,42 @@ function cumulative(h::Hist1D; forward=true)::Hist1D
     return h
 end
 
+"""
+    restrict(h::Hist1D, low=-Inf, high=Inf)
+    restrict(low=-Inf, high=Inf) = h::Hist1D -> restrict(h, low, high)
+
+Returns a new histogram with a restricted x-axis.
+`restrict(h, 0, 3)` (or `h |> restrict(0, 3)`)
+will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
+"""
+function restrict(h::Hist1D, low=-Inf, high=Inf)
+    sel = low .<= bincenters(h) .<= high
+    @assert sum(sel) > 0 "No bin centers contained in [$(low), $(high)]"
+    edgesel = BitArray(vcat(sel, 0))
+
+    # include the right edge of the rightmost selected bin
+    lastidx = findlast(edgesel)
+    if lastidx != nothing
+        edgesel[lastidx+1] = 1
+    end
+
+    _is_uniform_bins = FHist._is_uniform_bins
+    c = bincounts(h)[sel]
+    edges = binedges(h)[edgesel]
+    sumw2 = h.sumw2[sel]
+    if _is_uniform_bins(edges)
+        s = edges[2]-first(edges)
+        # FIXME. Try to do
+        #     x = -3:0.1:3
+        #     x[1]:(x[2]-x[1]):x[end]
+        # and observe we lose the last bin
+        s = round(s; digits=10)
+        edges = first(edges):s:last(edges)
+    end
+    Hist1D(Histogram(edges, c), sumw2)
+end
+restrict(low=-Inf, high=Inf) = h::Hist1D->restrict(h, low, high)
+
 function Base.show(io::IO, h::Hist1D)
     _e = binedges(h)
     if nbins(h) < 50

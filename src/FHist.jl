@@ -1,7 +1,7 @@
 module FHist
 
 export Hist1D, binedges, bincounts, bincenters, nbins, integral
-export sample, lookup, cumulative, normalize
+export sample, lookup, cumulative, normalize, restrict
 export unsafe_push!
 
 using StatsBase, RecipesBase, UnicodePlots, Statistics
