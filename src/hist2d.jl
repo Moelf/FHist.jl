@@ -58,7 +58,7 @@ end
     unsafe_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
     push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
 
-Adding one value at a time into histogram. 
+Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 
@@ -126,7 +126,7 @@ end
     Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector})
 
 Create a `Hist2D` with given bin `edges` and values from
-a 2-tuple of arrays of x, y values. 
+a 2-tuple of arrays of x, y values.
 `wgts` should have the same `size` as elements of `tuple`.
 """
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange})
@@ -153,7 +153,7 @@ end
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}; 
+function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
         nbins::Tuple{Integer,Integer}=(StatsBase.sturges(length(A[1])),
                                        StatsBase.sturges(length(A[2])))) where {T}
     F = float(T)
@@ -180,6 +180,20 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWei
 end
 
 """
+    function lookup(h::Hist1D, x)
+
+For given x-axis and y-axis value `x`, `y`, find the corresponding bin and return the bin content.
+If a value is out of the histogram range, return `missing`.
+"""
+function lookup(h::Hist2D, x, y)
+    rx, ry = binedges(h)
+    !(first(rx) <= x <= last(rx)) && return missing
+    !(first(ry) <= y <= last(ry)) && return missing
+    return bincounts(h)[_edge_binindex(rx, x), _edge_binindex(ry, y)]
+end
+
+
+"""
     normalize(h::Hist2D)
 
 Create a normalized histogram via division by `integral(h)`.
@@ -194,7 +208,7 @@ end
 
 """
     rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
-    rebin(nx::Int=1, ny::Int=nx) = h::Hist2D -> rebin(h, nx, ny)
+    rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
 Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
 """
@@ -211,7 +225,7 @@ function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
     return Hist2D(Histogram((ex,ey), counts), sumw2)
 end
-rebin(nx::Int=1, ny::Int=nx) = h::Hist2D -> rebin(h, nx, ny)
+rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
 function Base.show(io::IO, h::Hist2D)
     println(io)

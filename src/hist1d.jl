@@ -80,7 +80,7 @@ end
     unsafe_push!(h::Hist1D, val::Real, wgt::Real=1)
     push!(h::Hist1D, val::Real, wgt::Real=1)
 
-Adding one value at a time into histogram. 
+Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 
@@ -207,16 +207,15 @@ Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincount
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
 """
-    function lookup(h::Hist1D, v) 
+    function lookup(h::Hist1D, x)
 
-For given x-axis value`v`, find the corresponding bin and return the bin content.
+For given x-axis value `x`, find the corresponding bin and return the bin content.
 If a value is out of the histogram range, return `missing`.
 """
-function lookup(h::Hist1D, v)
+function lookup(h::Hist1D, x)
     r = binedges(h)
-    !(first(r) <= v <= last(r)) && return missing
-    binidx = searchsortedlast(r, v) # TODO replace with `_edges_binindex`
-    return bincounts(h)[binidx]
+    !(first(r) <= x <= last(r)) && return missing
+    return bincounts(h)[_edge_binindex(r, x)]
 end
 
 """
