@@ -202,9 +202,25 @@ function normalize(h::Hist2D)
     return h*(1/integral(h))
 end
 
-# TODO lookup
 # TODO profile
-# TODO project
+
+"""
+    project(h::Hist2D, axis::Symbol=:x)
+    project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
+
+Computes the `:x` (`:y`) axis projection of the 2D histogram by
+summing over the y (x) axis. Returns a `Hist1D`.
+"""
+function project(h::Hist2D, axis::Symbol=:x)
+    @assert axis ∈ (:x, :y)
+    dim = axis == :x ? 2 : 1
+    ex, ey = binedges(h)
+    counts = [sum(bincounts(h), dims=dim)...]
+    sumw2 = [sum(h.sumw2, dims=dim)...]
+    edges = axis == :x ? ex : ey
+    return Hist1D(Histogram(edges, counts), sumw2)
+end
+project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
 
 """
     rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
