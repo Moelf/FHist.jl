@@ -4,7 +4,7 @@ export Hist1D, binedges, bincounts, bincenters, nbins, integral
 export sample, lookup, cumulative, normalize, rebin
 export unsafe_push!
 
-export Hist2D, project
+export Hist2D, project, profile, transpose
 
 using StatsBase, RecipesBase, UnicodePlots, Statistics
 import LinearAlgebra: normalize, normalize!

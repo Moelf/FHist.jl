@@ -295,8 +295,8 @@ end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
 function Base.show(io::IO, h::Hist1D)
-    _e = binedges(h)
-    if nbins(h) < 50
+    if (nbins(h) < 50) && all(bincounts(h) .>= 0)
+        _e = binedges(h)
         _h = Histogram(float.(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end

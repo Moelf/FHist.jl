@@ -202,8 +202,6 @@ function normalize(h::Hist2D)
     return h*(1/integral(h))
 end
 
-# TODO profile
-
 """
     project(h::Hist2D, axis::Symbol=:x)
     project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
@@ -221,6 +219,52 @@ function project(h::Hist2D, axis::Symbol=:x)
     return Hist1D(Histogram(edges, counts), sumw2)
 end
 project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
+
+"""
+    transpose(h::Hist2D)
+
+Reverses the x and y axes.
+"""
+function transpose(h::Hist2D)
+    edges = reverse(binedges(h))
+    counts = collect(bincounts(h)')
+    sumw2 = collect(h.sumw2')
+    return Hist2D(Histogram(edges, counts), sumw2)
+end
+
+"""
+    profile(h::Hist2D, axis::Symbol=:x)
+    profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
+
+Returns the `axis`-profile of the 2D histogram by
+calculating the weighted mean over the other axis.
+`profile(h, :x)` will return a `Hist1D` with the y-axis edges of `h`.
+"""
+function profile(h::Hist2D, axis::Symbol=:x)
+    @assert axis ∈ (:x, :y)
+    if axis == :y
+        h = transpose(h)
+    end
+
+    edges = binedges(h)[1]
+    centers = bincenters(h)[2]
+    counts = bincounts(h)
+    sumw2 = h.sumw2
+
+    num = counts*centers
+    den = sum(counts, dims=2)
+    numerr2 = sumw2 * centers.^2
+    denerr2 = sum(sumw2, dims=2)
+    val = vec(num ./ den)
+    sw2 = vec(@. numerr2/den^2 - denerr2*(num/den^2)^2)
+
+    # ROOT sets the NaN entries and their error to 0
+    val[isnan.(val)] .= zero(eltype(val))
+    sw2[isnan.(sw2)] .= zero(eltype(sw2))
+
+    return Hist1D(Histogram(edges, val), sw2)
+end
+profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
 
 """
     rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
