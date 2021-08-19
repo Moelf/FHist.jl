@@ -39,7 +39,7 @@ end
 
 Get a tuple of the number of x and y bins of a histogram.
 """
-function nbins(h::Hist1D)
+function nbins(h::Hist2D)
     size(bincounts(h))
 end
 
@@ -72,7 +72,7 @@ Adding one value at a time into histogram.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 
 """
-@inline function Base.push!(h::Hist1D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
     lock(h)
     unsafe_push!(h, valx, valy, wgt)
     unlock(h)
@@ -96,7 +96,7 @@ end
 Base.broadcastable(h::Hist2D) = Ref(h)
 
 """
-    Hist1D(elT::Type{T}=Float64; binedges) where {T}
+    Hist2D(elT::Type{T}=Float64; binedges) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref)
