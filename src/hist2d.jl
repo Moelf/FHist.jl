@@ -7,6 +7,8 @@ struct Hist2D{T<:Real,E} <: AbstractHistogram{T,2,E}
         return new{T,E}(h, sw2, SpinLock())
     end
 end
+Base.lock(h::Hist2D) = lock(h.hlock)
+Base.unlock(h::Hist2D) = unlock(h.hlock)
 
 """
     bincounts(h::Hist2D)
@@ -31,6 +33,16 @@ function bincenters(h::Hist2D)
     StatsBase.midpoints.(binedges(h))
 end
 
+
+"""
+    nbins(h::Hist2D)
+
+Get a tuple of the number of x and y bins of a histogram.
+"""
+function nbins(h::Hist1D)
+    size(bincounts(h))
+end
+
 """
     integral(h::Hist2D)
 
@@ -49,6 +61,22 @@ function Base.empty!(h::Hist2D{T,E}) where {T,E}
     h.hist.weights .= zero(T)
     h.sumw2 .= 0.0
     return h
+end
+
+"""
+    unsafe_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
+    push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
+
+Adding one value at a time into histogram. 
+`sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
+`unsafe_push!` is a faster version of `push!` that is not thread-safe.
+
+"""
+@inline function Base.push!(h::Hist1D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+    lock(h)
+    unsafe_push!(h, valx, valy, wgt)
+    unlock(h)
+    return nothing
 end
 
 @inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
