@@ -135,7 +135,7 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, 
     unsafe_push!.(h, A[1], A[2], wgts)
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractVector,AbstractVector})
+function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector})
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))

@@ -64,6 +64,35 @@ end
     end
 end
 
+@testset "Hist2D" begin
+    x = rand(10)
+    y = rand(10)
+    h = Hist2D((x,y))
+    @test integral(h) == 10
+
+    rx, ry = 0:0.1:1, 0:0.2:1
+    wgts = weights(2*ones(length(x)))
+    h = Hist2D((x,y), wgts, (rx, ry))
+    @test integral(h) == sum(wgts)
+    @test nbins(h) == (length(rx)-1, length(ry)-1)
+
+    @test bincenters(Hist2D((x,y), (0:1,0:1))) == ([0.5], [0.5])
+    @test bincenters(Hist2D((x,y), wgts, (0:1,0:1))) == ([0.5], [0.5])
+    @test nbins(Hist2D((x,y), ([0,0.5,1],[0,0.5,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), ([0,0.3,1],[0,0.3,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), wgts, ([0,0.5,1],[0,0.5,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), wgts, ([0,0.3,1],[0,0.3,1]))) == (2,2)
+
+    @test integral(Hist2D((x,y), wgts, nbins=(5,5))) == sum(wgts)
+    @test integral(Hist2D((x,y), nbins=(5,5))) == length(x)
+
+    h1 = Hist2D((x,y), wgts, (rx, ry))
+    h2 = Hist2D(Float64; bins=(rx, ry))
+    push!.(h2, x, y, wgts)
+    @test h1 == h2
+end
+
+
 @testset "Special bins" begin
     # integer values and integer binning
     a = floor.(Int,abs.(randn(10^6)))
@@ -76,6 +105,10 @@ end
     a = rand(10^5)
     wgts1 = 2 .* ones(10^5) |> weights
     h1 = Hist1D(a, wgts1)
+    @test integral(h1) ≈ sum(wgts1) atol=1e-8
+    @test integral(normalize(h1)) ≈ 1 atol=1e-8
+
+    h1 = Hist2D((a,a), wgts1, (0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
 end
@@ -241,6 +274,23 @@ end
     @test binedges(rebin(h2, 2)) == [0, 0.7, 1.0]
 
     @test rebin(h1, 2) == (h1 |> rebin(2))
+
+    h1 = Hist2D((rand(10^2),rand(10^2)), (0:0.1:1,0:0.1:1))
+    @test h1 == rebin(h1, 1, 1)
+    @test integral(h1) == integral(rebin(h1, 5))
+    @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
+    @test binedges(rebin(h1, 5)) == ([0, 0.5, 1.0], [0, 0.5, 1.0])
+
+    bins = [0.0, 0.1, 0.7, 0.9, 1.0]
+    h2 = Hist2D((rand(10^2),rand(10^2)), (bins,bins))
+    @test h2 == rebin(h2, 1) == (h2 |> rebin(1, 1))
+    @test integral(h2) == integral(rebin(h2, 2))
+    @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
+    @test binedges(rebin(h2, 2)) == ([0, 0.7, 1.0], [0, 0.7, 1.0])
+
+    h2 = Hist2D((rand(10^2),rand(10^2)), (0:0.1:1,0:0.5:1))
+    @test nbins(rebin(h2, 10, 2)) == (1, 1)
+    @test_throws AssertionError rebin(h2, 2, 10)
 end
 
 @testset "Profile" begin
