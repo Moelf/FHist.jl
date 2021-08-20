@@ -11,14 +11,14 @@ Get the bin counts of a histogram.
 """
     binedges(h::Hist2D)
 
-Get the bin edges of a histogram.
+Get a 2-tuple of the bin edges of a histogram.
 """
 @inline binedges(h::Hist2D) = h.hist.edges
 
 """
     bincenters(h::Hist2D)
 
-Get the bin centers of a histogram.
+Get a 2-tuple of the bin centers of a histogram.
 """
 function bincenters(h::Hist2D)
     StatsBase.midpoints.(binedges(h))
@@ -28,7 +28,7 @@ end
 """
     nbins(h::Hist2D)
 
-Get a tuple of the number of x and y bins of a histogram.
+Get a 2-tuple of the number of x and y bins of a histogram.
 """
 function nbins(h::Hist2D)
     size(bincounts(h))
@@ -180,7 +180,7 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWei
 end
 
 """
-    function lookup(h::Hist1D, x)
+    function lookup(h::Hist2D, x, y)
 
 For given x-axis and y-axis value `x`, `y`, find the corresponding bin and return the bin content.
 If a value is out of the histogram range, return `missing`.
@@ -201,6 +201,27 @@ Create a normalized histogram via division by `integral(h)`.
 function normalize(h::Hist2D)
     return h*(1/integral(h))
 end
+
+"""
+    rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
+    rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
+
+Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
+"""
+function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
+    sx, sy = nbins(h)
+    @assert sx % nx == sy % ny == 0
+    p1d = (x,n)->Iterators.partition(x, n)
+    p2d = x->(x[i:i+(nx-1),j:j+(ny-1)] for i=1:nx:sx, j=1:ny:sy)
+    counts = sum.(p2d(bincounts(h)))
+    sumw2 = sum.(p2d(h.sumw2))
+    ex = first.(p1d(binedges(h)[1], nx))
+    ey = first.(p1d(binedges(h)[2], ny))
+    _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
+    _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
+    return Hist2D(Histogram((ex,ey), counts), sumw2)
+end
+rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
 """
     project(h::Hist2D, axis::Symbol=:x)
@@ -266,30 +287,9 @@ function profile(h::Hist2D, axis::Symbol=:x)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
 
-"""
-    rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
-    rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
-
-Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
-"""
-function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
-    sx, sy = nbins(h)
-    @assert sx % nx == sy % ny == 0
-    p1d = (x,n)->Iterators.partition(x, n)
-    p2d = x->(x[i:i+(nx-1),j:j+(ny-1)] for i=1:nx:sx, j=1:ny:sy)
-    counts = sum.(p2d(bincounts(h)))
-    sumw2 = sum.(p2d(h.sumw2))
-    ex = first.(p1d(binedges(h)[1], nx))
-    ey = first.(p1d(binedges(h)[2], ny))
-    _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
-    _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
-    return Hist2D(Histogram((ex,ey), counts), sumw2)
-end
-rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
-
 function Base.show(io::IO, h::Hist2D)
     println(io)
-    println(io, "edges: ", h.hist.edges)
+    println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
     print(io, "total count: ", integral(h))
 end

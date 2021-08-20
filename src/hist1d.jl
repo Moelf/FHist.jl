@@ -242,6 +242,28 @@ function cumulative(h::Hist1D; forward=true)
     return h
 end
 
+
+"""
+    rebin(h::Hist1D, n::Int=1)
+    rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
+Merges `n` consecutive bins into one.
+The returned histogram will have `nbins(h)/n` bins.
+"""
+function rebin(h::Hist1D, n::Int=1)
+    @assert nbins(h) % n == 0
+    p = x->Iterators.partition(x, n)
+    counts = sum.(p(bincounts(h)))
+    sumw2 = sum.(p(h.sumw2))
+    edges = first.(p(binedges(h)))
+    if _is_uniform_bins(edges)
+        s = edges[2] - first(edges)
+        edges = first(edges):s:last(edges)
+    end
+    return Hist1D(Histogram(edges, counts), sumw2)
+end
+rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
 function _svg(h::Hist1D)
     paddingx, paddingy = 0.05, 0.10
     framewidth, frameheight = 250, 200
@@ -273,27 +295,6 @@ function _svg(h::Hist1D)
     """
 end
 
-"""
-    rebin(h::Hist1D, n::Int=1)
-    rebin(n::Int) = h::Hist1D -> rebin(h, n)
-
-Merges `n` consecutive bins into one.
-The returned histogram will have `nbins(h)/n` bins.
-"""
-function rebin(h::Hist1D, n::Int=1)
-    @assert nbins(h) % n == 0
-    p = x->Iterators.partition(x, n)
-    counts = sum.(p(bincounts(h)))
-    sumw2 = sum.(p(h.sumw2))
-    edges = first.(p(binedges(h)))
-    if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        edges = first(edges):s:last(edges)
-    end
-    return Hist1D(Histogram(edges, counts), sumw2)
-end
-rebin(n::Int) = h::Hist1D -> rebin(h, n)
-
 function Base.show(io::IO, h::Hist1D)
     if (nbins(h) < 50) && all(bincounts(h) .>= 0)
         _e = binedges(h)
@@ -303,7 +304,7 @@ function Base.show(io::IO, h::Hist1D)
     println(io)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
-    print(io, "total count: ", sum(bincounts(h)))
+    print(io, "total count: ", integral(h))
 end
 
 function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
