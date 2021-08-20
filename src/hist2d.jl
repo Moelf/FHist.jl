@@ -310,11 +310,11 @@ function _svg(h::Hist2D)
         r = 0.2731*x^0+0.1270*x^1+-0.3617*x^2+-4.7456*x^3+6.7092*x^4+4.2491*x^5+-5.2678*x^6
         g = 0.0039*x^0+1.3810*x^1+0.3969*x^2+-6.4246*x^3+15.3241*x^4+-14.7345*x^5+4.9587*x^6
         b = 0.3305*x^0+1.3726*x^1+0.3948*x^2+-20.7431*x^3+59.7287*x^4+-68.3565*x^5+27.4051*x^6
-        return 255 .* (r,g,b)
+        return round.(Int, 255 .* (r,g,b))
     end
 
     counts = bincounts(h)
-    maxcount = maximum(counts)
+    mincount, maxcount = extrema(counts)
     counts = clamp.(counts, 0, maxcount)
     ex, ey = binedges(h)
     sx, sy = size(counts)
@@ -325,20 +325,27 @@ function _svg(h::Hist2D)
         tw, th = tx2-tx1, ty2-ty1
         c = counts[i,j]
         (counts[i,j] == 0) && continue
-        r,g,b = colorscale(c/maxcount)
+        r,g,b = colorscale((c-mincount)/(maxcount-mincount))
         color = "rgb($(r),$(g),$(b))"
         line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(color)" stroke="none" />"""
-        push!(rectlines, line)
+        if (sx <= 10) && (sy <= 10)
+            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" dominant-baseline="middle" text-anchor="middle">$(c)</text></g>"""
+        end
+        push!(rectlines, line * "\n")
     end
 
     return """
-    <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg" class="svgplot">
+        <style>
+          .svgplotlabels { display: none; fill: #fff; mix-blend-mode: difference; }
+          .svgplot g:hover text { display: block; }
+        </style>
+        $(join(rectlines))
         <rect x="$(round(Int,framewidth*paddingx1))" y="$(round(Int,frameheight*paddingy2))" width="$(round(Int,framewidth*(1-paddingx1-paddingx2)))" height="$(frameheight*(1-paddingy1-paddingy2))" fill="none" stroke="#000" stroke-width="1" />
         <text x="$(framewidth*paddingx1)" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ex))</text>
         <text x="$(framewidth*(1-paddingx2))" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ex))</text>
         <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*(1-paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ey))</text>
         <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*paddingy2)" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ey))</text>
-        $(join(rectlines))
     </svg>
     """
 end
