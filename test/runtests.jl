@@ -329,12 +329,11 @@ end
 
 
 @testset "Repr" begin
-    h1 = Hist1D(randn(100), -3:3)
-    @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
-    @test !occursin("<svg", repr(h1))
-    @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
-
-    h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
-    @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+    for h1 in (Hist1D(randn(100), -3:3),
+              Hist2D((randn(10),randn(10)), (-3:3,-3:3)))
+        @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+        @test !occursin("<svg", repr(h1))
+        @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
+    end
 end
 

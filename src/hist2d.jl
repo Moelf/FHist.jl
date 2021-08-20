@@ -287,6 +287,62 @@ function profile(h::Hist2D, axis::Symbol=:x)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
 
+function _svg(h::Hist2D)
+    paddingx1, paddingy1 = 0.15, 0.15 # left, bottom
+    paddingx2, paddingy2 = 0.05, 0.05 # right, top
+    framewidth, frameheight = 250, 200
+
+    (xlow, xhigh), (ylow, yhigh) = extrema.(binedges(h))
+    function transform(x::Real, y::Real)
+        xfrac = (x - xlow)/(xhigh - xlow)
+        xdraw = xfrac * framewidth*(1-paddingx1-paddingx2) + framewidth*paddingx1
+        yfrac = (y - ylow)/(yhigh - ylow)
+        ydraw = frameheight - (yfrac * frameheight*(1-paddingy1-paddingy2) + frameheight*paddingy1)
+        return xdraw, ydraw
+    end
+
+    function colorscale(x::Real)
+        # x is fraction between [0,1]
+        # 6th deg polynomial fit to viridis color palette
+        # see https://gist.github.com/aminnj/dba84777718613d3a37291a43659feff
+        # to generate other color palettes. Black and white is trivial:
+        #   return 255 .* (1-x,1-x,1-x)
+        r = 0.2731*x^0+0.1270*x^1+-0.3617*x^2+-4.7456*x^3+6.7092*x^4+4.2491*x^5+-5.2678*x^6
+        g = 0.0039*x^0+1.3810*x^1+0.3969*x^2+-6.4246*x^3+15.3241*x^4+-14.7345*x^5+4.9587*x^6
+        b = 0.3305*x^0+1.3726*x^1+0.3948*x^2+-20.7431*x^3+59.7287*x^4+-68.3565*x^5+27.4051*x^6
+        return 255 .* (r,g,b)
+    end
+
+    counts = bincounts(h)
+    maxcount = maximum(counts)
+    counts = clamp.(counts, 0, maxcount)
+    ex, ey = binedges(h)
+    sx, sy = size(counts)
+    rectlines = String[]
+    for i in 1:sx, j in 1:sy
+        tx1, ty1 = floor.(Int, transform(ex[i], ey[j+1]))
+        tx2, ty2 = ceil.(Int, transform(ex[i+1], ey[j]))
+        tw, th = tx2-tx1, ty2-ty1
+        c = counts[i,j]
+        (counts[i,j] == 0) && continue
+        r,g,b = colorscale(c/maxcount)
+        color = "rgb($(r),$(g),$(b))"
+        line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(color)" stroke="none" />"""
+        push!(rectlines, line)
+    end
+
+    return """
+    <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <rect x="$(round(Int,framewidth*paddingx1))" y="$(round(Int,frameheight*paddingy2))" width="$(round(Int,framewidth*(1-paddingx1-paddingx2)))" height="$(frameheight*(1-paddingy1-paddingy2))" fill="none" stroke="#000" stroke-width="1" />
+        <text x="$(framewidth*paddingx1)" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ex))</text>
+        <text x="$(framewidth*(1-paddingx2))" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ex))</text>
+        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*(1-paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ey))</text>
+        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*paddingy2)" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ey))</text>
+        $(join(rectlines))
+    </svg>
+    """
+end
+
 function Base.show(io::IO, h::Hist2D)
     println(io)
     println(io, "edges: ", binedges(h))
@@ -294,3 +350,18 @@ function Base.show(io::IO, h::Hist2D)
     print(io, "total count: ", integral(h))
 end
 
+function Base.show(io::IO, m::MIME"text/html", h::Hist2D)
+    println(io, """
+    <div style="display: flex;">
+        <div style="float:left; margin:5px">$(_svg(h))</div>
+        <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
+            <ul>
+                <li>edges: $(repr(binedges(h), context=:limit => true))</li>
+                <li>bin counts: $(repr(bincounts(h), context=:limit => true))</li>
+                <li>maximum count: $(maximum(bincounts(h)))</li>
+                <li>total count: $(integral(h))</li>
+            </ul>
+        </div>
+    </div>
+    """)
+end

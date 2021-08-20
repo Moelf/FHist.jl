@@ -316,7 +316,7 @@ function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
                 <li>edges: $(repr(binedges(h), context=:limit => true))</li>
                 <li>bin counts: $(repr(bincounts(h), context=:limit => true))</li>
                 <li>maximum count: $(maximum(bincounts(h)))</li>
-                <li>total count: $(sum(bincounts(h)))</li>
+                <li>total count: $(integral(h))</li>
             </ul>
         </div>
     </div>
