@@ -255,8 +255,7 @@ function rebin(h::Hist1D, n::Int=1)
     sumw2 = sum.(p(h.sumw2))
     edges = first.(p(binedges(h)))
     if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        edges = first(edges):s:last(edges)
+        edges = range(first(edges), last(edges), length=length(edges))
     end
     return Hist1D(Histogram(edges, counts), sumw2)
 end
