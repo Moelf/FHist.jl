@@ -70,6 +70,13 @@ end
     h1 = Hist1D(a, 0:5)
     h2 = Hist1D(fit(Histogram, a, 0:5))
     @test h1 == h2
+
+    # test floating point rounding when
+    # coercing explicit bins into StepRange
+    bins = collect(-3:0.1:3.1)
+    h = Hist1D(rand(100), bins)
+    @test binedges(h) isa AbstractRange
+    @test collect(binedges(h)) == bins
 end
 
 @testset "Normalize" begin
@@ -223,5 +230,20 @@ end
     @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
     @test !occursin("<svg", repr(h1))
     @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
+end
+
+@testset "Restrict" begin
+    h = Hist1D(randn(500), -5:0.2:5)
+    hleft = restrict(h, -Inf, 0.0)
+    hright = restrict(h, 0.0, Inf)
+
+    @test h == restrict(h)
+    @test restrict(h, -1, 1) == (h |> restrict(-1,1))
+    @test integral(hleft) + integral(hright) == integral(h)
+    @test nbins(hleft) + nbins(hright) == nbins(h)
+    @test sum(hleft.sumw2) + sum(hright.sumw2) == sum(h.sumw2)
+
+    @test all(-1 .<= bincenters(restrict(h,-1,1)) .<= 1)
+    @test_throws AssertionError restrict(h, 10, Inf)
 end
 
