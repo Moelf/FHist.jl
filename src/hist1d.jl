@@ -132,8 +132,7 @@ function Hist1D(A::AbstractVector, r::AbstractRange)
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector)
     if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        r = first(edges):s:last(edges)
+        r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, r)
     else
         h = Hist1D(Int; bins=edges)
@@ -157,8 +156,7 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
     @inbounds if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        r = first(edges):s:last(edges)
+        r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, wgts, r)
     else
         h = Hist1D(eltype(wgts); bins=edges)
@@ -263,6 +261,36 @@ function rebin(h::Hist1D, n::Int=1)
     return Hist1D(Histogram(edges, counts), sumw2)
 end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
+"""
+    restrict(h::Hist1D, low=-Inf, high=Inf)
+    restrict(low=-Inf, high=Inf) = h::Hist1D -> restrict(h, low, high)
+
+Returns a new histogram with a restricted x-axis.
+`restrict(h, 0, 3)` (or `h |> restrict(0, 3)`)
+will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
+"""
+function restrict(h::Hist1D, low=-Inf, high=Inf)
+    sel = low .<= bincenters(h) .<= high
+    @assert sum(sel) > 0 "No bin centers contained in [$(low), $(high)]"
+    edgesel = BitArray(vcat(sel, 0))
+
+    # include the right edge of the rightmost selected bin
+    lastidx = findlast(edgesel)
+    if lastidx != nothing
+        edgesel[lastidx+1] = 1
+    end
+
+    c = bincounts(h)[sel]
+    edges = binedges(h)[edgesel]
+    sumw2 = h.sumw2[sel]
+    if _is_uniform_bins(edges)
+        edges = range(first(edges), last(edges), length=length(edges))
+    end
+    Hist1D(Histogram(edges, c), sumw2)
+end
+restrict(low=-Inf, high=Inf) = h::Hist1D->restrict(h, low, high)
+
 
 function _svg(h::Hist1D)
     paddingx, paddingy = 0.05, 0.10
