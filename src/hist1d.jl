@@ -173,7 +173,7 @@ Automatically determine number of bins based on `Sturges` algo.
 """
 function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where {T}
     F = float(T)
-    lo, hi = extrema(A)
+    lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, r)
 end
@@ -184,7 +184,7 @@ function Hist1D(
     nbins::Integer=StatsBase.sturges(length(A)),
 ) where {T}
     F = float(T)
-    lo, hi = extrema(A)
+    lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, wgts, r)
 end
