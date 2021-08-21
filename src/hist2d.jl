@@ -302,6 +302,7 @@ function _svg(h::Hist2D)
     end
 
     function colorscale(x::Real)
+        x = isnan(x) ? 0. : x
         # x is fraction between [0,1]
         # 6th deg polynomial fit to viridis color palette
         # see https://gist.github.com/aminnj/dba84777718613d3a37291a43659feff
@@ -320,16 +321,17 @@ function _svg(h::Hist2D)
     sx, sy = size(counts)
     rectlines = String[]
     for i in 1:sx, j in 1:sy
-        tx1, ty1 = floor.(Int, transform(ex[i], ey[j+1]))
+        tx1, ty1 = ceil.(Int, transform(ex[i], ey[j+1]))
         tx2, ty2 = ceil.(Int, transform(ex[i+1], ey[j]))
         tw, th = tx2-tx1, ty2-ty1
         c = counts[i,j]
-        (counts[i,j] == 0) && continue
+        (c == 0) && continue
         r,g,b = colorscale((c-mincount)/(maxcount-mincount))
-        color = "rgb($(r),$(g),$(b))"
-        line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(color)" stroke="none" />"""
-        if (sx <= 10) && (sy <= 10)
-            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" dominant-baseline="middle" text-anchor="middle">$(c)</text></g>"""
+        rcolor = "rgb($(r),$(g),$(b))"
+        line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(rcolor)" stroke="none" />"""
+        if (sx <= 15) && (sy <= 15)
+            tcolor = ((0.299*r + 0.587*g + 0.114*b) < 0.60*255) ? "#fff" : "#000"
+            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" dominant-baseline="middle" fill="$(tcolor)", text-anchor="middle" font-size="85%">$(c)</text></g>"""
         end
         push!(rectlines, line * "\n")
     end
@@ -337,8 +339,8 @@ function _svg(h::Hist2D)
     return """
     <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg" class="svgplot">
         <style>
-          .svgplotlabels { display: none; fill: #fff; mix-blend-mode: difference; }
-          .svgplot g:hover text { display: block; }
+          .svgplotlabels { display: none; }
+          .svgplot g:hover text { display: block; cursor: default; }
         </style>
         $(join(rectlines))
         <rect x="$(round(Int,framewidth*paddingx1))" y="$(round(Int,frameheight*paddingy2))" width="$(round(Int,framewidth*(1-paddingx1-paddingx2)))" height="$(frameheight*(1-paddingy1-paddingy2))" fill="none" stroke="#000" stroke-width="1" />
