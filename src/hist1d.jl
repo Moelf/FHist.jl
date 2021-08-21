@@ -262,7 +262,7 @@ will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
 function restrict(h::Hist1D, low=-Inf, high=Inf)
     sel = low .<= bincenters(h) .<= high
     @assert sum(sel) > 0 "No bin centers contained in [$(low), $(high)]"
-    edgesel = push!(sel, false)
+    edgesel = push!(copy(sel), false)
 
     # include the right edge of the rightmost selected bin
     lastidx = findlast(edgesel)
