@@ -353,6 +353,11 @@ function _svg(h::Hist2D)
 end
 
 function Base.show(io::IO, h::Hist2D)
+    ex, ey = binedges(h)
+    nx, ny = nbins(h)
+    xscale = nx > 1 ? (maximum(ex)-minimum(ex))/(nx-1) : 0.0
+    yscale = ny > 1 ? (maximum(ey)-minimum(ey))/(ny-1) : 0.0
+    show(io, UnicodePlots.heatmap(bincounts(h)'; xscale=xscale, xoffset=minimum(ex), yscale=yscale, yoffset=minimum(ey)))
     println(io)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
