@@ -305,12 +305,12 @@ function _svg(h::Hist2D)
         x = isnan(x) ? 0. : x
         # x is fraction between [0,1]
         # 6th deg polynomial fit to viridis color palette
-        # see https://gist.github.com/aminnj/dba84777718613d3a37291a43659feff
+        # See https://gist.github.com/aminnj/dba84777718613d3a37291a43659feff
         # to generate other color palettes. Black and white is trivial:
         #   return 255 .* (1-x,1-x,1-x)
-        r = 0.2731*x^0+0.1270*x^1+-0.3617*x^2+-4.7456*x^3+6.7092*x^4+4.2491*x^5+-5.2678*x^6
-        g = 0.0039*x^0+1.3810*x^1+0.3969*x^2+-6.4246*x^3+15.3241*x^4+-14.7345*x^5+4.9587*x^6
-        b = 0.3305*x^0+1.3726*x^1+0.3948*x^2+-20.7431*x^3+59.7287*x^4+-68.3565*x^5+27.4051*x^6
+        r = @evalpoly(x, 0.2731, 0.1270, -0.3617, -4.7456, 6.7092, 4.2491, -5.2678)
+        g = @evalpoly(x, 0.0039, 1.3810, 0.3969, -6.4246, 15.3241, -14.7345, 4.9587)
+        b = @evalpoly(x, 0.3305, 1.3726, 0.3948, -20.7431, 59.7287, -68.3565, 27.4051)
         return round.(Int, 255 .* (r,g,b))
     end
 
