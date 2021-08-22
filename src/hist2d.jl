@@ -159,7 +159,7 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
     F = float(T)
     nbinsx, nbinsy = nbins
     lox, hix = minimum(A[1]), maximum(A[1])
-    loy, hiy = minimum(A[1]), maximum(A[2])
+    loy, hiy = minimum(A[2]), maximum(A[2])
     rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
     ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
     r = (rx, ry)
@@ -172,7 +172,7 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWei
     F = float(T)
     nbinsx, nbinsy = nbins
     lox, hix = minimum(A[1]), maximum(A[1])
-    loy, hiy = minimum(A[1]), maximum(A[2])
+    loy, hiy = minimum(A[2]), maximum(A[2])
     rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
     ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
     r = (rx, ry)
