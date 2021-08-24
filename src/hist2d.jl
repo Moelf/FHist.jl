@@ -320,6 +320,7 @@ function _svg(h::Hist2D)
     ex, ey = binedges(h)
     sx, sy = size(counts)
     rectlines = String[]
+    textstyle = """ dominant-baseline="middle" text-anchor="middle" font-size="85%" font-family="sans-serif" """
     for i in 1:sx, j in 1:sy
         tx1, ty1 = ceil.(Int, transform(ex[i], ey[j+1]))
         tx2, ty2 = ceil.(Int, transform(ex[i+1], ey[j]))
@@ -331,7 +332,7 @@ function _svg(h::Hist2D)
         line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(rcolor)" stroke="none" />"""
         if (sx <= 15) && (sy <= 15)
             tcolor = ((0.299*r + 0.587*g + 0.114*b) < 0.60*255) ? "#fff" : "#000"
-            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" dominant-baseline="middle" fill="$(tcolor)", text-anchor="middle" font-size="85%">$(c)</text></g>"""
+            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" fill="$(tcolor)" $(textstyle)>$(c)</text></g>"""
         end
         push!(rectlines, line * "\n")
     end
@@ -344,10 +345,10 @@ function _svg(h::Hist2D)
         </style>
         $(join(rectlines))
         <rect x="$(round(Int,framewidth*paddingx1))" y="$(round(Int,frameheight*paddingy2))" width="$(round(Int,framewidth*(1-paddingx1-paddingx2)))" height="$(frameheight*(1-paddingy1-paddingy2))" fill="none" stroke="#000" stroke-width="1" />
-        <text x="$(framewidth*paddingx1)" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ex))</text>
-        <text x="$(framewidth*(1-paddingx2))" y="$(frameheight*(1-0.5*paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ex))</text>
-        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*(1-paddingy1))" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(minimum(ey))</text>
-        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*paddingy2)" dominant-baseline="middle" text-anchor="middle" fill="black" font-size="85%">$(maximum(ey))</text>
+        <text x="$(framewidth*paddingx1)" y="$(frameheight*(1-0.5*paddingy1))" fill="black" $(textstyle)>$(minimum(ex))</text>
+        <text x="$(framewidth*(1-paddingx2))" y="$(frameheight*(1-0.5*paddingy1))" fill="black" $(textstyle)>$(maximum(ex))</text>
+        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*(1-paddingy1))" fill="black" $(textstyle)>$(minimum(ey))</text>
+        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*paddingy2)" fill="black" $(textstyle)>$(maximum(ey))</text>
     </svg>
     """
 end
