@@ -30,7 +30,7 @@ true</code></pre><h2 id="Speed"><a class="docs-heading-anchor" href="#Speed">Spe
 julia&gt; @benchmark Hist1D(a, -3:0.01:3)
  Range (min … max):  4.040 ms …   5.571 ms  ┊ GC (min … max): 0.00% … 0.00%
  Time  (median):     4.393 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   4.460 ms ± 198.070 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%</code></pre><h2 id="Features"><a class="docs-heading-anchor" href="#Features">Features</a><a id="Features-1"></a><a class="docs-heading-anchor-permalink" href="#Features" title="Permalink"></a></h2><pre><code class="language-julia hljs">julia&gt; using FHist, Statistics, Random
+ Time  (mean ± σ):   4.460 ms ± 198.070 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%</code></pre><h2 id="Features"><a class="docs-heading-anchor" href="#Features">Features</a><a id="Features-1"></a><a class="docs-heading-anchor-permalink" href="#Features" title="Permalink"></a></h2><h3 id="D"><a class="docs-heading-anchor" href="#D">1D</a><a id="D-1"></a><a class="docs-heading-anchor-permalink" href="#D" title="Permalink"></a></h3><pre><code class="language-julia hljs">julia&gt; using FHist, Statistics, Random
 
 julia&gt; Random.seed!(42)
 MersenneTwister(42)
@@ -102,4 +102,40 @@ bin counts: [4, 15, 41, 28, 10, 2]
 total count: 100
 
 julia&gt; h1 |&gt; normalize |&gt; integral
-1.0</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.5 on <span class="colophon-date" title="Saturday 21 August 2021 14:03">Saturday 21 August 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+1.0</code></pre><h3 id="D-2"><a class="docs-heading-anchor" href="#D-2">2D</a><a class="docs-heading-anchor-permalink" href="#D-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">julia&gt; h2 = Hist2D((randn(10^4),randn(10^4)), (-5:5,-5:5))
+
+edges: (-5:5, -5:5)
+bin counts: [0 0 … 0 0; 0 0 … 0 0; … ; 0 0 … 0 0; 0 0 … 0 0]
+total count: 10000
+
+julia&gt; nbins(h2)
+(10, 10)
+
+julia&gt; project(h2, :x)
+                ┌                              ┐
+   [-5.0, -4.0) ┤ 0
+   [-4.0, -3.0) ┤ 14
+   [-3.0, -2.0) ┤▇▇ 228
+   [-2.0, -1.0) ┤▇▇▇▇▇▇▇▇▇ 1345
+   [-1.0,  0.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 3399
+   [ 0.0,  1.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 3462
+   [ 1.0,  2.0) ┤▇▇▇▇▇▇▇▇▇ 1300
+   [ 2.0,  3.0) ┤▇▇ 237
+   [ 3.0,  4.0) ┤ 15
+   [ 4.0,  5.0) ┤ 0
+                └                              ┘
+edges: -5:5
+bin counts: [0, 14, 228, 1345, 3399, 3462, 1300, 237, 15, 0]
+total count: 10000
+
+julia&gt; h2 |&gt; profile(:x) # or pipe
+
+edges: -5:5
+bin counts: [0.0, -0.21428571428571427, 0.0, 0.03382899628252788, 0.0025007355104442485, 0.012709416522241479, 0.018461538461538463, 0.035864978902953586, 0.1, 0.0]
+total count: -0.010920048606008592
+
+julia&gt; h2 |&gt; rebin(10,5)
+
+edges: (-5.0:10.0:5.0, -5.0:5.0:5.0)
+bin counts: [4953 5047]
+total count: 10000</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.5 on <span class="colophon-date" title="Thursday 26 August 2021 03:05">Thursday 26 August 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
