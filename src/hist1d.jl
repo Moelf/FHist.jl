@@ -1,12 +1,3 @@
-struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
-    hist::Histogram{T,1,E}
-    sumw2::Vector{Float64}
-    hlock::SpinLock
-    # most concrete inner constructor
-    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights)) where {T,E}
-        return new{T,E}(h, sw2, SpinLock())
-    end
-end
 Base.lock(h::Hist1D) = lock(h.hlock)
 Base.unlock(h::Hist1D) = unlock(h.hlock)
 
@@ -89,7 +80,7 @@ end
     unsafe_push!(h::Hist1D, val::Real, wgt::Real=1)
     push!(h::Hist1D, val::Real, wgt::Real=1)
 
-Adding one value at a time into histogram. 
+Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 
@@ -182,7 +173,7 @@ Automatically determine number of bins based on `Sturges` algo.
 """
 function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where {T}
     F = float(T)
-    lo, hi = extrema(A)
+    lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, r)
 end
@@ -193,7 +184,7 @@ function Hist1D(
     nbins::Integer=StatsBase.sturges(length(A)),
 ) where {T}
     F = float(T)
-    lo, hi = extrema(A)
+    lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
     return Hist1D(A, wgts, r)
 end
@@ -214,16 +205,15 @@ Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincount
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
 """
-    function lookup(h::Hist1D, v) 
+    function lookup(h::Hist1D, x)
 
-For given x-axis value`v`, find the corresponding bin and return the bin content.
+For given x-axis value `x`, find the corresponding bin and return the bin content.
 If a value is out of the histogram range, return `missing`.
 """
-function lookup(h::Hist1D, v)
+function lookup(h::Hist1D, x)
     r = binedges(h)
-    !(first(r) <= v <= last(r)) && return missing
-    binidx = searchsortedlast(r, v) # TODO replace with `_edges_binindex`
-    return bincounts(h)[binidx]
+    !(first(r) <= x <= last(r)) && return missing
+    return bincounts(h)[_edge_binindex(r, x)]
 end
 
 """
@@ -250,6 +240,26 @@ function cumulative(h::Hist1D; forward=true)
     return h
 end
 
+
+"""
+    rebin(h::Hist1D, n::Int=1)
+    rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
+Merges `n` consecutive bins into one.
+The returned histogram will have `nbins(h)/n` bins.
+"""
+function rebin(h::Hist1D, n::Int=1)
+    @assert nbins(h) % n == 0
+    p = x->Iterators.partition(x, n)
+    counts = sum.(p(bincounts(h)))
+    sumw2 = sum.(p(h.sumw2))
+    edges = first.(p(binedges(h)))
+    if _is_uniform_bins(edges)
+        edges = range(first(edges), last(edges), length=length(edges))
+    end
+    return Hist1D(Histogram(edges, counts), sumw2)
+end
+rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
 """
     restrict(h::Hist1D, low=-Inf, high=Inf)
@@ -311,37 +321,17 @@ function _svg(h::Hist1D)
     </svg>
     """
 end
-"""
-    rebin(h::Hist1D, n::Int=1)
-    rebin(n::Int) = h::Hist1D -> rebin(h, n)
-
-Merges `n` consecutive bins into one.
-The returned histogram will have `nbins(h)/n` bins.
-"""
-function rebin(h::Hist1D, n::Int=1)
-    @assert nbins(h) % n == 0
-    p = x->Iterators.partition(x, n)
-    counts = sum.(p(bincounts(h)))
-    sumw2 = sum.(p(h.sumw2))
-    edges = first.(p(binedges(h)))
-    if _is_uniform_bins(edges)
-        s = edges[2] - first(edges)
-        edges = first(edges):s:last(edges)
-    end
-    return Hist1D(Histogram(edges, counts), sumw2)
-end
-rebin(n::Int) = Base.Fix2(rebin, n)
 
 function Base.show(io::IO, h::Hist1D)
-    _e = binedges(h)
-    if nbins(h) < 50
+    if (nbins(h) < 50) && all(bincounts(h) .>= 0)
+        _e = binedges(h)
         _h = Histogram(float.(_e), bincounts(h))
         show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
     end
     println(io)
     println(io, "edges: ", binedges(h))
     println(io, "bin counts: ", bincounts(h))
-    print(io, "total count: ", sum(bincounts(h)))
+    print(io, "total count: ", integral(h))
 end
 
 function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
@@ -353,7 +343,7 @@ function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
                 <li>edges: $(repr(binedges(h), context=:limit => true))</li>
                 <li>bin counts: $(repr(bincounts(h), context=:limit => true))</li>
                 <li>maximum count: $(maximum(bincounts(h)))</li>
-                <li>total count: $(sum(bincounts(h)))</li>
+                <li>total count: $(integral(h))</li>
             </ul>
         </div>
     </div>

@@ -64,7 +64,36 @@ end
     end
 end
 
-@testset "Special binning cases" begin
+@testset "Hist2D" begin
+    x = rand(10)
+    y = rand(10)
+    h = Hist2D((x,y))
+    @test integral(h) == 10
+
+    rx, ry = 0:0.1:1, 0:0.2:1
+    wgts = weights(2*ones(length(x)))
+    h = Hist2D((x,y), wgts, (rx, ry))
+    @test integral(h) == sum(wgts)
+    @test nbins(h) == (length(rx)-1, length(ry)-1)
+
+    @test bincenters(Hist2D((x,y), (0:1,0:1))) == ([0.5], [0.5])
+    @test bincenters(Hist2D((x,y), wgts, (0:1,0:1))) == ([0.5], [0.5])
+    @test nbins(Hist2D((x,y), ([0,0.5,1],[0,0.5,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), ([0,0.3,1],[0,0.3,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), wgts, ([0,0.5,1],[0,0.5,1]))) == (2,2)
+    @test nbins(Hist2D((x,y), wgts, ([0,0.3,1],[0,0.3,1]))) == (2,2)
+
+    @test integral(Hist2D((x,y), wgts, nbins=(5,5))) == sum(wgts)
+    @test integral(Hist2D((x,y), nbins=(5,5))) == length(x)
+
+    h1 = Hist2D((x,y), wgts, (rx, ry))
+    h2 = Hist2D(Float64; bins=(rx, ry))
+    push!.(h2, x, y, wgts)
+    @test h1 == h2
+end
+
+
+@testset "Special bins" begin
     # integer values and integer binning
     a = floor.(Int,abs.(randn(10^6)))
     h1 = Hist1D(a, 0:5)
@@ -83,6 +112,10 @@ end
     a = rand(10^5)
     wgts1 = 2 .* ones(10^5) |> weights
     h1 = Hist1D(a, wgts1)
+    @test integral(h1) ≈ sum(wgts1) atol=1e-8
+    @test integral(normalize(h1)) ≈ 1 atol=1e-8
+
+    h1 = Hist2D((a,a), wgts1, (0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
 end
@@ -115,6 +148,14 @@ end
     @test lookup.(Ref(h1), bincenters(h1)) == bincounts(h1)
     @test ismissing(lookup(h1, last(binedges(h1)) + 0.1))
     @test ismissing(lookup(h1, first(binedges(h1)) - 0.1))
+
+    h1 = Hist2D((randn(100), randn(100)), (-3:3,-3:3))
+    cx, cy = bincenters(h1)
+    # (x,y) tuples of bin centers with same shape as counts
+    tbc = ((x,y)->(x,y)).(cx, cy')
+    f = x->lookup(h1,x...)
+    @test f.(tbc) == bincounts(h1)
+    @test ismissing(lookup(h1, 10, 10))
 end
 
 @testset "Sample" begin
@@ -129,6 +170,11 @@ end
     @test maximum(h1.hist.weights) == 0
     @test maximum(h1.sumw2) == 0
     @test h1.hist.edges[1] == r
+
+    h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
+    empty!(h1)
+    @test maximum(h1.hist.weights) == 0
+    @test maximum(h1.sumw2) == 0
 end
 
 @testset "Unsafe push" begin
@@ -144,7 +190,7 @@ end
     @test h1 == h3
 end
 
-@testset "Broadcasted push" begin
+@testset "Broadcast" begin
     lookup(h::Hist1D, value) = h.hist.weights[FHist._edge_binindex(h.hist.edges[1], value)]
 
     h1 = Hist1D(Int; bins=0:3)
@@ -201,11 +247,23 @@ end
         @test h.sumw2 ≈ [0.17284, 0.191107, 0.029155] atol=1e-6
     end
 
+    @testset "Hist2D" begin
+        h1 = Hist2D(([0.5,1.5,1.5,2.5], [0.5,0.5,0.5,0.5]), (0:3,0:1))
+        h2 = Hist2D(([0.5,1.5,2.5,2.5], [0.5,0.5,0.5,0.5]), (0:3,0:1))
+        h = h1/(h1+h2*2)
+        @test vec(h.hist.weights) ≈ [0.333333, 0.5, 0.2] atol=1e-6
+        @test vec(h.sumw2) ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
+    end
+
 end
 
 @testset "Merging" begin
     h1 = Hist1D(randn(100), -3:3)
     h2 = Hist1D(randn(100), -3:3)
+    @test merge(h1,h2) == h1+h2
+
+    h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
+    h2 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
     @test merge(h1,h2) == h1+h2
 end
 
@@ -223,13 +281,67 @@ end
     @test binedges(rebin(h2, 2)) == [0, 0.7, 1.0]
 
     @test rebin(h1, 2) == (h1 |> rebin(2))
+
+    h1 = Hist2D((rand(10^2),rand(10^2)), (0:0.1:1,0:0.1:1))
+    @test h1 == rebin(h1, 1, 1)
+    @test integral(h1) == integral(rebin(h1, 5))
+    @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
+    @test binedges(rebin(h1, 5)) == ([0, 0.5, 1.0], [0, 0.5, 1.0])
+
+    bins = [0.0, 0.1, 0.7, 0.9, 1.0]
+    h2 = Hist2D((rand(10^2),rand(10^2)), (bins,bins))
+    @test h2 == rebin(h2, 1) == (h2 |> rebin(1, 1))
+    @test integral(h2) == integral(rebin(h2, 2))
+    @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
+    @test binedges(rebin(h2, 2)) == ([0, 0.7, 1.0], [0, 0.7, 1.0])
+
+    h2 = Hist2D((rand(10^2),rand(10^2)), (0:0.1:1,0:0.5:1))
+    @test nbins(rebin(h2, 10, 2)) == (1, 1)
+    @test_throws AssertionError rebin(h2, 2, 10)
 end
 
+@testset "Profile" begin
+    xy = collect(hcat([[-2.0, 1.5], [-2.0, -3.5], [-2.0, 1.5], [0.0, -2.0], [0.0, -2.0], [0.0, 0.0], [0.0, 2.0], [0.0, 4.0], [2.0, 1.5]]...)')
+    h = Hist2D((xy[:,1],xy[:,2]), (-5:2:5,-5:2:5))
+
+    hx = profile(h, :x)
+    hy = profile(h, :y)
+
+    @test hx == (h |> profile(:x))
+    @test hx.sumw2 == [0.0, 2.6666666666666665, 1.088, 0.0, 0.0]
+    @test hy.sumw2 == [0.0, 0.0, 0.0, 0.6875, 0.0]
+    @test bincounts(hx) == [0.0, 0.0, 0.4, 2.0, 0.0]
+    @test bincounts(hy) == [-2.0, 0.0, 0.0, -0.5, 0.0]
+    @test binedges(hx) == -5:2:5
+    @test binedges(hy) == -5:2:5
+end
+
+@testset "Projection" begin
+    xs = rand(10)
+    ys = rand(10)
+    r = 0:0.1:1
+    h1x = Hist1D(xs, r)
+    h1y = Hist1D(ys, r)
+    h2 = Hist2D((xs,ys), (r,r))
+    @test project(h2, :x) == (h2 |> project(:x))
+    @test h1x == project(h2, :x)
+    @test h1y == project(h2, :y)
+end
+
+@testset "Transpose" begin
+    h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
+    t = FHist.transpose
+    @test (t∘t)(h1) == h1
+end
+
+
 @testset "Repr" begin
-    h1 = Hist1D(randn(100), -3:3)
-    @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
-    @test !occursin("<svg", repr(h1))
-    @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
+    for h1 in (Hist1D(randn(100), -3:3),
+              Hist2D((randn(10),randn(10)), (-3:3,-3:3)))
+        @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+        @test !occursin("<svg", repr(h1))
+        @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
+    end
 end
 
 @testset "Restrict" begin
