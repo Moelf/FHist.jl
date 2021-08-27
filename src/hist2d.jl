@@ -77,7 +77,7 @@ end
     Ly = length(ry) - 1
     binidxx = _edge_binindex(rx, valx)
     binidxy = _edge_binindex(ry, valy)
-    if (1 <= binidxx <= Lx) && (1 <= binidxy <= Ly)
+    if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly)
         @inbounds h.hist.weights[binidxx,binidxy] += wgt
         @inbounds h.sumw2[binidxx,binidxy] += wgt^2
     end
