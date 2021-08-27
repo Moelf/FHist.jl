@@ -98,7 +98,7 @@ end
     r = @inbounds h.hist.edges[1]
     L = length(r) - 1
     binidx = _edge_binindex(r, val)
-    if 1 <= binidx <= L
+    if unsigned(binidx - 1) < L
         @inbounds h.hist.weights[binidx] += wgt
         @inbounds h.sumw2[binidx] += wgt^2
     end
