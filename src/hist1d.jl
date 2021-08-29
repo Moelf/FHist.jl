@@ -235,8 +235,8 @@ function cumulative(h::Hist1D; forward=true)
     # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse
     h = deepcopy(h)
-    h.hist.weights .= f(cumsum(h.hist.weights))
-    h.sumw2 .= f(cumsum(h.sumw2))
+    h.hist.weights .= f(cumsum(f(h.hist.weights)))
+    h.sumw2 .= f(cumsum(f(h.sumw2)))
     return h
 end
 

@@ -127,6 +127,11 @@ end
     h1 = Hist1D(a, wgts1)
     @test argmax(bincounts(cumulative(h1; forward=true))) == nbins(h1)
     @test argmax(bincounts(cumulative(h1; forward=false))) == 1
+    h1 = Hist1D([1,2,2,3,3,3],1:4)
+    @test bincounts(cumulative(h1, forward=true)) == [1, 3, 6]
+    @test bincounts(cumulative(h1, forward=true)) == cumulative(h1, forward=true).sumw2
+    @test bincounts(cumulative(h1, forward=false)) == [6, 5, 3]
+    @test bincounts(cumulative(h1, forward=false)) == cumulative(h1, forward=false).sumw2
 end
 
 
