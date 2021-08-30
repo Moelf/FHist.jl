@@ -364,3 +364,29 @@ end
     @test_throws AssertionError restrict(h, 10, Inf)
 end
 
+@testset "Overflow" begin
+    a = randn(10^5)
+    b = randn(10^5)
+    ϵ = 1e-6
+    edges = -3:0.5:3
+    aclip = clamp.(a,first(edges)+ϵ,last(edges)-ϵ)
+    bclip = clamp.(b,first(edges)+ϵ,last(edges)-ϵ)
+    sh1 = fit(Histogram, aclip, edges)
+    h1 = Hist1D(a, edges, overflow=true)
+    @test h1.hist == sh1
+    @test h1.sumw2 == bincounts(h1)
+
+    h1 = Hist1D(a, overflow=true)
+    before = last(bincounts(h1))
+    push!(h1, last(binedges(h1))+ϵ)
+    after = last(bincounts(h1))
+    @test after == before + 1
+
+    sh2 = fit(Histogram, (aclip,bclip), (edges,edges))
+    h2 = Hist2D((a,b), (edges,edges), overflow=true)
+    @test h2.hist == sh2
+    @test h2.sumw2 == bincounts(h2)
+    @test integral(project(h2, :x)) == length(aclip)
+    @test rebin(h2, 2).overflow == true
+
+end
