@@ -10,7 +10,7 @@ function hists_to_bars(hist1ds)
     L = length(hist1ds)
     oneedge = binedges(hist1ds[1])[1:end-1]
     edges = repeat(oneedge, L)
-    heights = mapreduce(h->bincounts(h), vcat, hist1ds)
+    heights = mapreduce(bincounts, vcat, hist1ds)
     grps = repeat(1:L; inner=length(oneedge))
     
     edges, heights, grps
