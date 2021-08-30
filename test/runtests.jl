@@ -404,3 +404,13 @@ end
     @test rebin(h2, 2).overflow == true
 
 end
+
+@testset "Utils" begin
+    @test FHist.pearson_err(10) ≈ (3.7015621187164243, 2.7015621187164243)
+    @test FHist.sqrt_err(9) == (3,3)
+    @test FHist._is_uniform_bins([1,2,3,4,5]) == true
+    @test FHist._is_uniform_bins([1,2,3,4,5+1e-8]) == false
+    @test FHist._is_uniform_bins(1:10) == true
+    h = Hist1D(randn(10^3))
+    @test FHist.hists_to_bars([h]) == binedges(h)[1:end-1], bincounts(h), ones(nbins(h))
+end
