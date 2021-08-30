@@ -77,9 +77,16 @@ end
     Ly = length(ry) - 1
     binidxx = _edge_binindex(rx, valx)
     binidxy = _edge_binindex(ry, valy)
-    if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly)
+    if h.overflow
+        binidxx = clamp(binidxx, 1, Lx)
+        binidxy = clamp(binidxy, 1, Ly)
         @inbounds h.hist.weights[binidxx,binidxy] += wgt
         @inbounds h.sumw2[binidxx,binidxy] += wgt^2
+    else
+        if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly)
+            @inbounds h.hist.weights[binidxx,binidxy] += wgt
+            @inbounds h.sumw2[binidxx,binidxy] += wgt^2
+        end
     end
     return nothing
 end
@@ -92,9 +99,9 @@ Base.broadcastable(h::Hist2D) = Ref(h)
 Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref)
 """
-function Hist2D(elT::Type{T}=Float64; bins) where {T}
+function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
     counts = zeros(elT, (length(bins[1]) - 1, length(bins[2])-1))
-    return Hist2D(Histogram(bins, counts))
+    return Hist2D(Histogram(bins, counts); overflow=overflow)
 end
 
 """
@@ -104,18 +111,18 @@ end
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange})
-    h = Hist2D(Int; bins=r)
+function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
+    h = Hist2D(Int; bins=r, overflow=overflow)
     unsafe_push!.(h, A[1], A[2])
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector})
+function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
-        return Hist2D(A, r)
+        return Hist2D(A, r; overflow=overflow)
     else
-        h = Hist2D(Int; bins=edges)
+        h = Hist2D(Int; bins=edges, overflow=overflow)
         unsafe_push!.(h, A[1], A[2])
         return h
     end
@@ -129,19 +136,19 @@ Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values.
 `wgts` should have the same `size` as elements of `tuple`.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange})
+function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
     @boundscheck @assert size(A[1]) == size(A[2]) == size(wgts)
-    h = Hist2D(eltype(wgts); bins=r)
+    h = Hist2D(eltype(wgts); bins=r, overflow=overflow)
     unsafe_push!.(h, A[1], A[2], wgts)
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector})
+function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
-        return Hist2D(A, wgts, r)
+        return Hist2D(A, wgts, r; overflow=overflow)
     else
-        h = Hist2D(Int; bins=edges)
+        h = Hist2D(Int; bins=edges, overflow=overflow)
         unsafe_push!.(h, A[1], A[2], wgts)
         return h
     end
@@ -153,9 +160,11 @@ end
 
 Automatically determine number of bins based on `Sturges` algo.
 """
+_sturges(x) = StatsBase.sturges(length(x))
 function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
-        nbins::Tuple{Integer,Integer}=(StatsBase.sturges(length(A[1])),
-                                       StatsBase.sturges(length(A[2])))) where {T}
+        nbins::Tuple{Integer,Integer}=_sturges.(A),
+        overflow=_default_overflow,
+    ) where {T}
     F = float(T)
     nbinsx, nbinsy = nbins
     lox, hix = minimum(A[1]), maximum(A[1])
@@ -163,12 +172,13 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
     rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
     ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
     r = (rx, ry)
-    return Hist2D(A, r)
+    return Hist2D(A, r; overflow=overflow)
 end
 
 function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWeights;
-        nbins::Tuple{Integer,Integer}=(StatsBase.sturges(length(A[1])),
-                                       StatsBase.sturges(length(A[2])))) where {T}
+        nbins::Tuple{Integer,Integer}=_sturges.(A),
+        overflow=_default_overflow,
+    ) where {T}
     F = float(T)
     nbinsx, nbinsy = nbins
     lox, hix = minimum(A[1]), maximum(A[1])
@@ -176,7 +186,7 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWei
     rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
     ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
     r = (rx, ry)
-    return Hist2D(A, wgts, r)
+    return Hist2D(A, wgts, r; overflow=overflow)
 end
 
 """
@@ -219,7 +229,7 @@ function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     ey = first.(p1d(binedges(h)[2], ny))
     _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
     _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
-    return Hist2D(Histogram((ex,ey), counts), sumw2)
+    return Hist2D(Histogram((ex,ey), counts), sumw2; overflow=h.overflow)
 end
 rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
@@ -237,7 +247,7 @@ function project(h::Hist2D, axis::Symbol=:x)
     counts = [sum(bincounts(h), dims=dim)...]
     sumw2 = [sum(h.sumw2, dims=dim)...]
     edges = axis == :x ? ex : ey
-    return Hist1D(Histogram(edges, counts), sumw2)
+    return Hist1D(Histogram(edges, counts), sumw2; overflow=h.overflow)
 end
 project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
 
@@ -250,7 +260,7 @@ function transpose(h::Hist2D)
     edges = reverse(binedges(h))
     counts = collect(bincounts(h)')
     sumw2 = collect(h.sumw2')
-    return Hist2D(Histogram(edges, counts), sumw2)
+    return Hist2D(Histogram(edges, counts), sumw2; overflow=h.overflow)
 end
 
 """
@@ -283,7 +293,7 @@ function profile(h::Hist2D, axis::Symbol=:x)
     val[isnan.(val)] .= zero(eltype(val))
     sw2[isnan.(sw2)] .= zero(eltype(sw2))
 
-    return Hist1D(Histogram(edges, val), sw2)
+    return Hist1D(Histogram(edges, val), sw2; overflow=h.overflow)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
 
