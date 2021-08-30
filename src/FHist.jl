@@ -28,12 +28,15 @@ function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
     true
 end
 
+const _default_overflow = false
+
 struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     hist::Histogram{T,1,E}
     sumw2::Array{Float64, 1}
     hlock::SpinLock
-    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights)) where {T,E}
-        return new{T,E}(h, sw2, SpinLock())
+    overflow::Bool
+    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights); overflow=_default_overflow) where {T,E}
+        return new{T,E}(h, sw2, SpinLock(), overflow)
     end
 end
 

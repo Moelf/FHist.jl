@@ -98,9 +98,15 @@ end
     r = @inbounds h.hist.edges[1]
     L = length(r) - 1
     binidx = _edge_binindex(r, val)
-    if unsigned(binidx - 1) < L
+    if h.overflow
+        binidx = clamp(binidx, 1, L)
         @inbounds h.hist.weights[binidx] += wgt
         @inbounds h.sumw2[binidx] += wgt^2
+    else
+        if unsigned(binidx - 1) < L
+            @inbounds h.hist.weights[binidx] += wgt
+            @inbounds h.sumw2[binidx] += wgt^2
+        end
     end
     return nothing
 end
@@ -113,9 +119,9 @@ Base.broadcastable(h::Hist1D) = Ref(h)
 Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref)
 """
-function Hist1D(elT::Type{T}=Float64; bins) where {T}
+function Hist1D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
     counts = zeros(elT, length(bins) - 1)
-    return Hist1D(Histogram(bins, counts))
+    return Hist1D(Histogram(bins, counts), overflow=overflow)
 end
 
 """
@@ -125,17 +131,17 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange)
-    h = Hist1D(Int; bins=r)
+function Hist1D(A::AbstractVector, r::AbstractRange; overflow=_default_overflow)
+    h = Hist1D(Int; bins=r, overflow=overflow)
     unsafe_push!.(h, A)
     return h
 end
-function Hist1D(A::AbstractVector, edges::AbstractVector)
+function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_overflow)
     if _is_uniform_bins(edges)
         r = range(first(edges), last(edges), length=length(edges))
-        return Hist1D(A, r)
+        return Hist1D(A, r, overflow=overflow)
     else
-        h = Hist1D(Int; bins=edges)
+        h = Hist1D(Int; bins=edges, overflow=overflow)
         unsafe_push!.(h, A)
         return h
     end
@@ -148,18 +154,18 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. `wgts` should have the same `size` as `array`.
 """
-function Hist1D(A, wgts::AbstractWeights, r::AbstractRange)
+function Hist1D(A, wgts::AbstractWeights, r::AbstractRange; overflow=_default_overflow)
     @boundscheck @assert size(A) == size(wgts)
-    h = Hist1D(eltype(wgts); bins=r)
+    h = Hist1D(eltype(wgts); bins=r, overflow=overflow)
     unsafe_push!.(h, A, wgts)
     return h
 end
-function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector)
+function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector, overflow=_default_overflow)
     @inbounds if _is_uniform_bins(edges)
         r = range(first(edges), last(edges), length=length(edges))
-        return Hist1D(A, wgts, r)
+        return Hist1D(A, wgts, r, overflow=overflow)
     else
-        h = Hist1D(eltype(wgts); bins=edges)
+        h = Hist1D(eltype(wgts); bins=edges, overflow=overflow)
         unsafe_push!.(h, A, wgts)
         return h
     end
@@ -171,22 +177,23 @@ end
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where {T}
+function Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A)), overflow=_default_overflow) where {T}
     F = float(T)
     lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, r)
+    return Hist1D(A, r, overflow=overflow)
 end
 
 function Hist1D(
     A::AbstractVector{T},
     wgts::AbstractWeights;
     nbins::Integer=StatsBase.sturges(length(A)),
+    overflow=_default_overflow,
 ) where {T}
     F = float(T)
     lo, hi = minimum(A), maximum(A)
     r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, wgts, r)
+    return Hist1D(A, wgts, r, overflow=overflow)
 end
 
 
