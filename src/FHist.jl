@@ -19,6 +19,8 @@ end
     s,s
 end
 
+_sturges(x) = StatsBase.sturges(length(x))
+
 @inline function _is_uniform_bins(A::AbstractVector{T}) where T<:Real
     diffs = diff(A)
     diff1 = first(diffs)
@@ -28,12 +30,15 @@ function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
     true
 end
 
+const _default_overflow = false
+
 struct Hist1D{T<:Real,E} <: AbstractHistogram{T,1,E}
     hist::Histogram{T,1,E}
     sumw2::Array{Float64, 1}
     hlock::SpinLock
-    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights)) where {T,E}
-        return new{T,E}(h, sw2, SpinLock())
+    overflow::Bool
+    function Hist1D(h::Histogram{T,1,E}, sw2 = copy(h.weights); overflow=_default_overflow) where {T,E}
+        return new{T,E}(h, sw2, SpinLock(), overflow)
     end
 end
 
@@ -41,8 +46,9 @@ struct Hist2D{T<:Real,E} <: AbstractHistogram{T,2,E}
     hist::Histogram{T,2,E}
     sumw2::Array{Float64, 2}
     hlock::SpinLock
-    function Hist2D(h::Histogram{T,2,E}, sw2 = copy(h.weights)) where {T,E}
-        return new{T,E}(h, sw2, SpinLock())
+    overflow::Bool
+    function Hist2D(h::Histogram{T,2,E}, sw2 = copy(h.weights); overflow=_default_overflow) where {T,E}
+        return new{T,E}(h, sw2, SpinLock(), overflow)
     end
 end
 

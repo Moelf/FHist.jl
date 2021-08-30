@@ -37,16 +37,31 @@ julia> h1 == h2
 true
 ```
 
+Additionally, one can specify `overflow=true` when creating a histogram to clamp out-of-bounds values into 
+the edge bins.
+```julia
+julia> Hist1D(rand(1000),0:0.2:0.9; overflow=true)
+              ┌                              ┐
+   [0.0, 0.2) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 218
+   [0.2, 0.4) ┤▇▇▇▇▇▇▇▇▇▇▇ 183
+   [0.4, 0.6) ┤▇▇▇▇▇▇▇▇▇▇▇▇ 198
+   [0.6, 0.8) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 401
+              └                              ┘
+edges: 0.0:0.2:0.8
+bin counts: [218, 183, 198, 401]
+total count: 1000
+```
+
 ## Speed
 
-Single-threaded filling happens at ~250 MHz
+Single-threaded filling happens at almost 300 MHz
 ```julia
 julia> a = randn(10^6);
 
 julia> @benchmark Hist1D(a, -3:0.01:3)
- Range (min … max):  4.040 ms …   5.571 ms  ┊ GC (min … max): 0.00% … 0.00%
- Time  (median):     4.393 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   4.460 ms ± 198.070 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+ Range (min … max):  3.171 ms …   5.764 ms  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     3.492 ms               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   3.544 ms ± 192.347 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
 ```
 
 ## Features
