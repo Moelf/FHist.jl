@@ -80,10 +80,8 @@ Adding one value at a time into histogram.
 end
 
 @inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
-    rx = @inbounds h.hist.edges[1]
-    ry = @inbounds h.hist.edges[2]
-    Lx = length(rx) - 1
-    Ly = length(ry) - 1
+    rx, ry = binedges(h)
+    Lx, Ly = nbins(h)
     binidxx = _edge_binindex(rx, valx)
     binidxy = _edge_binindex(ry, valy)
     if h.overflow
@@ -110,7 +108,7 @@ To be used with [`push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
 function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
-    counts = zeros(elT, (length(bins[1]) - 1, length(bins[2])-1))
+    counts = zeros(elT, length.(bins) .- 1)
     return Hist2D(Histogram(bins, counts); overflow=overflow)
 end
 
