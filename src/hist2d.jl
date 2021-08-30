@@ -24,6 +24,15 @@ function bincenters(h::Hist2D)
     StatsBase.midpoints.(binedges(h))
 end
 
+"""
+    binerrors(f::T, h::Hist2D) where T<:Function = f.(h.sumw2)
+    binerrors(h::Hist2D) = binerrors(sqrt, h)
+
+Calculate the bin errors from `sumw2` with a Gaussian default.
+"""
+binerrors(f::T, h::Hist2D) where T<:Function = f.(h.sumw2)
+binerrors(h::Hist2D) = binerrors(sqrt, h)
+
 
 """
     nbins(h::Hist2D)
