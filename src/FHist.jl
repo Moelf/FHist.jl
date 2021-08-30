@@ -1,6 +1,6 @@
 module FHist
 
-export Hist1D, binedges, bincounts, bincenters, nbins, integral
+export Hist1D, binedges, bincounts, bincenters, binerrors, nbins, integral
 export sample, lookup, cumulative, normalize, restrict, rebin
 export unsafe_push!
 

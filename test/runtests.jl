@@ -140,6 +140,14 @@ end
     @test bincounts(cumulative(h1, forward=false)) == cumulative(h1, forward=false).sumw2
 end
 
+@testset "Bin errors" begin
+    h1 = Hist1D(randn(100), -3:3)
+    @test h1.sumw2 == binerrors(identity, h1)
+    @test sqrt.(h1.sumw2) == binerrors(h1)
+    h1 = Hist2D((randn(100), randn(100)), (-3:3,-3:3))
+    @test h1.sumw2 == binerrors(identity, h1)
+    @test sqrt.(h1.sumw2) == binerrors(h1)
+end
 
 @testset "Statistics" begin
     r = -3:0.1:3
