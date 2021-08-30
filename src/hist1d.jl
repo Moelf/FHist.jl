@@ -16,7 +16,7 @@ end
 end
 
 @inline function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
-    return x - first(r) + 1
+    return (x - first(r))÷step(r) + 1
 end
 
 @inline function _edge_binindex(v::AbstractVector, x::Real)

@@ -100,6 +100,12 @@ end
     h2 = Hist1D(fit(Histogram, a, 0:5))
     @test h1 == h2
 
+    # integer values and integer binning
+    a = floor.(Int,abs.(randn(10^6)))
+    h1 = Hist1D(a, -6:2:6)
+    h2 = Hist1D(fit(Histogram, a, -6:2:6))
+    @test h1 == h2
+
     # test floating point rounding when
     # coercing explicit bins into StepRange
     bins = collect(-3:0.1:3.1)
