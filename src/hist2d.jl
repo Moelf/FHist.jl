@@ -160,7 +160,6 @@ end
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-_sturges(x) = StatsBase.sturges(length(x))
 function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
         nbins::Tuple{Integer,Integer}=_sturges.(A),
         overflow=_default_overflow,

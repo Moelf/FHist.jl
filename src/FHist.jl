@@ -19,6 +19,8 @@ end
     s,s
 end
 
+_sturges(x) = StatsBase.sturges(length(x))
+
 @inline function _is_uniform_bins(A::AbstractVector{T}) where T<:Real
     diffs = diff(A)
     diff1 = first(diffs)
