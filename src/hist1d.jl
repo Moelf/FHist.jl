@@ -114,10 +114,11 @@ end
 Base.broadcastable(h::Hist1D) = Ref(h)
 
 """
-    Hist1D(elT::Type{T}=Float64; binedges) where {T}
+    Hist1D(elT::Type{T}=Float64; binedges, overflow) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
-To be used with [`push!`](@ref)
+To be used with [`push!`](@ref). Default overflow behavior (`false`)
+will exclude values that are outside of `binedges`.
 """
 function Hist1D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
     counts = zeros(elT, length(bins) - 1)
@@ -125,8 +126,8 @@ function Hist1D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist1D(array, edges::AbstractRange)
-    Hist1D(array, edges::AbstractVector)
+    Hist1D(array, edges::AbstractRange; overflow)
+    Hist1D(array, edges::AbstractVector; overflow)
 
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
@@ -148,8 +149,8 @@ function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_over
 end
 
 """
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange)
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector)
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange; overflow)
+    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector; overflow)
 
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. `wgts` should have the same `size` as `array`.
@@ -172,8 +173,8 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector, overflow=_defau
 end
 
 """
-    Hist1D(A::AbstractVector{T}; nbins::Integer=StatsBase.sturges(length(A))) where T
-    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=StatsBase.sturges(length(A))) where T
+    Hist1D(A::AbstractVector{T}; nbins::Integer=_sturges(A), overflow) where T
+    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=_sturges(A), overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """

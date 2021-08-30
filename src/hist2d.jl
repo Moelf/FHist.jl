@@ -94,10 +94,11 @@ end
 Base.broadcastable(h::Hist2D) = Ref(h)
 
 """
-    Hist2D(elT::Type{T}=Float64; binedges) where {T}
+    Hist2D(elT::Type{T}=Float64; binedges, overflow) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
-To be used with [`push!`](@ref)
+To be used with [`push!`](@ref). Default overflow behavior (`false`)
+will exclude values that are outside of `binedges`.
 """
 function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
     counts = zeros(elT, (length(bins[1]) - 1, length(bins[2])-1))
@@ -105,8 +106,8 @@ function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist2D(tuple, edges::Tuple{AbstractRange,AbstractRange})
-    Hist2D(tuple, edges::Tuple{AbstractVector,AbstractVector})
+    Hist2D(tuple, edges::Tuple{AbstractRange,AbstractRange}; overflow)
+    Hist2D(tuple, edges::Tuple{AbstractVector,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
@@ -129,8 +130,8 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVe
 end
 
 """
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractRange,AbstractRange})
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector})
+    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractRange,AbstractRange}; overflow)
+    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values.
@@ -155,8 +156,8 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, 
 end
 
 """
-    Hist2D(A::AbstractVector{T}; nbins::Tuple{Integer,Integer}) where T
-    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Tuple{Integer,Integer}) where T
+    Hist2D(A::AbstractVector{T}; nbins::Tuple{Integer,Integer}, overflow) where T
+    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Tuple{Integer,Integer}, overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
