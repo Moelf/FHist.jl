@@ -369,8 +369,8 @@ end
     b = randn(10^5)
     ϵ = 1e-6
     edges = -3:0.5:3
-    aclip = clamp.(a,first(edges)+ϵ,last(edges)-ϵ)
-    bclip = clamp.(b,first(edges)+ϵ,last(edges)-ϵ)
+    aclip = clamp.(a,nextfloat(first(edges)),prevfloat(last(edges)))
+    bclip = clamp.(b,nextfloat(first(edges)),prevfloat(last(edges)))
     sh1 = fit(Histogram, aclip, edges)
     h1 = Hist1D(a, edges, overflow=true)
     @test h1.hist == sh1
@@ -378,7 +378,7 @@ end
 
     h1 = Hist1D(a, overflow=true)
     before = last(bincounts(h1))
-    push!(h1, last(binedges(h1))+ϵ)
+    push!(h1, nextfloat(last(binedges(h1))))
     after = last(bincounts(h1))
     @test after == before + 1
 

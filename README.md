@@ -35,8 +35,12 @@ julia> Threads.@threads for i in a
 
 julia> h1 == h2
 true
+```
 
-julia> Hist1D(rand(1000),0:0.2:0.9; overflow=true) # clamp overflowing values into range
+Additionally, one can specify `overflow=true` when creating a histogram to clamp out-of-bounds values into 
+the edge bins.
+```julia
+julia> Hist1D(rand(1000),0:0.2:0.9; overflow=true)
               ┌                              ┐
    [0.0, 0.2) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 218
    [0.2, 0.4) ┤▇▇▇▇▇▇▇▇▇▇▇ 183
@@ -47,8 +51,6 @@ edges: 0.0:0.2:0.8
 bin counts: [218, 183, 198, 401]
 total count: 1000
 ```
-
-one can use
 
 ## Speed
 
