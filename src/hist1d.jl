@@ -12,7 +12,9 @@ function sample(h::Hist1D; n::Int=1)
 end
 
 @inline function _edge_binindex(r::AbstractRange, x::Real)
-    return floor(Int, (x - first(r)) / step(r)) + 1
+    return floor(Int, (x - first(r)) * inv(step(r))) + 1
+    # # 20% faster and assigns -Inf, Inf, NaN to typemin(Int64)
+    # return Base.unsafe_trunc(Int, round((x - first(r)) * inv(step(r)), RoundDown)) + 1
 end
 
 @inline function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
