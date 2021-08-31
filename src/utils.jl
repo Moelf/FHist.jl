@@ -27,11 +27,5 @@ end
 
 _sturges(x) = StatsBase.sturges(length(x))
 
-@inline function _is_uniform_bins(A::AbstractVector{T}) where T<:Real
-    diffs = diff(A)
-    diff1 = first(diffs)
-    all(isapprox.(diff1, diffs; atol = 1e-9)) #hack
-end
-function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
-    true
-end
+_is_uniform_bins(v::AbstractVector{<:Real}) = range(first(v), last(v), length=length(v)) == v
+_is_uniform_bins(v::AbstractRange{<:Real}) = true
