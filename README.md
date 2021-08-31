@@ -54,14 +54,14 @@ total count: 1000
 
 ## Speed
 
-Single-threaded filling happens at almost 0.5 GHz
+Single-threaded filling happens at almost 400 MHz
 ```julia
 julia> a = randn(10^6);
 
 julia> @benchmark Hist1D(a, -3:0.01:3)
- Range (min … max):  2.178 ms …   3.697 ms  ┊ GC (min … max): 0.00% … 0.00%
- Time  (median):     2.335 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   2.383 ms ± 151.177 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+ Range (min … max):  2.591 ms …   4.746 ms  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     2.802 ms               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   2.864 ms ± 195.931 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
 ```
 
 ## Features
