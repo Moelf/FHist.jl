@@ -122,7 +122,9 @@ a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
     h = Hist2D(Int; bins=r, overflow=overflow)
     unsafe_push!.(h, A[1], A[2], 1, false)
-    h.sumw2 .= bincounts(h)
+    for i in eachindex(h.sumw2)
+        h.sumw2[i] = bincounts(h)[i]
+    end
     return h
 end
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)

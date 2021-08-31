@@ -146,7 +146,9 @@ array. Weight for each value is assumed to be 1.
 function Hist1D(A::AbstractVector, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
     unsafe_push!.(h, A, 1, false)
-    h.sumw2 .= bincounts(h)
+    for i in eachindex(h.sumw2)
+        h.sumw2[i] = bincounts(h)[i]
+    end
     return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_overflow)
