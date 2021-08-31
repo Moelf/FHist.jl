@@ -104,8 +104,8 @@ N.B. To append multiple values at once, use broadcasting via
 end
 
 @inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
-    r = @inbounds h.hist.edges[1]
-    L = length(r) - 1
+    r = binedges(h)
+    L = nbins(h)
     binidx = _edge_binindex(r, val)
     if h.overflow
         binidx = clamp(binidx, 1, L)
