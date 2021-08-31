@@ -79,7 +79,7 @@ Adding one value at a time into histogram.
     return nothing
 end
 
-@inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1, sumw2::Bool=true) where {T,E}
     rx, ry = binedges(h)
     Lx, Ly = nbins(h)
     binidxx = _edge_binindex(rx, valx)
@@ -88,11 +88,11 @@ end
         binidxx = clamp(binidxx, 1, Lx)
         binidxy = clamp(binidxy, 1, Ly)
         @inbounds h.hist.weights[binidxx,binidxy] += wgt
-        @inbounds h.sumw2[binidxx,binidxy] += wgt^2
+        sumw2 && @inbounds h.sumw2[binidxx,binidxy] += wgt^2
     else
         if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly)
             @inbounds h.hist.weights[binidxx,binidxy] += wgt
-            @inbounds h.sumw2[binidxx,binidxy] += wgt^2
+            sumw2 && @inbounds h.sumw2[binidxx,binidxy] += wgt^2
         end
     end
     return nothing
@@ -121,7 +121,8 @@ a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
     h = Hist2D(Int; bins=r, overflow=overflow)
-    unsafe_push!.(h, A[1], A[2])
+    unsafe_push!.(h, A[1], A[2], 1, false)
+    h.sumw2 .= bincounts(h)
     return h
 end
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)

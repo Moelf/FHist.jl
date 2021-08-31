@@ -105,18 +105,18 @@ N.B. To append multiple values at once, use broadcasting via
     return nothing
 end
 
-@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1, sumw2::Bool=true) where {T,E}
     r = binedges(h)
     L = nbins(h)
     binidx = _edge_binindex(r, val)
     if h.overflow
         binidx = clamp(binidx, 1, L)
         @inbounds h.hist.weights[binidx] += wgt
-        @inbounds h.sumw2[binidx] += wgt^2
+        sumw2 && @inbounds h.sumw2[binidx] += wgt^2
     else
         if unsigned(binidx - 1) < L
             @inbounds h.hist.weights[binidx] += wgt
-            @inbounds h.sumw2[binidx] += wgt^2
+            sumw2 && @inbounds h.sumw2[binidx] += wgt^2
         end
     end
     return nothing
@@ -145,7 +145,8 @@ array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A::AbstractVector, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
-    unsafe_push!.(h, A)
+    unsafe_push!.(h, A, 1, false)
+    h.sumw2 .= bincounts(h)
     return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_overflow)
