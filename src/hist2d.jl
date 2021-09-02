@@ -375,7 +375,7 @@ function Base.show(io::IO, h::Hist2D)
     if compact
         print(io, "Hist2D{$(eltype(bincounts(h)))}, ")
         print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
-        println(io, "integral=$(integral(h))")
+        print(io, "integral=$(integral(h))")
     else
         ex, ey = binedges(h)
         nx, ny = nbins(h)
