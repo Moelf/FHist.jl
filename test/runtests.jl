@@ -360,6 +360,7 @@ end
         @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
         @test !occursin("<svg", repr(h1))
         @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
+        @test all(occursin.(["edges=", "integral=", "Hist"], repr(h1, context=:compact=>true)))
     end
 end
 
