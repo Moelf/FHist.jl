@@ -342,15 +342,22 @@ function _svg(h::Hist1D)
 end
 
 function Base.show(io::IO, h::Hist1D)
-    if (nbins(h) < 50) && all(bincounts(h) .>= 0)
-        _e = binedges(h)
-        _h = Histogram(float.(_e), bincounts(h))
-        show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
+    compact = get(io, :compact, false)
+    if compact
+        print(io, "Hist1D{$(eltype(bincounts(h)))}, ")
+        print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
+        print(io, "integral=$(integral(h))")
+    else
+        if (nbins(h) < 50) && all(bincounts(h) .>= 0)
+            _e = binedges(h)
+            _h = Histogram(float.(_e), bincounts(h))
+            show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
+        end
+        println(io)
+        println(io, "edges: ", binedges(h))
+        println(io, "bin counts: ", bincounts(h))
+        print(io, "total count: ", integral(h))
     end
-    println(io)
-    println(io, "edges: ", binedges(h))
-    println(io, "bin counts: ", bincounts(h))
-    print(io, "total count: ", integral(h))
 end
 
 function Base.show(io::IO, m::MIME"text/html", h::Hist1D)
