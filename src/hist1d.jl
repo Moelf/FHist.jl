@@ -316,7 +316,14 @@ function _svg(h::Hist1D)
     fill = "#ffffff00" # 0 alpha
     strokecolor, strokewidth = "black", 1
     strokewidth = 1
-    _c, _e = bincounts(h), binedges(h)
+    _c, _e = copy(bincounts(h)), copy(binedges(h))
+
+    hasneg = minimum(_c) < 0
+    zerolineyfrac = 0.0
+    if hasneg
+        zerolineyfrac = -minimum(_c)/(maximum(_c)-minimum(_c))
+        _c .-= minimum(_c)
+    end
     ys = frameheight * ((2*paddingy-1)/maximum(_c) .* _c .+ (1-paddingy))
     xs = framewidth * (
         (1 - 2 * paddingx) / (maximum(_e) - minimum(_e))
@@ -329,12 +336,15 @@ function _svg(h::Hist1D)
         push!(points, (xs[i+1],ys[i])) # right bin edge
     end
     push!(points, ((1-paddingx)*framewidth,(1-paddingy)*frameheight))
-    push!(points, points[1]) # close path
+    if !hasneg
+        push!(points, points[1]) # close path
+    end
     pathstr = join(["$(x),$(y)" for (x,y) in points],",")
+    zeroliney = hasneg ? frameheight*(1-zerolineyfrac) : frameheight*(1-paddingy)
     return """
     <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <polyline points="$(pathstr)" stroke="$(strokecolor)" fill="$(fill)" stroke-width="$(strokewidth)"/>
-        <polyline points="$(framewidth*paddingx),$(frameheight*(1-paddingy)),$(framewidth*(1-paddingx)),$(frameheight*(1-paddingy))" stroke="black" stroke-width="1"/>
+        <polyline points="$(framewidth*paddingx),$(zeroliney),$(framewidth*(1-paddingx)),$(zeroliney)" stroke="black" stroke-width="1"/>
         <text x="$(framewidth*paddingx)" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="start" fill="black">$(minimum(_e))</text>
         <text x="$(framewidth*(1-paddingx))" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="end" fill="black">$(maximum(_e))</text>
     </svg>
