@@ -356,7 +356,8 @@ end
 
 @testset "Repr" begin
     for h1 in (Hist1D(randn(100), -3:3),
-              Hist2D((randn(10),randn(10)), (-3:3,-3:3)))
+               Hist2D((randn(10),randn(10)), (-3:3,-3:3)),
+               profile(Hist2D((randn(10^5),randn(10^5)), (-3:0.1:3, -5:0.1:5)), :x))
         @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
         @test !occursin("<svg", repr(h1))
         @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
