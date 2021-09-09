@@ -147,6 +147,13 @@ end
     h1 = Hist2D((randn(100), randn(100)), (-3:3,-3:3))
     @test h1.sumw2 == binerrors(identity, h1)
     @test sqrt.(h1.sumw2) == binerrors(h1)
+
+    h2 = Hist1D(Float64; bins=0:1)
+    push!(h2, 0.5, 0.5)
+    push!(h2, 0.5, 0.5)
+
+    @test h2.sumw2 == [0.5]
+    @test binerrors(h2) == [sqrt(0.5)]
 end
 
 @testset "Statistics" begin
