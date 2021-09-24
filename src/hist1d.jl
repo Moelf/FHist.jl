@@ -88,24 +88,24 @@ function Base.empty!(h::Hist1D{T,E}) where {T,E}
 end
 
 """
-    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1)
     push!(h::Hist1D, val::Real, wgt::Real=1)
+    atomic_push!(h::Hist1D, val::Real, wgt::Real=1)
 
 Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
-`unsafe_push!` is a faster version of `push!` that is not thread-safe.
+`atomic_push!` is a slower version of `push!` that is thread-safe.
 
 N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function atomic_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     lock(h)
-    unsafe_push!(h, val, wgt)
+    push!(h, val, wgt)
     unlock(h)
     return nothing
 end
 
-@inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
     r = binedges(h)
     L = nbins(h)
     binidx = _edge_binindex(r, val)
@@ -145,7 +145,7 @@ array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A::AbstractVector, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
-    unsafe_push!.(h, A)
+    push!.(h, A)
     return h
 end
 function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_overflow)
@@ -154,7 +154,7 @@ function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_over
         return Hist1D(A, r; overflow=overflow)
     else
         h = Hist1D(Int; bins=edges, overflow=overflow)
-        unsafe_push!.(h, A)
+        push!.(h, A)
         return h
     end
 end
@@ -169,7 +169,7 @@ array. `wgts` should have the same `size` as `array`.
 function Hist1D(A, wgts::AbstractWeights, r::AbstractRange; overflow=_default_overflow)
     @boundscheck @assert size(A) == size(wgts)
     h = Hist1D(eltype(wgts); bins=r, overflow=overflow)
-    unsafe_push!.(h, A, wgts)
+    push!.(h, A, wgts)
     return h
 end
 function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector, overflow=_default_overflow)
@@ -178,7 +178,7 @@ function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector, overflow=_defau
         return Hist1D(A, wgts, r; overflow=overflow)
     else
         h = Hist1D(eltype(wgts); bins=edges, overflow=overflow)
-        unsafe_push!.(h, A, wgts)
+        push!.(h, A, wgts)
         return h
     end
 end
