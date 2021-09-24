@@ -88,8 +88,11 @@ end
 
     h1 = Hist2D((x,y), wgts, (rx, ry))
     h2 = Hist2D(Float64; bins=(rx, ry))
+    h3 = Hist2D(Float64; bins=(rx, ry))
     push!.(h2, x, y, wgts)
+    atomic_push!.(h3, x, y, wgts)
     @test h1 == h2
+    @test h1 == h3
 end
 
 
