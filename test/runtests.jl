@@ -88,8 +88,11 @@ end
 
     h1 = Hist2D((x,y), wgts, (rx, ry))
     h2 = Hist2D(Float64; bins=(rx, ry))
+    h3 = Hist2D(Float64; bins=(rx, ry))
     push!.(h2, x, y, wgts)
+    atomic_push!.(h3, x, y, wgts)
     @test h1 == h2
+    @test h1 == h3
 end
 
 
@@ -203,14 +206,14 @@ end
     @test maximum(h1.sumw2) == 0
 end
 
-@testset "Unsafe push" begin
+@testset "Atomic push" begin
     a = randn(10^5)
     h1 = Hist1D(a, -3:0.2:3)
     h2 = Hist1D(Int; bins=-3:0.2:3)
     h3 = Hist1D(Int; bins=-3:0.2:3)
     for i in a
         push!(h2, i)
-        FHist.unsafe_push!(h3, i)
+        atomic_push!(h3, i)
     end
     @test h1 == h2
     @test h1 == h3

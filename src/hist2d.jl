@@ -64,22 +64,22 @@ function Base.empty!(h::Hist2D{T,E}) where {T,E}
 end
 
 """
-    unsafe_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
     push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
+    atomic_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
 
 Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
-`unsafe_push!` is a faster version of `push!` that is not thread-safe.
+`atomic_push!` is a slower version of `push!` that is thread-safe.
 
 """
-@inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function atomic_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
     lock(h)
-    unsafe_push!(h, valx, valy, wgt)
+    push!(h, valx, valy, wgt)
     unlock(h)
     return nothing
 end
 
-@inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
     rx, ry = binedges(h)
     Lx, Ly = nbins(h)
     binidxx = _edge_binindex(rx, valx)
@@ -121,7 +121,7 @@ a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
     h = Hist2D(Int; bins=r, overflow=overflow)
-    unsafe_push!.(h, A[1], A[2])
+    push!.(h, A[1], A[2])
     return h
 end
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
@@ -131,7 +131,7 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVe
         return Hist2D(A, r; overflow=overflow)
     else
         h = Hist2D(Int; bins=edges, overflow=overflow)
-        unsafe_push!.(h, A[1], A[2])
+        push!.(h, A[1], A[2])
         return h
     end
 end
@@ -147,7 +147,7 @@ a 2-tuple of arrays of x, y values.
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
     @boundscheck @assert size(A[1]) == size(A[2]) == size(wgts)
     h = Hist2D(eltype(wgts); bins=r, overflow=overflow)
-    unsafe_push!.(h, A[1], A[2], wgts)
+    push!.(h, A[1], A[2], wgts)
     return h
 end
 function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
@@ -157,7 +157,7 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, 
         return Hist2D(A, wgts, r; overflow=overflow)
     else
         h = Hist2D(Int; bins=edges, overflow=overflow)
-        unsafe_push!.(h, A[1], A[2], wgts)
+        push!.(h, A[1], A[2], wgts)
         return h
     end
 end
@@ -379,9 +379,9 @@ function Base.show(io::IO, h::Hist2D)
     else
         ex, ey = binedges(h)
         nx, ny = nbins(h)
-        xscale = nx > 1 ? (maximum(ex)-minimum(ex))/(nx-1) : 0.0
-        yscale = ny > 1 ? (maximum(ey)-minimum(ey))/(ny-1) : 0.0
-        show(io, UnicodePlots.heatmap(bincounts(h)'; xscale=xscale, xoffset=minimum(ex), yscale=yscale, yoffset=minimum(ey)))
+        xfact = nx > 1 ? (maximum(ex)-minimum(ex))/(nx-1) : 0.0
+        yfact = ny > 1 ? (maximum(ey)-minimum(ey))/(ny-1) : 0.0
+        show(io, UnicodePlots.heatmap(bincounts(h)'; xfact=xfact, xoffset=minimum(ex), yfact=yfact, yoffset=minimum(ey)))
         println(io)
         println(io, "edges: ", binedges(h))
         println(io, "bin counts: ", bincounts(h))
