@@ -5,26 +5,28 @@ julia&gt; a = randn(1000);
 
 julia&gt; h1 = Hist1D(a)
                 ┌                              ┐
-   [-4.0, -3.0) ┤ 1
-   [-3.0, -2.0) ┤▇▇ 25
-   [-2.0, -1.0) ┤▇▇▇▇▇▇▇▇▇▇ 139
-   [-1.0,  0.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 341
-   [ 0.0,  1.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 347
-   [ 1.0,  2.0) ┤▇▇▇▇▇▇▇▇▇ 123
-   [ 2.0,  3.0) ┤▇▇ 23
-   [ 3.0,  4.0) ┤ 1
+   [-4.0, -3.0) ┤▎ 2
+   [-3.0, -2.0) ┤█▋ 24
+   [-2.0, -1.0) ┤████████▌ 124
+   [-1.0,  0.0) ┤█████████████████████████  367
+   [ 0.0,  1.0) ┤██████████████████████▍ 328
+   [ 1.0,  2.0) ┤████████▊ 129
+   [ 2.0,  3.0) ┤█▋ 25
+   [ 3.0,  4.0) ┤▏ 1
                 └                              ┘
 edges: -4.0:1.0:4.0
-bin counts: [1, 25, 139, 341, 347, 123, 23, 1]
+bin counts: [2, 24, 124, 367, 328, 129, 25, 1]
 total count: 1000
 
-julia&gt; h2 = Hist1D(Int; bins=-3:0.5:3)
+julia&gt; h2 = Hist1D(Int; bins=-4.0:1.0:4.0);
 
-julia&gt; Threads.@threads for i in a
-           push!(h2, i)
+julia&gt; push!.(h2, a)
+
+julia&gt; Threads.@threads for v in a
+           atomic_push!(h2, v) # thread-safe
        end
 
-julia&gt; h1 == h2
+julia&gt; h1+h1 == h2
 true</code></pre><p>Additionally, one can specify <code>overflow=true</code> when creating a histogram to clamp out-of-bounds values into  the edge bins.</p><pre><code class="language-julia hljs">julia&gt; Hist1D(rand(1000),0:0.2:0.9; overflow=true)
               ┌                              ┐
    [0.0, 0.2) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 218
@@ -147,4 +149,4 @@ julia&gt; h2 |&gt; rebin(10,5)
 
 edges: (-5.0:10.0:5.0, -5.0:5.0:5.0)
 bin counts: [4953 5047]
-total count: 10000</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Thursday 9 September 2021 22:35">Thursday 9 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+total count: 10000</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Friday 24 September 2021 11:39">Friday 24 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
