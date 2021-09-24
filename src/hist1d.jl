@@ -98,13 +98,12 @@ Adding one value at a time into histogram.
 N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-let (before,after) = Threads.nthreads()>1 ? (:(lock(h)), :(unlock(h))) : (nothing, nothing)
-    @eval @inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
-        $before
-        unsafe_push!(h, val, wgt)
-        $after
-        return nothing
-    end
+_lk, _ulk = Threads.nthreads()>1 ? (:(lock(h)), :(unlock(h))) : (:(), :())
+@eval @inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+    $_lk
+    unsafe_push!(h, val, wgt)
+    $_ulk
+    return nothing
 end
 
 @inline function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}

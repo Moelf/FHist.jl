@@ -72,13 +72,12 @@ Adding one value at a time into histogram.
 `unsafe_push!` is a faster version of `push!` that is not thread-safe.
 
 """
-let (before,after) = Threads.nthreads()>1 ? (:(lock(h)), :(unlock(h))) : (nothing, nothing)
-    @eval @inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
-        $before
-        unsafe_push!(h, valx, valy, wgt)
-        $after
-        return nothing
-    end
+_lk, _ulk = Threads.nthreads()>1 ? (:(lock(h)), :(unlock(h))) : (:(), :())
+@eval @inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+    $_lk
+    unsafe_push!(h, valx, valy, wgt)
+    $_ulk
+    return nothing
 end
 
 @inline function unsafe_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
