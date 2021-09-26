@@ -207,16 +207,24 @@ end
 end
 
 @testset "Atomic push" begin
+    if get(ENV, "CI", "false") == "true"
+        @test Threads.nthreads() > 1
+    end
     a = randn(10^5)
     h1 = Hist1D(a, -3:0.2:3)
     h2 = Hist1D(Int; bins=-3:0.2:3)
     h3 = Hist1D(Int; bins=-3:0.2:3)
+    h4 = Hist1D(Int; bins=-3:0.2:3)
     for i in a
         push!(h2, i)
         atomic_push!(h3, i)
     end
+    Threads.@threads for i in a
+        atomic_push!(h4, i)
+    end
     @test h1 == h2
     @test h1 == h3
+    @test h1 == h4
 end
 
 @testset "Broadcast" begin
