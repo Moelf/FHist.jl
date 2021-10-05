@@ -7,7 +7,7 @@ for op in (:+, :-, :*, :/)
     @eval ($op)(h1::Histogram, n::Real) = Histogram(h1.edges, broadcast($op, h1.weights, n))
 end
 
-for T in (:Hist1D,:Hist2D)
+for T in (:Hist1D,:Hist2D,:Hist3D)
     for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))
             h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("Edges don't match"))
