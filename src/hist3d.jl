@@ -221,34 +221,81 @@ function _svg(h::Hist3D)
                              end, points)
     flatstring(points) = join([points...;], " ")
 
-    front = [[x1,y1,z1],[x2,y1,z1],[x2,y2,z1],[x1,y2,z1],[x1,y1,z1]]
-    right = [[x2,y1,z2],[x2,y2,z2],[x2,y2,z1],[x2,y1,z1],[x2,y1,z2]]
-    top = [[x1,y2,z2],[x1,y2,z1],[x2,y2,z1],[x2,y2,z2],[x1,y2,z2]]
-
-    frontface = projection(front)
-    rightface = projection(right)
-    topface = projection(top)
-
+    frontface = projection([[x1,y1,z1],[x2,y1,z1],[x2,y2,z1],[x1,y2,z1],[x1,y1,z1]])
+    rightface = projection([[x2,y1,z2],[x2,y2,z2],[x2,y2,z1],[x2,y1,z1],[x2,y1,z2]])
+    topface = projection([[x1,y2,z2],[x1,y2,z1],[x2,y2,z1],[x2,y2,z2],[x1,y2,z2]])
+    backface = projection([[x1,y1,z2],[x2,y1,z2],[x2,y2,z2],[x1,y2,z2],[x1,y1,z2]])
+    bottomface = projection([[x1,y1,z2],[x1,y1,z1],[x2,y1,z1],[x2,y1,z2],[x1,y1,z2]])
     xaxisline = projection([[x1,y1,z1],[x2,y1,z1]])
     yaxisline = projection([[x1,y1,z1],[x1,y2,z1]])
     zaxisline = projection([[x1,y2,z1],[x1,y2,z2]])
 
-    (x1text, x2text), (y1text, y2text), (z1text, z2text) = map(x->(first(x),last(x)), binedges(h))
+    (xlow, xhigh), (ylow, yhigh), (zlow, zhigh) = extrema.(binedges(h))
+    function data_to_pixels(x, y, z)
+        xt = (x - xlow)/(xhigh - xlow)*(x2-x1)+x1
+        yt = (y - ylow)/(yhigh - ylow)*(y2-y1)+y1
+        zt = (z - zlow)/(zhigh - zlow)*(z2-z1)+z1
+        return xt, yt, zt
+    end
+
+    boxes = ""
+    if prod(nbins(h)) < 5000
+        counts = bincounts(h)
+        maxcount = maximum(counts)
+        counts = clamp.(counts, 0, maxcount)
+        ex, ey, ez = binedges(h)
+        sx, sy, sz = size(counts)
+        lines = String[]
+        for i in 1:sx, j in 1:sy, k in 1:sz
+            c = counts[i,j,k]
+            (c == 0) && continue
+            x1t,y1t,z1t = data_to_pixels(ex[i], ey[j], ez[k])
+            x2t,y2t,z2t = data_to_pixels(ex[i+1], ey[j+1], ez[k+1])
+            sf = c/maxcount # normalize box size by count relative to maximum
+            zf = 1 - (0.5*(ez[k]+ez[k+1])-zlow) / (zhigh-zlow)
+            opacity = 0.1 + 0.4*zf # more transparent as you go toward the rear
+            dx, dy, dz = x2t - x1t, y2t - y1t, z2t - z1t
+            x1t += dx*(1-sf)/2
+            x2t -= dx*(1-sf)/2
+            y1t += dy*(1-sf)/2
+            y2t -= dy*(1-sf)/2
+            z1t += dz*(1-sf)/2
+            z2t -= dz*(1-sf)/2
+            face1 = projection([[x1t,y1t,z1t],[x2t,y1t,z1t],[x2t,y2t,z1t],[x1t,y2t,z1t],[x1t,y1t,z1t]])
+            face2 = projection([[x2t,y1t,z2t],[x2t,y2t,z2t],[x2t,y2t,z1t],[x2t,y1t,z1t],[x2t,y1t,z2t]])
+            face3 = projection([[x1t,y2t,z2t],[x1t,y2t,z1t],[x2t,y2t,z1t],[x2t,y2t,z2t],[x1t,y2t,z2t]])
+            push!(lines, """<polyline points="$(flatstring(face1))" stroke="none" fill="#888" opacity="$(opacity)"/>\n""")
+            push!(lines, """<polyline points="$(flatstring(face2))" stroke="none" fill="#ccc" opacity="$(opacity)"/>\n""")
+            push!(lines, """<polyline points="$(flatstring(face3))" stroke="none" fill="#aaa" opacity="$(opacity)"/>\n""")
+        end
+        boxes = join(lines)
+    end
 
     c1, c2, c3 = "#1f77b4", "#d62728", "#2ca02c"
+    (x1text, x2text), (y1text, y2text), (z1text, z2text) = map(x->(first(x),last(x)), binedges(h))
     textstyle = """ font-size="85%" font-family="sans-serif" """
     return """
     <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="$(flatstring(backface))" stroke="gray" stroke-width="1" stroke-dasharray="4" fill="none"/>
+        <polyline points="$(flatstring(bottomface))" stroke="gray" stroke-width="1" stroke-dasharray="4" fill="none"/>
+        $(boxes)
         <polyline points="$(flatstring(frontface))" stroke="black" stroke-width="1" fill="none"/>
         <polyline points="$(flatstring(rightface))" stroke="black" stroke-width="1" fill="none"/>
         <polyline points="$(flatstring(topface))" stroke="black" stroke-width="1" fill="none"/>
+
         <polyline points="$(flatstring(xaxisline))" stroke="$(c1)" stroke-width="2" fill="none"/>
         <polyline points="$(flatstring(yaxisline))" stroke="$(c2)" stroke-width="2" fill="none"/>
         <polyline points="$(flatstring(zaxisline))" stroke="$(c3)" stroke-width="2" fill="none"/>
+
+        <text x="$(mean(xaxisline[1])+10)" y="$(xaxisline[1][2]+5)" fill="$(c1)" dominant-baseline="hanging" text-anchor="middle" $(textstyle)>x</text>
         <text x="$(xaxisline[1][1])" y="$(xaxisline[1][2]+5)" fill="$(c1)" dominant-baseline="hanging" text-anchor="left" $(textstyle)>$(x1text)</text>
         <text x="$(xaxisline[2][1])" y="$(xaxisline[2][2]+5)" fill="$(c1)" dominant-baseline="hanging" text-anchor="end" $(textstyle)>$(x2text)</text>
+
+        <text x="$(yaxisline[1][1]-5)" y="$(mean(yaxisline[1]))" fill="$(c2)" dominant-baseline="text-bottom" text-anchor="end" $(textstyle)>y</text>
         <text x="$(yaxisline[1][1]-5)" y="$(yaxisline[1][2])" fill="$(c2)" dominant-baseline="text-bottom" text-anchor="end" $(textstyle)>$(y1text)</text>
         <text x="$(yaxisline[2][1]-5)" y="$(yaxisline[2][2])" fill="$(c2)" dominant-baseline="hanging" text-anchor="end" $(textstyle)>$(y2text)</text>
+
+        <text x="$((zaxisline[1][1]+zaxisline[2][1])/2-10)" y="$((zaxisline[1][2]+zaxisline[2][2])/2)" fill="$(c3)" dominant-baseline="text-bottom" text-anchor="end" $(textstyle)>z</text>
         <text x="$(zaxisline[1][1]+15)" y="$(zaxisline[1][2]-4)" fill="$(c3)" dominant-baseline="text-bottom" text-anchor="start" $(textstyle)>$(z1text)</text>
         <text x="$(zaxisline[2][1]+5)" y="$(zaxisline[2][2]+3)" fill="$(c3)" dominant-baseline="hanging" text-anchor="start" $(textstyle)>$(z2text)</text>
     </svg>
