@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/Moelf/FHist.jl/workflows/CI/badge.svg)](https://github.com/Moelf/FHist.jl/actions)
 [![Codecov](https://codecov.io/gh/Moelf/FHist.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Moelf/FHist.jl)
 
-Fast, error-aware, and thread-safe 1&2D histograms that are also compatible with `StatsBase.Histogram`
+Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Quick Start
 ```julia
@@ -188,3 +188,12 @@ bin counts: [4953 5047]
 total count: 10000
 ```
 
+### 3D
+
+```julia
+julia> h3 = Hist3D((randn(10^4),randn(10^4),randn(10^4)), (-5:5,-5:5,-5:5))
+Hist3D{Int64}, edges=(-5:5, -5:5, -5:5), integral=10000
+
+julia> h3 |> project(:x) |> project(:x) |> std
+1.051590599996025
+```

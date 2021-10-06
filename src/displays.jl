@@ -155,7 +155,7 @@ function _svg(h::Hist3D)
             x2t,y2t,z2t = data_to_pixels(ex[i+1], ey[j+1], ez[k+1])
             sf = c/maxcount # normalize box size by count relative to maximum
             zf = 1 - (0.5*(ez[k]+ez[k+1])-zlow) / (zhigh-zlow)
-            opacity = 0.1 + 0.4*zf # more transparent as you go toward the rear
+            opacity = 0.3 + 0.3*zf # more transparent as you go toward the rear
             dx, dy, dz = x2t - x1t, y2t - y1t, z2t - z1t
             x1t += dx*(1-sf)/2
             x2t -= dx*(1-sf)/2

@@ -113,18 +113,18 @@ function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist2D(tuple, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist2D(tuple, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist2D(tuple, edges::NTuple{2,AbstractRange}; overflow)
+    Hist2D(tuple, edges::NTuple{2,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
     h = Hist2D(Int; bins=r, overflow=overflow)
     push!.(h, A[1], A[2])
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
@@ -137,20 +137,20 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVe
 end
 
 """
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist2D(tuple, wgts::AbstractWeights, edges::NTuple{2,AbstractRange}; overflow)
+    Hist2D(tuple, wgts::AbstractWeights, edges::NTuple{2,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values.
 `wgts` should have the same `size` as elements of `tuple`.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, wgts::AbstractWeights, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
     @boundscheck @assert size(A[1]) == size(A[2]) == size(wgts)
     h = Hist2D(eltype(wgts); bins=r, overflow=overflow)
     push!.(h, A[1], A[2], wgts)
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, wgts::AbstractWeights, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
@@ -163,13 +163,13 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, 
 end
 
 """
-    Hist2D(A::AbstractVector{T}; nbins::Tuple{Integer,Integer}, overflow) where T
-    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Tuple{Integer,Integer}, overflow) where T
+    Hist2D(A::AbstractVector{T}; nbins::NTuple{2,Integer}, overflow) where T
+    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{2,Integer}, overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
-        nbins::Tuple{Integer,Integer}=_sturges.(A),
+function Hist2D(A::NTuple{2,AbstractVector{T}};
+        nbins::NTuple{2,Integer}=_sturges.(A),
         overflow=_default_overflow,
     ) where {T}
     F = float(T)
@@ -182,8 +182,8 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
     return Hist2D(A, r; overflow=overflow)
 end
 
-function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWeights;
-        nbins::Tuple{Integer,Integer}=_sturges.(A),
+function Hist2D(A::NTuple{2,AbstractVector{T}}, wgts::AbstractWeights;
+        nbins::NTuple{2,Integer}=_sturges.(A),
         overflow=_default_overflow,
     ) where {T}
     F = float(T)

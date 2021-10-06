@@ -115,8 +115,8 @@ function Hist3D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist3D(tuple, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist3D(tuple, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist3D(tuple, edges::NTuple{3,AbstractRange}; overflow)
+    Hist3D(tuple, edges::NTuple{3,AbstractVector}; overflow)
 
 Create a `Hist3D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
@@ -140,17 +140,17 @@ function Hist3D(A::NTuple{3,AbstractVector}, edges::NTuple{3,AbstractVector}; ov
 end
 
 """
-    Hist3D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist3D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist3D(tuple, wgts::AbstractWeights, edges::NTuple{3,AbstractRange}; overflow)
+    Hist3D(tuple, wgts::AbstractWeights, edges::NTuple{3,AbstractVector}; overflow)
 
 Create a `Hist3D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values.
 `wgts` should have the same `size` as elements of `tuple`.
 """
 function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, r::NTuple{3,AbstractRange}; overflow=_default_overflow)
-    @boundscheck @assert size(A[1]) == size(A[2]) == size(wgts)
+    @boundscheck @assert size(A[1]) == size(A[2]) == size(A[3]) == size(wgts)
     h = Hist3D(eltype(wgts); bins=r, overflow=overflow)
-    push!.(h, A[1], A[2], wgts)
+    push!.(h, A[1], A[2], A[3], wgts)
     return h
 end
 function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, edges::NTuple{3,AbstractVector}; overflow=_default_overflow)
@@ -167,8 +167,8 @@ function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, edges::NTupl
 end
 
 """
-    Hist3D(A::AbstractVector{T}; nbins::Tuple{Integer,Integer}, overflow) where T
-    Hist3D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Tuple{Integer,Integer}, overflow) where T
+    Hist3D(A::AbstractVector{T}; nbins::NTuple{3,Integer}, overflow) where T
+    Hist3D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{3,Integer}, overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
@@ -231,6 +231,7 @@ end
 
 """
     project(h::Hist3D, axis::Symbol=:x)
+    project(axis::Symbol=:x) = h::Hist3D -> project(h, axis)
 
 Computes the `:x`/`:y`/`:z` axis projection of the 3D histogram by
 summing over the specified axis. Returns a `Hist2D`.
