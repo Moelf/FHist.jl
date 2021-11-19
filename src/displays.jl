@@ -29,12 +29,13 @@ function _svg(h::Hist1D)
     end
     pathstr = join(["$(x),$(y)" for (x,y) in points],",")
     zeroliney = hasneg ? frameheight*(1-zerolineyfrac) : frameheight*(1-paddingy)
+    xlow, xhigh = round.(extrema(_e), sigdigits=10)
     return """
     <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <polyline points="$(pathstr)" stroke="$(strokecolor)" fill="$(fill)" stroke-width="$(strokewidth)"/>
         <polyline points="$(framewidth*paddingx),$(zeroliney),$(framewidth*(1-paddingx)),$(zeroliney)" stroke="black" stroke-width="1"/>
-        <text x="$(framewidth*paddingx)" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="start" fill="black">$(minimum(_e))</text>
-        <text x="$(framewidth*(1-paddingx))" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="end" fill="black">$(maximum(_e))</text>
+        <text x="$(framewidth*paddingx)" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="start" fill="black">$(xlow)</text>
+        <text x="$(framewidth*(1-paddingx))" y="$(frameheight*(1-0.5*paddingy))" dominant-baseline="middle" text-anchor="end" fill="black">$(xhigh)</text>
     </svg>
     """
 end
