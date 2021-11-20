@@ -95,6 +95,37 @@ end
     @test h1 == h3
 end
 
+@testset "Hist3D" begin
+    x = rand(10)
+    y = rand(10)
+    z = rand(10)
+    h = Hist3D((x,y,z))
+    @test integral(h) == 10
+
+    rx, ry, rz = 0:0.1:1, 0:0.2:1, 0:0.5:1
+    wgts = weights(2*ones(length(x)))
+    h = Hist3D((x,y,z), wgts, (rx, ry, rz))
+    @test integral(h) == sum(wgts)
+    @test nbins(h) == (length(rx)-1, length(ry)-1, length(rz)-1)
+
+    @test bincenters(Hist3D((x,y,z), (0:1,0:1,0:1))) == ([0.5], [0.5], [0.5])
+    @test bincenters(Hist3D((x,y,z), wgts, (0:1,0:1,0:1))) == ([0.5], [0.5], [0.5])
+    @test nbins(Hist3D((x,y,z), ([0,0.5,1],[0,0.5,1],[0,0.5,1]))) == (2,2,2)
+    @test nbins(Hist3D((x,y,z), ([0,0.3,1],[0,0.3,1],[0,0.3,1]))) == (2,2,2)
+    @test nbins(Hist3D((x,y,z), wgts, ([0,0.5,1],[0,0.5,1],[0,0.5,1]))) == (2,2,2)
+    @test nbins(Hist3D((x,y,z), wgts, ([0,0.3,1],[0,0.3,1],[0,0.3,1]))) == (2,2,2)
+
+    @test integral(Hist3D((x,y,z), wgts, nbins=(5,5,5))) == sum(wgts)
+    @test integral(Hist3D((x,y,z), nbins=(5,5,5))) == length(x)
+
+    h1 = Hist3D((x,y,z), wgts, (rx, ry, rz))
+    h2 = Hist3D(Float64; bins=(rx, ry, rz))
+    h3 = Hist3D(Float64; bins=(rx, ry, rz))
+    push!.(h2, x, y, z, wgts)
+    atomic_push!.(h3, x, y, z, wgts)
+    @test h1 == h2
+    @test h1 == h3
+end
 
 @testset "Special bins" begin
     # integer values and integer binning
@@ -127,6 +158,10 @@ end
     h1 = Hist2D((a,a), wgts1, (0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
+
+    h1 = Hist3D((a,a,a), wgts1, (0:0.1:1,0:0.1:1,0:0.1:1))
+    @test integral(h1) ≈ sum(wgts1) atol=1e-8
+    @test integral(normalize(h1)) ≈ 1 atol=1e-8
 end
 
 
@@ -148,6 +183,9 @@ end
     @test h1.sumw2 == binerrors(identity, h1)
     @test sqrt.(h1.sumw2) == binerrors(h1)
     h1 = Hist2D((randn(100), randn(100)), (-3:3,-3:3))
+    @test h1.sumw2 == binerrors(identity, h1)
+    @test sqrt.(h1.sumw2) == binerrors(h1)
+    h1 = Hist3D((randn(100), randn(100), randn(100)), (-3:3,-3:3,-3:3))
     @test h1.sumw2 == binerrors(identity, h1)
     @test sqrt.(h1.sumw2) == binerrors(h1)
 
@@ -180,11 +218,15 @@ end
 
     h1 = Hist2D((randn(100), randn(100)), (-3:3,-3:3))
     cx, cy = bincenters(h1)
-    # (x,y) tuples of bin centers with same shape as counts
-    tbc = ((x,y)->(x,y)).(cx, cy')
-    f = x->lookup(h1,x...)
-    @test f.(tbc) == bincounts(h1)
+    points = [(x,y) for x in cx, y in cy]
+    @test map(p->lookup(h1,p...), points) == bincounts(h1)
     @test ismissing(lookup(h1, 10, 10))
+
+    h1 = Hist3D((randn(100), randn(100), randn(100)), (-3:3,-3:3,-3:3))
+    cx, cy, cz = bincenters(h1)
+    points = [(x,y,z) for x in cx, y in cy, z in cz]
+    @test map(p->lookup(h1,p...), points) == bincounts(h1)
+    @test ismissing(lookup(h1, 10, 10, 10))
 end
 
 @testset "Sample" begin
@@ -201,6 +243,11 @@ end
     @test h1.hist.edges[1] == r
 
     h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
+    empty!(h1)
+    @test maximum(h1.hist.weights) == 0
+    @test maximum(h1.sumw2) == 0
+
+    h1 = Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3))
     empty!(h1)
     @test maximum(h1.hist.weights) == 0
     @test maximum(h1.sumw2) == 0
@@ -292,6 +339,14 @@ end
         @test vec(h.sumw2) ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
     end
 
+    @testset "Hist3D" begin
+        h1 = Hist3D(([0.5,1.5,1.5,2.5], [0.5,0.5,0.5,0.5], [0.5,0.5,0.5,0.5]), (0:3,0:1,0:1))
+        h2 = Hist3D(([0.5,1.5,2.5,2.5], [0.5,0.5,0.5,0.5], [0.5,0.5,0.5,0.5]), (0:3,0:1,0:1))
+        h = h1/(h1+h2*2)
+        @test vec(h.hist.weights) ≈ [0.333333, 0.5, 0.2] atol=1e-6
+        @test vec(h.sumw2) ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
+    end
+
 end
 
 @testset "Merging" begin
@@ -301,6 +356,10 @@ end
 
     h1 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
     h2 = Hist2D((randn(10),randn(10)), (-3:3,-3:3))
+    @test merge(h1,h2) == h1+h2
+
+    h1 = Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3))
+    h2 = Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3))
     @test merge(h1,h2) == h1+h2
 end
 
@@ -356,6 +415,7 @@ end
 @testset "Projection" begin
     xs = rand(10)
     ys = rand(10)
+    zs = rand(10)
     r = 0:0.1:1
     h1x = Hist1D(xs, r)
     h1y = Hist1D(ys, r)
@@ -363,6 +423,9 @@ end
     @test project(h2, :x) == (h2 |> project(:x))
     @test h1x == project(h2, :x)
     @test h1y == project(h2, :y)
+    h3 = Hist3D((xs,ys,zs), (r,r,r))
+    @test (h3 |> project(:z)) == h2
+    @test (h3 |> project(:y) |> project(:x)) == (h2 |> project(:x))
 end
 
 @testset "Transpose" begin
@@ -375,8 +438,13 @@ end
 @testset "Repr" begin
     for h1 in (Hist1D(randn(100), -3:3),
                Hist2D((randn(10),randn(10)), (-3:3,-3:3)),
+               Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3)),
                profile(Hist2D((randn(10^5),randn(10^5)), (-3:0.1:3, -5:0.1:5)), :x))
-        @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+        if h1 isa Hist3D
+            @test all(occursin.(["Hist3D", "edges=", "integral="], repr(h1)))
+        else
+            @test all(occursin.(["edges:", "total count:", "bin counts:"], repr(h1)))
+        end
         @test !occursin("<svg", repr(h1))
         @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
         @test all(occursin.(["edges=", "integral=", "Hist"], repr(h1, context=:compact=>true)))
@@ -401,10 +469,12 @@ end
 @testset "Overflow" begin
     a = randn(10^5)
     b = randn(10^5)
+    c = randn(10^5)
     ϵ = 1e-6
     edges = -3:0.5:3
     aclip = clamp.(a,nextfloat(first(edges)),prevfloat(last(edges)))
     bclip = clamp.(b,nextfloat(first(edges)),prevfloat(last(edges)))
+    cclip = clamp.(c,nextfloat(first(edges)),prevfloat(last(edges)))
     sh1 = fit(Histogram, aclip, edges)
     h1 = Hist1D(a, edges, overflow=true)
     @test h1.hist == sh1
@@ -423,6 +493,11 @@ end
     @test integral(project(h2, :x)) == length(aclip)
     @test rebin(h2, 2).overflow == true
 
+    sh3 = fit(Histogram, (aclip,bclip,cclip), (edges,edges,edges))
+    h3 = Hist3D((a,b,c), (edges,edges,edges), overflow=true)
+    @test h3.hist == sh3
+    @test h3.sumw2 == bincounts(h3)
+    @test project(h3, :x).overflow == h3.overflow
 end
 
 @testset "Utils" begin

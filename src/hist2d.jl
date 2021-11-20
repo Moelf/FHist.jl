@@ -113,18 +113,18 @@ function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist2D(tuple, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist2D(tuple, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist2D(tuple, edges::NTuple{2,AbstractRange}; overflow)
+    Hist2D(tuple, edges::NTuple{2,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
     h = Hist2D(Int; bins=r, overflow=overflow)
     push!.(h, A[1], A[2])
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
@@ -137,20 +137,20 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, edges::Tuple{AbstractVe
 end
 
 """
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractRange,AbstractRange}; overflow)
-    Hist2D(tuple, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow)
+    Hist2D(tuple, wgts::AbstractWeights, edges::NTuple{2,AbstractRange}; overflow)
+    Hist2D(tuple, wgts::AbstractWeights, edges::NTuple{2,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values.
 `wgts` should have the same `size` as elements of `tuple`.
 """
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, r::Tuple{AbstractRange,AbstractRange}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, wgts::AbstractWeights, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
     @boundscheck @assert size(A[1]) == size(A[2]) == size(wgts)
     h = Hist2D(eltype(wgts); bins=r, overflow=overflow)
     push!.(h, A[1], A[2], wgts)
     return h
 end
-function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, edges::Tuple{AbstractVector,AbstractVector}; overflow=_default_overflow)
+function Hist2D(A::NTuple{2,AbstractVector}, wgts::AbstractWeights, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
@@ -163,13 +163,13 @@ function Hist2D(A::Tuple{AbstractVector,AbstractVector}, wgts::AbstractWeights, 
 end
 
 """
-    Hist2D(A::AbstractVector{T}; nbins::Tuple{Integer,Integer}, overflow) where T
-    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Tuple{Integer,Integer}, overflow) where T
+    Hist2D(A::AbstractVector{T}; nbins::NTuple{2,Integer}, overflow) where T
+    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{2,Integer}, overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
-function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
-        nbins::Tuple{Integer,Integer}=_sturges.(A),
+function Hist2D(A::NTuple{2,AbstractVector{T}};
+        nbins::NTuple{2,Integer}=_sturges.(A),
         overflow=_default_overflow,
     ) where {T}
     F = float(T)
@@ -182,8 +182,8 @@ function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}};
     return Hist2D(A, r; overflow=overflow)
 end
 
-function Hist2D(A::Tuple{AbstractVector{T},AbstractVector{T}}, wgts::AbstractWeights;
-        nbins::Tuple{Integer,Integer}=_sturges.(A),
+function Hist2D(A::NTuple{2,AbstractVector{T}}, wgts::AbstractWeights;
+        nbins::NTuple{2,Integer}=_sturges.(A),
         overflow=_default_overflow,
     ) where {T}
     F = float(T)
@@ -256,7 +256,6 @@ function project(h::Hist2D, axis::Symbol=:x)
     edges = axis == :x ? ex : ey
     return Hist1D(Histogram(edges, counts), sumw2; overflow=h.overflow)
 end
-project(axis::Symbol=:x) = h::Hist2D -> project(h, axis)
 
 """
     transpose(h::Hist2D)
@@ -303,104 +302,3 @@ function profile(h::Hist2D, axis::Symbol=:x)
     return Hist1D(Histogram(edges, val), sw2; overflow=h.overflow)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
-
-function _svg(h::Hist2D)
-    paddingx1, paddingy1 = 0.15, 0.15 # left, bottom
-    paddingx2, paddingy2 = 0.05, 0.05 # right, top
-    framewidth, frameheight = 250, 200
-
-    (xlow, xhigh), (ylow, yhigh) = extrema.(binedges(h))
-    function transform(x::Real, y::Real)
-        xfrac = (x - xlow)/(xhigh - xlow)
-        xdraw = xfrac * framewidth*(1-paddingx1-paddingx2) + framewidth*paddingx1
-        yfrac = (y - ylow)/(yhigh - ylow)
-        ydraw = frameheight - (yfrac * frameheight*(1-paddingy1-paddingy2) + frameheight*paddingy1)
-        return xdraw, ydraw
-    end
-
-    function colorscale(x::Real)
-        x = isnan(x) ? 0. : x
-        # x is fraction between [0,1]
-        # 6th deg polynomial fit to viridis color palette
-        # See https://gist.github.com/aminnj/dba84777718613d3a37291a43659feff
-        # to generate other color palettes. Black and white is trivial:
-        #   return 255 .* (1-x,1-x,1-x)
-        r = @evalpoly(x, 0.2731, 0.1270, -0.3617, -4.7456, 6.7092, 4.2491, -5.2678)
-        g = @evalpoly(x, 0.0039, 1.3810, 0.3969, -6.4246, 15.3241, -14.7345, 4.9587)
-        b = @evalpoly(x, 0.3305, 1.3726, 0.3948, -20.7431, 59.7287, -68.3565, 27.4051)
-        return round.(Int, 255 .* (r,g,b))
-    end
-
-    counts = bincounts(h)
-    mincount, maxcount = extrema(counts)
-    counts = clamp.(counts, 0, maxcount)
-    ex, ey = binedges(h)
-    sx, sy = size(counts)
-    rectlines = String[]
-    textstyle = """ dominant-baseline="middle" text-anchor="middle" font-size="85%" font-family="sans-serif" """
-    for i in 1:sx, j in 1:sy
-        tx1, ty1 = ceil.(Int, transform(ex[i], ey[j+1]))
-        tx2, ty2 = ceil.(Int, transform(ex[i+1], ey[j]))
-        tw, th = tx2-tx1, ty2-ty1
-        c = counts[i,j]
-        (c == 0) && continue
-        r,g,b = colorscale((c-mincount)/(maxcount-mincount))
-        rcolor = "rgb($(r),$(g),$(b))"
-        line = """<rect x="$(tx1)" y="$(ty1)" width="$(tw)" height="$(th)" fill="$(rcolor)" stroke="none" />"""
-        if (sx <= 15) && (sy <= 15)
-            tcolor = ((0.299*r + 0.587*g + 0.114*b) < 0.60*255) ? "#fff" : "#000"
-            line = """<g>$(line)<text class="svgplotlabels" x="$(tx1+tw/2)" y="$(ty1+th/2)" fill="$(tcolor)" $(textstyle)>$(c)</text></g>"""
-        end
-        push!(rectlines, line * "\n")
-    end
-
-    return """
-    <svg width="$(framewidth)" height="$(frameheight)" version="1.1" xmlns="http://www.w3.org/2000/svg" class="svgplot">
-        <style>
-          .svgplotlabels { display: none; }
-          .svgplot g:hover text { display: block; cursor: default; }
-        </style>
-        $(join(rectlines))
-        <rect x="$(round(Int,framewidth*paddingx1))" y="$(round(Int,frameheight*paddingy2))" width="$(round(Int,framewidth*(1-paddingx1-paddingx2)))" height="$(frameheight*(1-paddingy1-paddingy2))" fill="none" stroke="#000" stroke-width="1" />
-        <text x="$(framewidth*paddingx1)" y="$(frameheight*(1-0.5*paddingy1))" fill="black" $(textstyle)>$(minimum(ex))</text>
-        <text x="$(framewidth*(1-paddingx2))" y="$(frameheight*(1-0.5*paddingy1))" fill="black" $(textstyle)>$(maximum(ex))</text>
-        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*(1-paddingy1))" fill="black" $(textstyle)>$(minimum(ey))</text>
-        <text x="$(framewidth*0.5*paddingx1)" y="$(frameheight*paddingy2)" fill="black" $(textstyle)>$(maximum(ey))</text>
-    </svg>
-    """
-end
-
-function Base.show(io::IO, h::Hist2D)
-    compact = get(io, :compact, false)
-    if compact
-        print(io, "Hist2D{$(eltype(bincounts(h)))}, ")
-        print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
-        print(io, "integral=$(integral(h))")
-    else
-        ex, ey = binedges(h)
-        nx, ny = nbins(h)
-        xfact = nx > 1 ? (maximum(ex)-minimum(ex))/(nx-1) : 0.0
-        yfact = ny > 1 ? (maximum(ey)-minimum(ey))/(ny-1) : 0.0
-        show(io, UnicodePlots.heatmap(bincounts(h)'; xfact=xfact, xoffset=minimum(ex), yfact=yfact, yoffset=minimum(ey)))
-        println(io)
-        println(io, "edges: ", binedges(h))
-        println(io, "bin counts: ", bincounts(h))
-        print(io, "total count: ", integral(h))
-    end
-end
-
-function Base.show(io::IO, m::MIME"text/html", h::Hist2D)
-    println(io, """
-    <div style="display: flex;">
-        <div style="float:left; margin:5px">$(_svg(h))</div>
-        <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
-            <ul>
-                <li>edges: $(repr(binedges(h), context=:limit => true))</li>
-                <li>bin counts: $(repr(bincounts(h), context=:limit => true))</li>
-                <li>maximum count: $(maximum(bincounts(h)))</li>
-                <li>total count: $(integral(h))</li>
-            </ul>
-        </div>
-    </div>
-    """)
-end
