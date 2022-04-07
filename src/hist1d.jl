@@ -125,7 +125,7 @@ end
 Base.broadcastable(h::Hist1D) = Ref(h)
 
 """
-    Hist1D(elT::Type{T}=Float64; binedges, overflow) where {T}
+    Hist1D(elT::Type{T}=Float64; bins, overflow) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref). Default overflow behavior (`false`)
