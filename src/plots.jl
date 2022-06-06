@@ -1,3 +1,5 @@
+using RecipesBase
+
 @recipe function f(h::Hist1D)
     seriestype --> :barbins
     x:=h.hist.edges[1]
