@@ -1,6 +1,6 @@
-import MakieCore
+using .Makie
 
-MakieCore.@recipe(StackedHist, hs) do scene
+@recipe(StackedHist, hs) do scene
     Theme(
         line_color = :red
     )
@@ -22,9 +22,9 @@ function Makie.plot!(myplot::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     )
     myplot
 end
-# function Makie.stairs(h::Hist1D; baseline = 0.0, kwargs...)
-#     Makie.stairs(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
-# end
+function Makie.stairs(h::Hist1D; baseline = 0.0, kwargs...)
+    Makie.stairs(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
+end
 function Makie.stairs!(h::Hist1D; baseline = 0.0, kwargs...)
     Makie.stairs!(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
 end
