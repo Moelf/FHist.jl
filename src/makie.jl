@@ -1,4 +1,6 @@
-Makie.@recipe(StackedHist, hs) do scene
+import MakieCore
+
+MakieCore.@recipe(StackedHist, hs) do scene
     Theme(
         line_color = :red
     )
@@ -27,7 +29,6 @@ function Makie.stairs!(h::Hist1D; baseline = 0.0, kwargs...)
     Makie.stairs!(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
 end
 
-# import MakieCore
 # TODO find the correct way of doing this
 # MakieCore.plottype(::Hist1D) = Makie.BarPlot
 # function MakieCore.convert_arguments(P::Type{<:MakieCore.AbstractPlot}, h::Hist1D)
