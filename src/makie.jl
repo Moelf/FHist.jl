@@ -1,27 +1,30 @@
 using .Makie
 
-@recipe(StackedHist, hs) do scene
+@recipe(StackedHist) do scene
     Theme(
         line_color = :red
     )
 end
 
-function Makie.plot!(myplot::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
+function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}}; kwargs...)
+    hs = input[1][]
     Nhist = length(hs)
     _e = binedges(first(hs))
-    @assert all(==(_e), binedges.(hs))
+    all(==(_e), binedges.(hs)) || throw("binedges must match in stacked histogram")
     
     centers = bincenters(first(hs))
+    Nbin = length(centers)
     xs = repeat(centers; outer=Nhist)
     ys = mapreduce(bincounts, vcat, hs)
-    grp = repeat(eachindex(hs); outer=length(centers))
+    grp = repeat(eachindex(hs); inner=Nbin)
     
-    Makie.barplot!(myplot, xs, ys,
+    Makie.barplot!(input, xs, ys,
         stack = grp,
         color = grp; kwargs...
     )
-    myplot
+    input
 end
+
 function Makie.stairs(h::Hist1D; baseline = 0.0, kwargs...)
     Makie.stairs(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
 end
