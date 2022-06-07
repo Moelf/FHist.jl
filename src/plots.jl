@@ -1,7 +1,11 @@
-using RecipesBase
+using RecipesBase, Statistics
 
 @recipe function f(h::Hist1D)
     seriestype --> :barbins
+    I = round(integral(h); sigdigits= 2)
+    M = round(mean(h); sigdigits= 2)
+    S = round(std(h); sigdigits= 2)
+    label := "Integral = $I\nMean = $M\nStd Dev = $S\nOverflow = $(h.overflow)"
     x:=h.hist.edges[1]
     y:=h.hist.weights
     ()
