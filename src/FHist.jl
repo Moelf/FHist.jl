@@ -8,7 +8,7 @@ export Hist2D, project, profile, transpose
 
 export Hist3D
 
-using StatsBase, UnicodePlots, Statistics
+using StatsBase, UnicodePlots, Statistics, Measurements
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
