@@ -38,17 +38,14 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     input
 end
 
-function Makie.stairs(h::Hist1D; baseline = 0.0, kwargs...)
-    Makie.stairs(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
-end
-function Makie.stairs!(h::Hist1D; baseline = 0.0, kwargs...)
-    Makie.stairs!(binedges(h), vcat(baseline, bincounts(h)); kwargs...)
+Makie.MakieCore.plottype(::Hist1D) = Hist
+Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D) = convert_arguments(P, binedges(h), vcat(0.0, bincounts(h)))
+Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
+function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
+    h = input[1][]
+    Makie.barplot!(input, h; gap = 0)
+    input
 end
 
-# TODO find the correct way of doing this
-# MakieCore.plottype(::Hist1D) = Makie.BarPlot
-# function MakieCore.convert_arguments(P::Type{<:MakieCore.AbstractPlot}, h::Hist1D)
-#     (Makie.Point2f.(bincenters(h), bincounts(h)), )
-# end
-
-# MakieCore.plottype(::Hist2D) = Heatmap
+# Makie.MakieCore.plottype(::Hist2D) = Heatmap
+# MakieCore.convert_arguments(P::Type{<:Heatmap}, h::Hist1D) = convert_arguments(p, ...)
