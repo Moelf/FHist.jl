@@ -1,12 +1,17 @@
 using .Makie
 
+"""
+    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true)
+
+Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar in the plot.
+"""
 @recipe(StackedHist) do scene
-    Theme(
-        line_color = :red
+    Attributes(
+        errors = true
     )
 end
 
-function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}}; errors = true, kwargs...)
+function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     hs = input[1][]
     Nhist = length(hs)
     _e = binedges(first(hs))
@@ -17,23 +22,20 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}}; erro
     xs = repeat(centers; outer=Nhist)
     ys = mapreduce(bincounts, vcat, hs)
     grp = repeat(eachindex(hs); inner=Nbin)
-    mes = mapreduce(h->(bincounts(h), binerrors(h)), ((c1, e1), (c2, e2)) -> (c1 .± e1) + (c2 .± e2), hs)
+    mes = mapreduce(h -> bincounts(h) .± binerrors(h), (.+), hs)
     totals = Measurements.value.(mes)
     errs = Measurements.uncertainty.(mes)
     
-    
-    Makie.barplot!(input, xs, ys,
+    Makie.barplot!(input, xs, ys;
         stack = grp,
-        color = grp; kwargs...
+        color = grp,
+        gap = 0
     )
     
-    if errors
-        errorbars!(input, centers, totals,errs/2,
-            color = range(0, 1, length = length(xs)),
-            whiskerwidth = 10)
+    if input.errors[]
+        errorbars!(input, centers, totals, errs/2, whiskerwidth = 15)
     end
     input
-        
 end
 
 function Makie.stairs(h::Hist1D; baseline = 0.0, kwargs...)
