@@ -13,7 +13,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
             h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("Edges don't match"))
             _f(counts) = any(x -> x<0, counts)
             _hist = ($op)(h1.hist,  h2.hist)
-            ($T)(_hist, h1.sumw2 + h2.sumw2)
+            ($T)(_hist, h1.sumw2 + h2.sumw2, nentries(h1) + nentries(h2))
         end
     end
 

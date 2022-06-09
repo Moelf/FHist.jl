@@ -304,6 +304,7 @@ end
         h = h1 + h2
         @test h.hist.weights == [2.0, 3.0, 3.0]
         @test h.sumw2 == [2.0, 3.0, 3.0]
+        @test nentries(h) == nentries(h1) + nentries(h2)
 
         h = h1 - h2
         @test h.hist.weights == [0.0, 1.0, -1.0]

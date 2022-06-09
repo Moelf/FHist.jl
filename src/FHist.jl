@@ -23,8 +23,8 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         hlock::SpinLock
         overflow::Bool
         nentries::Ref{Int}
-        function $H(h::Histogram{T,$N,E}, sw2 = copy(h.weights); overflow=_default_overflow) where {T,E}
-            return new{T,E}(h, sw2, SpinLock(), overflow, Ref(0))
+        function $H(h::Histogram{T,$N,E}, sw2 = copy(h.weights), nentries=0; overflow=_default_overflow) where {T,E}
+            return new{T,E}(h, sw2, SpinLock(), overflow, Ref(nentries))
         end
     end
 end
