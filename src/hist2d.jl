@@ -84,6 +84,7 @@ end
     Lx, Ly = nbins(h)
     binidxx = _edge_binindex(rx, valx)
     binidxy = _edge_binindex(ry, valy)
+    h.nentries[] += 1
     if h.overflow
         binidxx = clamp(binidxx, 1, Lx)
         binidxy = clamp(binidxy, 1, Ly)

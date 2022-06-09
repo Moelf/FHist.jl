@@ -4,10 +4,10 @@ using Test
 @testset "The basics" begin
     a = rand(10^3)
     sth1 = fit(Histogram, a)
-    h1sqrt = Hist1D(sth1)
     h1p = Hist1D(sth1)
-    @test h1sqrt.hist == sth1
     @test h1p.hist == sth1
+    # broken but we can't recover anyway
+    @test nentries(h1p)==1000 broken=true
 
     h1 = Hist1D(a)
     sth1 = fit(Histogram, a)
@@ -20,6 +20,7 @@ end
     r2 = collect(r1)
     for r in (r1,r2)
         h1 = Hist1D(a, r)
+        @test nentries(h1) == 10^5
         sth1 = fit(Histogram, a, r)
         @test all(h1.hist.weights .≈ sth1.weights)
     end
@@ -30,6 +31,7 @@ end
     r1 = [0, 0.3, 0.4, 0.8, 1]
     h1 = Hist1D(a, r1)
     sth1 = fit(Histogram, a, r1)
+    @test nentries(h1) == 10^5
     @test all(h1.hist.weights .≈ sth1.weights)
 end
 
@@ -38,6 +40,7 @@ end
     r1 = [0, 0.3, 0.4, 0.8, 1]
     h1 = Hist1D(a, r1)
     h2 = Hist1D(Int; bins = r1)
+    @test nentries(h1) == 10^5
     sth1 = fit(Histogram, a, r1)
     for ele in a
         push!(h2, ele)
@@ -56,6 +59,8 @@ end
 
     h1 = Hist1D(a)
     h2 = Hist1D(a, wgts1)
+    @test nentries(h1) == 10^5
+    @test nentries(h2) == 10^5
     @test h1==h2
     for r in (r1,r2)
         h1 = Hist1D(a, weights(wgts), r)
@@ -69,10 +74,12 @@ end
     y = rand(10)
     h = Hist2D((x,y))
     @test integral(h) == 10
+    @test nentries(h) == 10
 
     rx, ry = 0:0.1:1, 0:0.2:1
     wgts = weights(2*ones(length(x)))
     h = Hist2D((x,y), wgts, (rx, ry))
+    @test nentries(h) == 10
     @test integral(h) == sum(wgts)
     @test nbins(h) == (length(rx)-1, length(ry)-1)
 
@@ -101,10 +108,12 @@ end
     z = rand(10)
     h = Hist3D((x,y,z))
     @test integral(h) == 10
+    @test nentries(h) == 10
 
     rx, ry, rz = 0:0.1:1, 0:0.2:1, 0:0.5:1
     wgts = weights(2*ones(length(x)))
     h = Hist3D((x,y,z), wgts, (rx, ry, rz))
+    @test nentries(h) == 10
     @test integral(h) == sum(wgts)
     @test nbins(h) == (length(rx)-1, length(ry)-1, length(rz)-1)
 

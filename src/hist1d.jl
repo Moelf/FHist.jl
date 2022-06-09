@@ -109,6 +109,7 @@ end
     r = binedges(h)
     L = nbins(h)
     binidx = _edge_binindex(r, val)
+    h.nentries[] += 1
     if h.overflow
         binidx = clamp(binidx, 1, L)
         @inbounds h.hist.weights[binidx] += wgt

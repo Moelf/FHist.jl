@@ -63,9 +63,28 @@ Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D) = convert_arguments(P, bin
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     h = input[1][]
-    L = haskey(input, :label) ? input[:label][] : nothing
-    Makie.barplot!(input, h; gap = 0, label = L)
+    label = haskey(input, :label) ? input[:label][] : nothing
+    C = input[:color][]
+    # this is a hack, it seems always has non-empty color
+    color = C == Makie.RGBA{Float32}(0.0f0,0.0f0,0.0f0,0.6f0) ? Makie.RGB(0/255, 114/255, 178/255) : C
+    Makie.barplot!(input, h; gap = 0, label, color=color)
     input
+end
+
+function statbox!(fig::Makie.FigureAxisPlot, h)
+    f, _, _ = fig
+    statbox!(f, h)
+    fig
+end
+
+function statbox!(fig::Makie.Figure, h)
+    N = nentries(h)
+    M = round(mean(h); sigdigits= 2)
+    S = round(std(h); sigdigits= 2)
+    labels = ["Entries = $N", "Mean = $M", "Std Dev = $S", "Overflow = $(h.overflow)" ]
+    elements = fill(PolyElement(polycolor = :transparent), 4)
+    Legend(fig[1,2], elements, labels)
+    fig
 end
 
 Makie.MakieCore.plottype(::Hist2D) = Heatmap
