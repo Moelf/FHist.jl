@@ -68,5 +68,5 @@ function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     input
 end
 
-# Makie.MakieCore.plottype(::Hist2D) = Heatmap
-# MakieCore.convert_arguments(P::Type{<:Heatmap}, h::Hist1D) = convert_arguments(p, ...)
+Makie.MakieCore.plottype(::Hist2D) = Heatmap
+Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D) = convert_arguments(P, bincenters(h2d)..., bincounts(h2d))
