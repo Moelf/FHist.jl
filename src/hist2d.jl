@@ -197,6 +197,14 @@ function Hist2D(A::NTuple{2,AbstractVector{T}}, wgts::AbstractWeights;
     return Hist2D(A, wgts, r; overflow=overflow)
 end
 
+for op in (:mean, :std, :median)
+    @eval function Statistics.$op(h::Hist2D)
+        px = project(h, :x)
+        py = project(h, :y)
+        return $op(px), $op(py)
+    end
+end
+
 """
     function lookup(h::Hist2D, x, y)
 
@@ -279,7 +287,7 @@ calculating the weighted mean over the other axis.
 `profile(h, :x)` will return a `Hist1D` with the y-axis edges of `h`.
 """
 function profile(h::Hist2D, axis::Symbol=:x)
-    @assert axis ∈ (:x, :y)
+    axis ∈ (:x, :y) || throw("axis must be ∈ `(:x, :y)`, got $axis")
     if axis == :y
         h = transpose(h)
     end

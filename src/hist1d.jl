@@ -211,13 +211,15 @@ end
 
 
 """
-    Statistics.mean(h::Hist1D)
-    Statistics.std(h::Hist1D)
-    Statistics.median(h::Hist1D)
+    Statistics.mean(h)
+    Statistics.std(h)
+    Statistics.median(h)
     Statistics.quantile(h::Hist1D, p)
 
 Compute statistical quantities based on the bin centers weighted
 by the bin counts.
+
+When the histogram is `Hist2D`, return tuple instead, e.g `(mean(project(h, :x)), mean(project(h, :y)))` etc.
 """
 Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
 Statistics.std(h::Hist1D) = sqrt(Statistics.var(bincenters(h), Weights(bincounts(h))))

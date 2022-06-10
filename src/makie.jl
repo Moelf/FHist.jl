@@ -1,5 +1,15 @@
 using .Makie
 
+"""
+
+## Example
+```
+with_theme(ATLASTHEME) do
+    h1 = Hist1D(randn(10^4))
+    hist(h1; label="atlas style histogram")
+end
+```
+"""
 const ATLASTHEME = 
 Theme(
       Axis = (
@@ -74,6 +84,7 @@ end
 
 Makie.MakieCore.plottype(::Hist1D) = Hist
 Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D) = convert_arguments(P, binedges(h), vcat(0.0, bincounts(h)))
+Makie.convert_arguments(P::Type{<:Errorbars}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h), binerrors(h)/2)
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     h = input[1][]
@@ -85,19 +96,39 @@ function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     input
 end
 
-function statbox!(fig::Makie.FigureAxisPlot, h)
+"""
+    statbox!(fig::Uiont{Figure, AxisFigurePlot}, h::Union{Hist1D, Hist2D}; position = (1,2))
+
+Add a CERN ROOT style statbox to an existing figure.
+
+##Example
+```julia
+h1 = Hist1D(randn(10^4))
+afp = hist(h1; label="a")
+statbox!(afp, h1)
+```
+"""
+function statbox!(fig::Makie.FigureAxisPlot, h; position = (1,2))
     f, _, _ = fig
-    statbox!(f, h)
+    statbox!(f, h; position)
     fig
 end
-
-function statbox!(fig::Makie.Figure, h)
+function statbox!(fig::Makie.Figure, h::Hist1D; position = (1,2))
     N = nentries(h)
     M = round(mean(h); sigdigits= 2)
     S = round(std(h); sigdigits= 2)
     labels = ["Entries = $N", "Mean = $M", "Std Dev = $S", "Overflow = $(h.overflow)" ]
     elements = fill(PolyElement(polycolor = :transparent), 4)
-    Legend(fig[1,2], elements, labels)
+    Legend(getindex(fig, position...), elements, labels)
+    fig
+end
+function statbox!(fig::Makie.Figure, h::Hist2D; position = (1,2))
+    N = nentries(h)
+    xM, yM = round.(mean(h); sigdigits= 2)
+    xS, yS = round.(std(h); sigdigits= 2)
+    labels = ["Entries = $N", "Mean x = $xM", "Mean y = $yM", "Std Dev x = $xS", "Std Dev y = $yS", "Overflow = $(h.overflow)" ]
+    elements = fill(PolyElement(polycolor = :transparent), 6)
+    Legend(getindex(fig, position...), elements, labels)
     fig
 end
 
