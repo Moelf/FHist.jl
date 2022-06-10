@@ -215,7 +215,7 @@ function Base.show(io::IO, h::Hist1D)
         if (nbins(h) < 50) && all(bincounts(h) .>= 0)
             _e = binedges(h)
             _h = Histogram(float.(_e), bincounts(h))
-            show(io, UnicodePlots.horizontal_histogram(_h; width=30, xlabel=""))
+            show(io, UnicodePlots.histogram(_h; width=30, xlabel=""))
         end
         println(io)
         println(io, "edges: ", binedges(h))
