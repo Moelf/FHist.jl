@@ -6,7 +6,7 @@ export atomic_push!
 
 export Hist2D, project, profile, transpose
 
-export Hist3D, statbox!
+export Hist3D, statbox!, ATLASTHEME
 
 using StatsBase, UnicodePlots, Statistics, Measurements
 import LinearAlgebra: normalize, normalize!

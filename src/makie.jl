@@ -1,5 +1,19 @@
 using .Makie
 
+const ATLASTHEME = 
+Theme(
+      Axis = (
+              xtickalign=1, ytickalign=1, 
+              xminortickalign=1, yminortickalign=1,
+              xticksize=10, yticksize=10,
+              xminorticksize=6, yminorticksize=6,
+              xgridvisible = false, ygridvisible = false,
+              xminorticksvisible = true, yminorticksvisible = true,
+              xticks = WilkinsonTicks(6), yticks = WilkinsonTicks(6),
+              xminorticks = IntervalsBetween(5), yminorticks = IntervalsBetween(5),
+             )
+     )
+
 """
     stackedhist(hs:AbstractVector{<:Hist1D}; errors=true, color=Makie.wong_colors())
 
