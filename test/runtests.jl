@@ -7,7 +7,7 @@ using Test
     h1p = Hist1D(sth1)
     @test h1p.hist == sth1
     # broken but we can't recover anyway
-    @test nentries(h1p)==1000 broken=true
+    @test_broken nentries(h1p)==1000
 
     h1 = Hist1D(a)
     sth1 = fit(Histogram, a)
