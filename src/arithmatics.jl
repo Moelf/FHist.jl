@@ -11,9 +11,10 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
     for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))
             h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("Edges don't match"))
+            h1.overflow != h2.overflow && throw("Can't $op histograms with different overflow settings.")
             _f(counts) = any(x -> x<0, counts)
             _hist = ($op)(h1.hist,  h2.hist)
-            ($T)(_hist, h1.sumw2 + h2.sumw2, nentries(h1) + nentries(h2))
+            ($T)(_hist, h1.sumw2 + h2.sumw2, nentries(h1) + nentries(h2); overflow = h1.overflow)
         end
     end
 
