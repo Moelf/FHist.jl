@@ -19,9 +19,15 @@ Theme(
               xminorticksize=6, yminorticksize=6,
               xgridvisible = false, ygridvisible = false,
               xminorticksvisible = true, yminorticksvisible = true,
-              xticks = WilkinsonTicks(6), yticks = WilkinsonTicks(6),
+              xticks = WilkinsonTicks(6; k_min=4), yticks = WilkinsonTicks(7; k_min=4),
+              limits = (nothing, nothing, 0, nothing), 
               xminorticks = IntervalsBetween(5), yminorticks = IntervalsBetween(5),
-             )
+             ),
+      Colorbar = (
+                  colormap = :haline,
+                  highclip = :red,
+                  lowclip = :black
+                 )
      )
 
 """
@@ -44,12 +50,13 @@ title = "Processes"
 Legend(fig[1,2], elements, labels, title)
 fig
 """
-@recipe(StackedHist) do scene
+@recipe(StackedHist) do scene 
     Attributes(
         errors = true,
         color = Makie.wong_colors(),
         labels = nothing,
-        whiskerwidth = 15
+        whiskerwidth = 10,
+        gap = 0
     )
 end
 
@@ -82,10 +89,39 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     input
 end
 
+@recipe(RatioHist) do scene 
+    Attributes(
+        errors = true,
+        whiskerwidth = 10,
+    )
+end
+
+function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D}})
+    hratio = input[1][]
+    xs = bincenters(hratio)
+    ys = bincounts(hratio)
+
+    scatter!(input, xs, ys)
+    if input[:errors][]
+        errorbars!(input, xs, ys, binerrors(hratio); whiskerwidth=input[:whiskerwidth][])
+    end
+    hlines!(input, 1; color=RGBf(0.2,0.2,0.2), linestyle=:dashdot)
+    input
+end
+function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D, <:Hist1D}})
+    hratio = input[1][] / input[2][]
+    ratiohist!(input, hratio)
+end
+
 Makie.MakieCore.plottype(::Hist1D) = Hist
-Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D) = convert_arguments(P, binedges(h), vcat(0.0, bincounts(h)))
-Makie.convert_arguments(P::Type{<:Errorbars}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h), binerrors(h)/2)
+function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
+    edges = binedges(h)
+    phantomedge = 2*edges[end] - edges[end-1] # to bring step back to baseline
+    convert_arguments(P, vcat(edges, phantomedge), vcat(0.0, bincounts(h), 0.0))
+end
+Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
+Makie.convert_arguments(P::Type{<:Errorbars}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h), binerrors(h)/2)
 function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     h = input[1][]
     label = haskey(input, :label) ? input[:label][] : nothing
@@ -137,4 +173,32 @@ function Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D)
     counts = bincounts(h2d)
     z = zero(eltype(counts))
     convert_arguments(P, bincenters(h2d)..., replace(counts, z => NaN))
+end
+
+"""
+    collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position::Union{Symbol, Point2f} = :lt)
+
+Inject collaboration text such as `ATLAS/CMS Preliminary` into the plot. The position `Point2f` is in relative x and y.
+
+## Example
+```
+h1 = Hist1D(randn(10^4))
+with_theme(ATLASTHEME) do
+    fig, ax, p = stairs(h1)
+    errorbars!(h1)
+    collabtext!(ax)
+    fig
+end
+"""
+function collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
+    relative_projection = Makie.camrelative(axis.scene);
+    pos = if position isa Symbol
+        length(String(position)) != 2 && throw("`position` must be length == 2, support `lt` or `rt`")
+        position == :lt ? Point2f(0.04, 0.94) : Point2f(0.70, 0.94)
+    else
+        position
+    end
+    text!(relative_projection, "$colabname $stage", position = pos, 
+        font=[fill("TeX Gyre Heros Bold Italic Makie", length(colabname)); fill("TeX Gyre Heros Makie", length(stage)+1)]
+    )
 end
