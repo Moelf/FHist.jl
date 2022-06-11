@@ -5,7 +5,6 @@ version = "0.7.2"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
@@ -14,7 +13,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
+Measurements = "^2"
 RecipesBase = "^1"
+Requires = "^1"
 StatsBase = "^0.33"
 UnicodePlots = "^2.4.1"
 julia = "^1.3"
