@@ -5,6 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 4cf8f502-eba2-11ec-275f-3f1858e4c2e6
+# hideall
 let
     docs_dir = dirname(dirname(@__DIR__))
     pkg_dir = dirname(docs_dir)
