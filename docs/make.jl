@@ -1,4 +1,16 @@
 using Documenter, FHist
+using Pluto: Configuration.CompilerOptions
+using PlutoStaticHTML
+
+notebooks = [
+    "Makie Plotting",
+]
+
+include("build.jl")
+
+build()
+md_files = markdown_files()
+T = [t => f for (t, f) in zip(notebooks, md_files)]
 
 makedocs(;
     modules=[FHist],
@@ -9,6 +21,7 @@ makedocs(;
     pages=[
         "Introduction" => "index.md",
         "APIs" => "api.md",
+        "Tutorials" => T,
     ],
     repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
     sitename="FHist.jl",
