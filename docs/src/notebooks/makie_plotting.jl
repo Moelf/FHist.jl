@@ -52,7 +52,7 @@ end
 
 # ╔═╡ 3b4d5b69-dbbb-49dd-b7ad-9ef1605f76eb
 md"""
-When you're studying a single histogram, it's hepful to have statbox (ROOT CERN enjoyer?)
+When you're studying a single histogram, it's hepful to have statbox (CERN ROOT enjoyer?)
 
 We provide a `statbox!()` function to add such box:
 """
@@ -79,19 +79,26 @@ end
 
 # ╔═╡ d549a735-12a4-443a-98c7-be5cce4e6789
 md"""
-You can freely combine these by using the bang `!` version to plot things on top of each other, for example this some plot you might see:
+You can freely combine these by using the bang `!` version to plot things on top of each other, for example this is some plot you might see:
 """
 
 # ╔═╡ 12b44438-2af4-4ca5-8569-57de2cadc607
 begin
-	pos_h2 = restrict(h2, 0, Inf)
-	hist(pos_h2; label = "fake bkg", axis=(
-	yticks=10.0 .^ (-1:1:3), yminorticks=IntervalsBetween(9),
-	yminorticksvisible = true,
-	yscale=Makie.pseudolog10, ))
-	errorbars!(pos_h2; whiskerwidth=7)
-	stairs!(h3; color=:red, label = "fake sig")
-	current_figure()
+    pos_h2 = restrict(h2, 0, Inf)
+    hist(pos_h2; 
+         label = "fake bkg", 
+         axis=(
+               yticks=10.0 .^ (-1:1:3),
+               yminorticks=IntervalsBetween(9),
+               yminorticksvisible = true,
+               yscale=Makie.pseudolog10
+              )
+        )
+
+    errorbars!(pos_h2; whiskerwidth=7)
+    stairs!(h3; color=:red, label = "fake sig")
+    axislegend()
+    current_figure()
 end
 
 # ╔═╡ 386b8f0e-ad21-4af3-b2b6-b3412f44315c
