@@ -144,6 +144,26 @@ with_theme(ATLASTHEME) do
     f_ratio
 end
 
+# ╔═╡ 2f97d05b-9103-451e-8fce-bb7458acf2ba
+md"""
+## Shading/Hatching errorbar band
+
+Until: https://github.com/JuliaPlots/Makie.jl/issues/1385#issuecomment-1166367423 is fixed, we don't have access to `LinePattern` driven shading, so you'd have to be creative and use [crossbar](https://makie.juliaplots.org/dev/examples/plotting_functions/crossbar/):
+"""
+
+# ╔═╡ f120fa84-6d27-4561-a8d0-fb619c94c490
+begin
+	f_crossbar = stairs(h1)
+	statbox!(f_crossbar, h1)
+	crossbar!(
+		h1; 
+		show_midline=false, 
+		color=(:black, 0.5), 
+		gap=0, width=diff(binedges(h1))
+	)
+	f_crossbar
+end
+
 # ╔═╡ Cell order:
 # ╟─4cf8f502-eba2-11ec-275f-3f1858e4c2e6
 # ╠═82a6fb18-e9c9-450d-9c93-e05bd6cf5859
@@ -162,3 +182,5 @@ end
 # ╠═089fb6a1-3f2a-45f4-b4bf-4013dee3a6da
 # ╠═a3dd8f72-d292-4f85-be76-2647b9433b42
 # ╠═b1188446-d16b-4e0c-93be-c5e3d0de379c
+# ╟─2f97d05b-9103-451e-8fce-bb7458acf2ba
+# ╠═f120fa84-6d27-4561-a8d0-fb619c94c490
