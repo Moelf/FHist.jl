@@ -31,9 +31,10 @@ Theme(
      )
 
 """
-    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true, color=Makie.wong_colors())
+    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors())
 
 Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar in the plot.
+`errors = true` and `errors = :bar` are equivalent.
 
 `color` should be a vector of colors that is at least `length(hs)` long. See below example
 regarding how to make legends semi-manually.
@@ -83,8 +84,16 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
         gap = 0,
     )
     
-    if input[:errors][]
+    err = input[:errors][]
+    if err ∈ (true, :bar)
         errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth][])
+    elseif err == :shade
+        crossbar!(input, centers, totals, totals .+ errs/2, totals .- errs/2;
+                  gap = 0,
+                  width = diff(_e),
+                  show_midline = false,
+                  color = (:black, 0.5)
+                 )
     end
     input
 end

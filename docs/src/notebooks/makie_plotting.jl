@@ -146,7 +146,7 @@ end
 
 # ╔═╡ 2f97d05b-9103-451e-8fce-bb7458acf2ba
 md"""
-## Shading/Hatching errorbar band
+# Shading/Hatching errorbar band
 
 Until: https://github.com/JuliaPlots/Makie.jl/issues/1385#issuecomment-1166367423 is fixed, we don't have access to `LinePattern` driven shading, so you'd have to be creative and use [crossbar](https://makie.juliaplots.org/dev/examples/plotting_functions/crossbar/):
 """
@@ -162,6 +162,16 @@ begin
 		gap=0, width=diff(binedges(h1))
 	)
 	f_crossbar
+end
+
+# ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
+with_theme(ATLASTHEME) do
+	f, a, p = stackedhist([h1, h1 ]; errors=:shade) #errors defaults to `:bar`
+	labels = ["proc1", "blah"]
+	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
+	title = "Legend title"
+	Legend(f[1,2], elements, labels, title)
+	f
 end
 
 # ╔═╡ Cell order:
@@ -184,3 +194,4 @@ end
 # ╠═b1188446-d16b-4e0c-93be-c5e3d0de379c
 # ╟─2f97d05b-9103-451e-8fce-bb7458acf2ba
 # ╠═f120fa84-6d27-4561-a8d0-fb619c94c490
+# ╠═b114c8a7-5f01-44fe-9660-b5021d359399
