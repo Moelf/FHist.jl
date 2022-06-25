@@ -122,6 +122,11 @@ end
 Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:Errorbars}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h), binerrors(h)/2)
+function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
+    cs = bincounts(h)
+    es = binerrors(h)
+    convert_arguments(P, bincenters(h), cs, cs .- es/2, cs .+ es/2)
+end
 function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
     h = input[1][]
     label = haskey(input, :label) ? input[:label][] : nothing
