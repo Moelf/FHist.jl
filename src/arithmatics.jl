@@ -59,3 +59,32 @@ function merge(hists...)
     foreach(x-> merge!(h, x), hists[2:end])
     h
 end
+
+"""
+    significance(signal, bkg) -> `(significance, error_on_significance)`
+
+Calculate the significance of signal vs. bkg histograms, this function uses a more
+accurate algorithm than the naive `S / sqrt(B)`
+
+Ref: https://cds.cern.ch/record/2736148/files/ATL-PHYS-PUB-2020-025.pdf
+
+## Example:
+```julia
+h1 = Hist1D(rand(1000), [0, 0.5])
+h2 = Hist1D(rand(10000), [0, 0.5]);
+
+julia> s1 = significance(h1,h2)
+(6.738690967342175, 0.3042424717261312)
+```
+"""
+function significance(signal, bkg)
+    S = integral(signal)
+    B = integral(bkg)
+    Sig = sqrt(2*((S + B) * log(1 + S/B) - S))
+    dS = sqrt(sum(signal.sumw2))
+    dB = sqrt(sum(bkg.sumw2))
+    dSigdS = log(1 + S/B) / Sig
+    dSigdB = (log(1 + S/B) - S/B) / Sig
+    err = sqrt((dSigdS * dS)^2 + (dSigdB * dB)^2)
+    return Sig, err
+end
