@@ -53,7 +53,7 @@ fig
 """
 @recipe(StackedHist) do scene 
     Attributes(
-        errors = true,
+        error_color = (:black, 0.5),
         color = Makie.wong_colors(),
         labels = nothing,
         whiskerwidth = 10,
@@ -84,15 +84,15 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
         gap = 0,
     )
     
-    err = input[:errors][]
-    if err ∈ (true, :bar)
+    error_color = input[:error_color][]
+    if error_color ∈ (true, :bar)
         errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth][])
-    elseif err == :shade
+    else
         crossbar!(input, centers, totals, totals .+ errs/2, totals .- errs/2;
                   gap = 0,
                   width = diff(_e),
                   show_midline = false,
-                  color = (:black, 0.5)
+                  color = error_color
                  )
     end
     input
