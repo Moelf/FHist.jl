@@ -166,7 +166,7 @@ end
 
 # ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
 with_theme(ATLASTHEME) do
-	f, a, p = stackedhist([h1, h1 ]; errors=:shade) #errors defaults to `:bar`
+    f, a, p = stackedhist([h1, h1 ]; error_color=Pattern('/'))
 	labels = ["proc1", "blah"]
 	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
 	title = "Legend title"
