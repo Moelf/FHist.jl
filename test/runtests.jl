@@ -163,6 +163,7 @@ end
     h1 = Hist1D(a, wgts1)
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
+    @test nentries(normalize(h1)) == length(a)
 
     h1 = Hist2D((a,a), wgts1, (0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8

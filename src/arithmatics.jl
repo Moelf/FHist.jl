@@ -22,18 +22,19 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         _f(counts) = any(x -> x<0, counts)
         _f(h1.hist.weights) && error("Can't do * when bin count is negative")
         _hist = *(h1.hist, num)
-        ($T)(_hist, h1.sumw2 * num^2)
+        ($T)(_hist, h1.sumw2 * num^2, nentries(h1); overflow = h1.overflow)
     end
 
     # https://github.com/aminnj/yahist/blob/4a5767f181ec7fdcc4af18cf15ceedd1c2f89019/yahist/hist1d.py#L427-L430
     @eval function /(h1::($T), h2::($T))
         _f(counts) = any(x -> x<0, counts)
         (_f(h1.hist.weights) || _f(h2.hist.weights)) && error("Can't do / when bin count is negative")
+        h1.overflow != h2.overflow && throw("Can't divide two histograms with different overflow settings.")
         _hist = /(h1.hist, h2.hist)
         _sumw2 =  @. h1.sumw2 / (h2.hist.weights ^ 2) +
                 (sqrt(h2.sumw2) * h1.hist.weights / (h2.hist.weights ^ 2)) ^ 2
                        
-        ($T)(_hist, _sumw2)
+        ($T)(_hist, _sumw2, nentries(h1) ÷ nentries(h2); overflow=h1.overflow)
     end
 
     @eval function ==(h1::$T, h2::$T)
