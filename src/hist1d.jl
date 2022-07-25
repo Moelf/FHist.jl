@@ -144,18 +144,22 @@ end
 Create a `Hist1D` with given bin `edges` and vlaues from
 array. Weight for each value is assumed to be 1.
 """
-function Hist1D(A::AbstractVector, r::AbstractRange; overflow=_default_overflow)
+function Hist1D(A, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
-    push!.(h, A)
+    for x in A
+        push!(h, x)
+    end
     return h
 end
-function Hist1D(A::AbstractVector, edges::AbstractVector; overflow=_default_overflow)
+function Hist1D(A, edges::AbstractVector; overflow=_default_overflow)
     if _is_uniform_bins(edges)
         r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, r; overflow=overflow)
     else
         h = Hist1D(Int; bins=edges, overflow=overflow)
-        push!.(h, A)
+        for x in A
+            push!(h, x)
+        end
         return h
     end
 end
