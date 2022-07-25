@@ -136,6 +136,23 @@ end
     @test h1 == h3
 end
 
+@testset "Iterable fall back" begin
+    # 1D
+    a = Iterators.flatten([[1,2], [], [3]])
+    b = collect(a)
+    r = 0:0.1:1
+    @test Hist1D(a,r) == Hist1D(b, r)
+    
+    # 2D
+    x1 = Iterators.flatten(rand(10))
+    y1 = Iterators.flatten(rand(10))
+    h1 = Hist2D((x1,y1), (r,r))
+    x2 = collect(x1)
+    y2 = collect(y1)
+    h2 = Hist2D((x2,y2), (r,r))
+    @test h1 == h2
+end
+
 @testset "Special bins" begin
     # integer values and integer binning
     a = floor.(Int,abs.(randn(10^6)))

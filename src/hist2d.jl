@@ -114,25 +114,27 @@ function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T
 end
 
 """
-    Hist2D(tuple, edges::NTuple{2,AbstractRange}; overflow)
-    Hist2D(tuple, edges::NTuple{2,AbstractVector}; overflow)
+    Hist2D(Tuple{<:iterable, <:iterable}, edges::NTuple{2,AbstractRange}; overflow)
+    Hist2D(Tuple{<:iterable, <:iterable}, edges::NTuple{2,AbstractVector}; overflow)
 
 Create a `Hist2D` with given bin `edges` and values from
 a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
 """
-function Hist2D(A::NTuple{2,AbstractVector}, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
+function Hist2D(A, r::NTuple{2,AbstractRange}; overflow=_default_overflow)
+    A1, A2 = A
     h = Hist2D(Int; bins=r, overflow=overflow)
-    push!.(h, A[1], A[2])
+    push!.(h, A1, A2)
     return h
 end
-function Hist2D(A::NTuple{2,AbstractVector}, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
+function Hist2D(A, edges::NTuple{2,AbstractVector}; overflow=_default_overflow)
+    A1, A2 = A
     if all(_is_uniform_bins.(edges))
         r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
              range(first(edges[2]), last(edges[2]), length=length(edges[2])))
         return Hist2D(A, r; overflow=overflow)
     else
         h = Hist2D(Int; bins=edges, overflow=overflow)
-        push!.(h, A[1], A[2])
+        push!.(h, A1, A2)
         return h
     end
 end
@@ -164,8 +166,8 @@ function Hist2D(A::NTuple{2,AbstractVector}, wgts::AbstractWeights, edges::NTupl
 end
 
 """
-    Hist2D(A::AbstractVector{T}; nbins::NTuple{2,Integer}, overflow) where T
-    Hist2D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{2,Integer}, overflow) where T
+    Hist2D(XsYs::Tuple; nbins::NTuple{2,Integer}, overflow) where T
+    Hist2D(XsYs::Tuple, wgts::AbstractWeights; nbins::NTuple{2,Integer}, overflow) where T
 
 Automatically determine number of bins based on `Sturges` algo.
 """
