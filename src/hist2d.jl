@@ -247,7 +247,7 @@ function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     ey = first.(p1d(binedges(h)[2], ny))
     _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
     _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
-    return Hist2D(Histogram((ex,ey), counts), sumw2; overflow=h.overflow)
+    return Hist2D(Histogram((ex,ey), counts), sumw2, nentries(h); overflow=h.overflow)
 end
 rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
@@ -265,7 +265,7 @@ function project(h::Hist2D, axis::Symbol=:x)
     counts = [sum(bincounts(h), dims=dim)...]
     sumw2 = [sum(h.sumw2, dims=dim)...]
     edges = axis == :x ? ex : ey
-    return Hist1D(Histogram(edges, counts), sumw2; overflow=h.overflow)
+    return Hist1D(Histogram(edges, counts), sumw2, nentries(h); overflow=h.overflow)
 end
 
 """
