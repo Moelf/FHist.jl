@@ -402,6 +402,7 @@ end
     h2 = Hist1D(rand(10^2), [0.0, 0.1, 0.7, 0.9, 1.0])
     @test h2 == rebin(h2, 1)
     @test integral(h2) == integral(rebin(h2, 2))
+    @test nentries(h2) == nentries(rebin(h2, 1))
     @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
     @test binedges(rebin(h2, 2)) == [0, 0.7, 1.0]
 
