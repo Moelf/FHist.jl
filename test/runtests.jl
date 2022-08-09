@@ -394,6 +394,7 @@ end
 @testset "Rebinning" begin
     h1 = Hist1D(rand(10^2), 0:0.1:1)
     @test h1 == rebin(h1, 1)
+    @test nentries(h1) == nentries(rebin(h1, 1))
     @test integral(h1) == integral(rebin(h1, 5))
     @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
     @test binedges(rebin(h1, 5)) == [0, 0.5, 1.0]
@@ -485,6 +486,7 @@ end
     hright = restrict(h, 0.0, Inf)
 
     @test h == restrict(h)
+    @test nentries(h) == nentries(restrict(h))
     @test restrict(h, -1, 1) == (h |> restrict(-1,1))
     @test integral(hleft) + integral(hright) == integral(h)
     @test nbins(hleft) + nbins(hright) == nbins(h)

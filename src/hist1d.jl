@@ -283,7 +283,7 @@ function rebin(h::Hist1D, n::Int=1)
     if _is_uniform_bins(edges)
         edges = range(first(edges), last(edges), length=length(edges))
     end
-    return Hist1D(Histogram(edges, counts), sumw2; overflow=h.overflow)
+    return Hist1D(Histogram(edges, counts), sumw2, nentries(h); overflow=h.overflow)
 end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
@@ -312,6 +312,6 @@ function restrict(h::Hist1D, low=-Inf, high=Inf)
     if _is_uniform_bins(edges)
         edges = range(first(edges), last(edges), length=length(edges))
     end
-    Hist1D(Histogram(edges, c), sumw2; overflow=h.overflow)
+    Hist1D(Histogram(edges, c), sumw2, nentries(h); overflow=h.overflow)
 end
 restrict(low=-Inf, high=Inf) = h::Hist1D->restrict(h, low, high)
