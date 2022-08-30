@@ -21,6 +21,7 @@ makedocs(;
     pages=[
         "Introduction" => "index.md",
         "APIs" => "api.md",
+        "Writing to `.root`" => "writingtoroot.md",
         "Tutorials" => T,
     ],
     repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
