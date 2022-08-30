@@ -26,11 +26,8 @@ edges: 0.0:0.2:1.0
 bin counts: [22, 18, 17, 18, 25]
 total count: 100
 
-julia> file = up.recreate("example.root")
-Python WritableDirectory: <WritableDirectory '/' at 0x7fcfd0891f40>
-
-julia> file["myhist"] = np.array(bincounts(h)), np.array(binedges(h))
+julia> pywith(up.recreate("./example.root")) do file
+           file["myhist"] = np.array(bincounts(h)), np.array(binedges(h))
+       end;
 (<py array([22, 18, 17, 18, 25])>, <py array([0. , 0.2, 0.4, 0.6, 0.8, 1. ])>)
-
-julia> file.close()
 ```
