@@ -68,12 +68,17 @@ function nbins(h::Hist1D)
 end
 
 """
-    integral(h::Hist1D)
+    integral(h::Hist1D; width=false)
 
-Get the integral a histogram.
+Get the integral a histogram; `width` means multiply each bincount
+by their bin width when calculating the integral.
 """
-function integral(h::Hist1D)
-    sum(bincounts(h))
+function integral(h::Hist1D; width=false)
+    if width
+        mapreduce(*, +, bincounts(h), diff(binedges(h)))
+    else
+        sum(bincounts(h))
+    end
 end
 
 """
@@ -226,7 +231,7 @@ by the bin counts.
 When the histogram is `Hist2D`, return tuple instead, e.g `(mean(project(h, :x)), mean(project(h, :y)))` etc.
 """
 Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
-Statistics.std(h::Hist1D) = sqrt(Statistics.var(bincenters(h), Weights(bincounts(h))))
+Statistics.std(h::Hist1D) = Statistics.var(bincenters(h), Weights(bincounts(h)); corrected=false) |> sqrt
 Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincounts(h)))
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
@@ -243,12 +248,18 @@ function lookup(h::Hist1D, x)
 end
 
 """
-    normalize(h::Hist1D)
+    normalize(h::Hist1D; width=false)
 
-Create a normalized histogram via division by `integral(h)`.
+Create a normalized histogram via division by `integral(h)`, when `width==true`, the
+resultant histogram has area under the curve equals 1.
+
+!!! warning
+    `width=true` is not compatible with histograms with overflow, because
+    we don't have separate bins for under/over flows.
 """
-function normalize(h::Hist1D)
-    return h*(1/integral(h))
+function normalize(h::Hist1D; width=false)
+    (width && h.overflow) && error("width=true can't be used with overflow histogram")
+    return h*(1/integral(h; width=width))
 end
 
 """
