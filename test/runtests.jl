@@ -208,6 +208,10 @@ end
     ntw = normalize(t; width = true)
     @test bincounts(ntw) == bincounts(t) ./ 2
     @test integral(ntw; width=true) == 1 #self-consistent
+
+    to = Hist1D(; bins=[0, 1, 2, 4], overflow=true)
+    @test_throws ["width", "overflow"] integral(to; width=true)
+    @test_throws ["width", "overflow"] normalize(to; width=true)
 end
 
 

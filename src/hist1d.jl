@@ -75,6 +75,7 @@ by their bin width when calculating the integral.
 """
 function integral(h::Hist1D; width=false)
     if width
+        h.overflow && error("width=true can't be used with overflow histogram")
         mapreduce(*, +, bincounts(h), diff(binedges(h)))
     else
         sum(bincounts(h))
