@@ -2,12 +2,12 @@ using FHist, StatsBase, Statistics
 using Test
 
 @testset "The basics" begin
-    a = rand(10^3)
+    N = 10^3
+    a = rand(N)
     sth1 = fit(Histogram, a)
     h1p = Hist1D(sth1)
     @test h1p.hist == sth1
-    # broken but we can't recover anyway
-    @test_broken nentries(h1p)==1000
+    @test nentries(h1p)==N
 
     h1 = Hist1D(a)
     sth1 = fit(Histogram, a)
@@ -189,6 +189,34 @@ end
     h1 = Hist3D((a,a,a), wgts1, (0:0.1:1,0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
+end
+
+@testset "Normalize with width" begin
+    t = Hist1D(; bins=[0, 1, 2, 4])
+    push!(t, 0.5, 0.5);
+    push!(t, 0.5, 0.5);
+    push!(t, 2.5, 0.5);
+    # 0.5 + 0.5 + 0.5 = 1.5
+
+    @test integral(t) == 1.5
+    @test integral(t; width=true) == 2
+
+    nt = normalize(t)
+    @test bincounts(nt) == bincounts(t) ./ 1.5
+    @test integral(nt) == 1 # self-consistent requirement
+
+    ntw = normalize(t; width = true)
+    @test bincounts(ntw) == bincounts(t) ./ 2
+    @test integral(ntw; width=true) == 1 #self-consistent
+
+    to = Hist1D(; bins=[0, 1, 2, 4], overflow=true)
+    @static if VERSION<v"1.7"
+        @test_throws ErrorException integral(to; width=true)
+        @test_throws ErrorException normalize(to; width=true)
+    else
+        @test_throws "width=true can't be used with overflow histogram" integral(to; width=true)
+        @test_throws "width=true can't be used with overflow histogram" normalize(to; width=true)
+    end
 end
 
 

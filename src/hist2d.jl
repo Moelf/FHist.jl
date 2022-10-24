@@ -277,7 +277,7 @@ function transpose(h::Hist2D)
     edges = reverse(binedges(h))
     counts = collect(bincounts(h)')
     sumw2 = collect(h.sumw2')
-    return Hist2D(Histogram(edges, counts), sumw2; overflow=h.overflow)
+    return Hist2D(Histogram(edges, counts), sumw2, nentries(h); overflow=h.overflow)
 end
 
 """
@@ -310,6 +310,6 @@ function profile(h::Hist2D, axis::Symbol=:x)
     val[isnan.(val)] .= zero(eltype(val))
     sw2[isnan.(sw2)] .= zero(eltype(sw2))
 
-    return Hist1D(Histogram(edges, val), sw2; overflow=h.overflow)
+    return Hist1D(Histogram(edges, val), sw2, nentries(h); overflow=h.overflow)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
