@@ -32,4 +32,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/Moelf/FHist.jl",
+    push_preview = true
 )
