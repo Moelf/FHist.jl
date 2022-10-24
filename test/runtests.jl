@@ -210,7 +210,7 @@ end
     @test integral(ntw; width=true) == 1 #self-consistent
 
     to = Hist1D(; bins=[0, 1, 2, 4], overflow=true)
-    @static if VERSION<v"1.7"
+    @static if VERSION<v"1.8"
         @test_throws ErrorException integral(to; width=true)
         @test_throws ErrorException normalize(to; width=true)
     else

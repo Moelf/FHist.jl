@@ -4,6 +4,7 @@ authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
 version = "0.8.9"
 
 [deps]
+BayesHistogram = "000d9b38-65fe-4c81-bdb9-69f01f102479"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
