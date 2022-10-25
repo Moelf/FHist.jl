@@ -300,6 +300,24 @@ end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
 """
+    bayes_rebin_edges(h::Hist1D; prior=BayesHistogram.Geometric(0.995))
+
+Find optimal bin edges for a histogram using Bayesian rebinning algorithm.
+This function only find edges, it doesn't return a new histogram.
+
+For possible priors, see [`BayesHistogram.jl`](https://github.com/francescoalemanno/BayesHistogram.jl/blob/main/src/BayesHistogram.jl).
+
+"""
+function bayes_rebin_edges(h::Hist1D; prior=BayesHistogram.Geometric(0.995))
+    old_edges = binedges(h)
+    length(old_edges) < 4 && error("too little bins to rebin")
+    fake_xs = [first(old_edges); bincenters(h); last(old_edges)]
+    weights = [0; bincounts(h); 0]
+    res = BayesHistogram.bayesian_blocks(fake_xs; weights=weights, prior=prior)
+    return res.edges
+end
+
+"""
     restrict(h::Hist1D, low=-Inf, high=Inf)
     restrict(low=-Inf, high=Inf) = h::Hist1D -> restrict(h, low, high)
 

@@ -9,10 +9,14 @@ export Hist2D, project, profile, transpose
 export Hist3D, collabtext!, statbox!, ATLASTHEME
 
 using StatsBase, UnicodePlots, Statistics, Measurements
+export Weights
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
 using Requires
+
+using BayesHistogram
+export BayesHistogram
 
 const _default_overflow = false
 
