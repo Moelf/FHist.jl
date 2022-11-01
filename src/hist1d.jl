@@ -115,13 +115,14 @@ end
     r = binedges(h)
     L = nbins(h)
     binidx = _edge_binindex(r, val)
-    h.nentries[] += 1
     if h.overflow
         binidx = clamp(binidx, 1, L)
+        h.nentries[] += 1
         @inbounds h.hist.weights[binidx] += wgt
         @inbounds h.sumw2[binidx] += wgt^2
     else
         if unsigned(binidx - 1) < L
+            h.nentries[] += 1
             @inbounds h.hist.weights[binidx] += wgt
             @inbounds h.sumw2[binidx] += wgt^2
         end
