@@ -15,7 +15,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
-BayesHistogram = "1.0.1"
+BayesHistogram = "1.0.7"
 MakieCore = "0.4, 0.5"
 Measurements = "^2.7"
 RecipesBase = "^1"
