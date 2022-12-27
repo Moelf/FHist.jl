@@ -179,8 +179,8 @@ end
     wgts1 = 2 .* ones(10^5) |> weights
     h1 = Hist1D(a, wgts1)
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
-    @test integral(normalize(h1)) ≈ 1 atol=1e-8
-    @test nentries(normalize(h1)) == length(a)
+    @test integral(normalize(h1; width=false)) ≈ 1 atol=1e-8
+    @test nentries(normalize(h1; width=false)) == length(a)
 
     h1 = Hist2D((a,a), wgts1, (0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
@@ -201,7 +201,7 @@ end
     @test integral(t) == 1.5
     @test integral(t; width=true) == 2
 
-    nt = normalize(t)
+    nt = normalize(t; width=false)
     @test bincounts(nt) == bincounts(t) ./ 1.5
     @test integral(nt) == 1 # self-consistent requirement
 
@@ -210,13 +210,6 @@ end
     @test integral(ntw; width=true) == 1 #self-consistent
 
     to = Hist1D(; bins=[0, 1, 2, 4], overflow=true)
-    @static if VERSION<v"1.8"
-        @test_throws ErrorException integral(to; width=true)
-        @test_throws ErrorException normalize(to; width=true)
-    else
-        @test_throws "width=true can't be used with overflow histogram" integral(to; width=true)
-        @test_throws "width=true can't be used with overflow histogram" normalize(to; width=true)
-    end
 end
 
 
@@ -538,6 +531,8 @@ end
     h1 = Hist1D(a, edges, overflow=true)
     @test h1.hist == sh1
     @test h1.sumw2 == bincounts(h1)
+    # normalize has approximation built-in
+    @test normalize(h1; width=true) != normalize(h1; width=false)
 
     h1 = Hist1D(a, overflow=true)
     before = last(bincounts(h1))
