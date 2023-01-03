@@ -72,10 +72,14 @@ end
 
 Get the integral a histogram; `width` means multiply each bincount
 by their bin width when calculating the integral.
+
+!!! warning
+    Be aware of the approximation you make
+    when using `width=true` with histogram with overflow bins, the overflow
+    bins (i.e. the left/right most bins) width will be taken "as is".
 """
 function integral(h::Hist1D; width=false)
     if width
-        h.overflow && error("width=true can't be used with overflow histogram")
         mapreduce(*, +, bincounts(h), diff(binedges(h)))
     else
         sum(bincounts(h))
@@ -238,7 +242,7 @@ Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincount
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
 """
-    function lookup(h::Hist1D, x)
+    lookup(h::Hist1D, x)
 
 For given x-axis value `x`, find the corresponding bin and return the bin content.
 If a value is out of the histogram range, return `missing`.
@@ -250,17 +254,17 @@ function lookup(h::Hist1D, x)
 end
 
 """
-    normalize(h::Hist1D; width=false)
+    normalize(h::Hist1D; width=true)
 
 Create a normalized histogram via division by `integral(h)`, when `width==true`, the
 resultant histogram has area under the curve equals 1.
 
 !!! warning
-    `width=true` is not compatible with histograms with overflow, because
-    we don't have separate bins for under/over flows.
+    Implicit approximation is made when using `width=true` with histograms
+    that have overflow bins: the overflow data lives inthe left/right most bins
+    and the bin width is taken "as is".
 """
-function normalize(h::Hist1D; width=false)
-    (width && h.overflow) && error("width=true can't be used with overflow histogram")
+function normalize(h::Hist1D; width=true)
     return h*(1/integral(h; width=width))
 end
 
