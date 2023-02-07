@@ -14,14 +14,13 @@ const ATLASTHEME =
 Theme(
       Axis = (
               xtickalign=1, ytickalign=1, 
+              xticksmirrored=1, yticksmirrored=1,
               xminortickalign=1, yminortickalign=1,
               xticksize=10, yticksize=10,
               xminorticksize=6, yminorticksize=6,
               xgridvisible = false, ygridvisible = false,
               xminorticksvisible = true, yminorticksvisible = true,
-              xticks = WilkinsonTicks(6; k_min=4), yticks = WilkinsonTicks(7; k_min=4),
               limits = (nothing, nothing, 0, nothing), 
-              xminorticks = IntervalsBetween(5), yminorticks = IntervalsBetween(5),
              ),
       Colorbar = (
                   colormap = :haline,
