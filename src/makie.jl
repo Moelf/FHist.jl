@@ -124,7 +124,7 @@ end
 Makie.MakieCore.plottype(::Hist1D) = Hist
 function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
     edges = binedges(h)
-    phantomedge = 2*edges[end] - edges[end-1] # to bring step back to baseline
+    phantomedge = edges[end] # to bring step back to baseline
     convert_arguments(P, vcat(edges, phantomedge), vcat(0.0, bincounts(h), 0.0))
 end
 Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
