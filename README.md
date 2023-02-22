@@ -6,6 +6,10 @@
 
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
+## Changelog
+- 0.10
+  - due to huge latency issue, UnicodePlots.jl (for text based terminal display) has been dropped.
+
 ## Quick Start
 ```julia
 julia> using FHist
