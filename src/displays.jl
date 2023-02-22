@@ -212,12 +212,6 @@ function Base.show(io::IO, h::Hist1D)
         print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
         print(io, "integral=$(integral(h))")
     else
-        if (nbins(h) < 50) && all(bincounts(h) .>= 0)
-            _e = binedges(h)
-            _h = Histogram(float.(_e), bincounts(h))
-            show(io, UnicodePlots.horizontal_histogram(_h; width=30, xlabel=""))
-        end
-        println(io)
         println(io, "edges: ", binedges(h))
         println(io, "bin counts: ", bincounts(h))
         print(io, "total count: ", integral(h))
@@ -247,12 +241,6 @@ function Base.show(io::IO, h::Hist2D)
         print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
         print(io, "integral=$(integral(h))")
     else
-        ex, ey = binedges(h)
-        nx, ny = nbins(h)
-        xfact = nx > 1 ? (maximum(ex)-minimum(ex))/(nx-1) : 0.0
-        yfact = ny > 1 ? (maximum(ey)-minimum(ey))/(ny-1) : 0.0
-        show(io, UnicodePlots.heatmap(bincounts(h)'; xfact=xfact, xoffset=minimum(ex), yfact=yfact, yoffset=minimum(ey)))
-        println(io)
         println(io, "edges: ", binedges(h))
         println(io, "bin counts: ", bincounts(h))
         print(io, "total count: ", integral(h))

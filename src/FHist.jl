@@ -8,7 +8,7 @@ export Hist2D, project, profile, transpose
 
 export Hist3D, collabtext!, statbox!, ATLASTHEME
 
-using StatsBase, UnicodePlots, Statistics, Measurements
+using StatsBase, Statistics, Measurements
 export Weights
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
