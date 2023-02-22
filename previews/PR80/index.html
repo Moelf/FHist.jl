@@ -3,24 +3,14 @@
 
 julia&gt; a = randn(1000);
 
-julia&gt; h1 = Hist1D(a)
-                ┌                              ┐
-   [-4.0, -3.0) ┤▎ 2
-   [-3.0, -2.0) ┤█▋ 24
-   [-2.0, -1.0) ┤████████▌ 124
-   [-1.0,  0.0) ┤█████████████████████████  367
-   [ 0.0,  1.0) ┤██████████████████████▍ 328
-   [ 1.0,  2.0) ┤████████▊ 129
-   [ 2.0,  3.0) ┤█▋ 25
-   [ 3.0,  4.0) ┤▏ 1
-                └                              ┘
+julia&gt; h1 = Hist1D(a, -4:1.0:4)
 edges: -4.0:1.0:4.0
-bin counts: [2, 24, 124, 367, 328, 129, 25, 1]
+bin counts: [0, 23, 123, 377, 320, 134, 21, 2]
 total count: 1000
 
 julia&gt; h2 = Hist1D(Int; bins=-4.0:1.0:4.0);
 
-julia&gt; push!.(h2, a)
+julia&gt; push!.(h2, a);
 
 julia&gt; Threads.@threads for v in a
            atomic_push!(h2, v) # thread-safe
@@ -28,12 +18,6 @@ julia&gt; Threads.@threads for v in a
 
 julia&gt; h1+h1 == h2
 true</code></pre><p>Additionally, one can specify <code>overflow=true</code> when creating a histogram to clamp out-of-bounds values into  the edge bins.</p><pre><code class="language-julia hljs">julia&gt; Hist1D(rand(1000),0:0.2:0.9; overflow=true)
-              ┌                              ┐
-   [0.0, 0.2) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 218
-   [0.2, 0.4) ┤▇▇▇▇▇▇▇▇▇▇▇ 183
-   [0.4, 0.6) ┤▇▇▇▇▇▇▇▇▇▇▇▇ 198
-   [0.6, 0.8) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 401
-              └                              ┘
 edges: 0.0:0.2:0.8
 bin counts: [218, 183, 198, 401]
 total count: 1000</code></pre><h2 id="Speed"><a class="docs-heading-anchor" href="#Speed">Speed</a><a id="Speed-1"></a><a class="docs-heading-anchor-permalink" href="#Speed" title="Permalink"></a></h2><p>Single-threaded filling happens at almost 400 MHz</p><pre><code class="language-julia hljs">julia&gt; a = randn(10^6);
@@ -49,28 +33,6 @@ MersenneTwister(42)
 julia&gt; h1 = Hist1D(randn(10^4).+2, -5:0.5:5);
 
 julia&gt; h1 = (h1 + h1*2)
-                ┌                              ┐
-   [-5.0, -4.5) ┤ 0
-   [-4.5, -4.0) ┤ 0
-   [-4.0, -3.5) ┤ 0
-   [-3.5, -3.0) ┤ 0
-   [-3.0, -2.5) ┤ 0
-   [-2.5, -2.0) ┤ 3
-   [-2.0, -1.5) ┤ 3
-   [-1.5, -1.0) ┤ 39
-   [-1.0, -0.5) ┤▇ 153
-   [-0.5,  0.0) ┤▇▇ 540
-   [ 0.0,  0.5) ┤▇▇▇▇▇▇ 1356
-   [ 0.5,  1.0) ┤▇▇▇▇▇▇▇▇▇▇▇ 2640
-   [ 1.0,  1.5) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 4551
-   [ 1.5,  2.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 5757
-   [ 2.0,  2.5) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 5727
-   [ 2.5,  3.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 4494
-   [ 3.0,  3.5) ┤▇▇▇▇▇▇▇▇▇▇▇ 2652
-   [ 3.5,  4.0) ┤▇▇▇▇▇▇ 1326
-   [ 4.0,  4.5) ┤▇▇ 546
-   [ 4.5,  5.0) ┤▇ 168
-                └                              ┘
 edges: -5.0:0.5:5.0
 bin counts: [0, 0, 0, 0, 0, 3, 3, 39, 153, 540, 1356, 2640, 4551, 5757, 5727, 4494, 2652, 1326, 546, 168]
 total count: 29955
@@ -100,14 +62,6 @@ julia&gt; lookup.(h1, [-1.5,0,2.5]) # find bin counts for given x-axis values
  4494
 
 julia&gt; Hist1D(sample(h1; n=100))
-                ┌                              ┐
-   [-1.0,  0.0) ┤▇▇▇ 4
-   [ 0.0,  1.0) ┤▇▇▇▇▇▇▇▇▇▇ 15
-   [ 1.0,  2.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 41
-   [ 2.0,  3.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 28
-   [ 3.0,  4.0) ┤▇▇▇▇▇▇ 10
-   [ 4.0,  5.0) ┤▇ 2
-                └                              ┘
 edges: -1.0:1.0:5.0
 bin counts: [4, 15, 41, 28, 10, 2]
 total count: 100
@@ -123,18 +77,6 @@ julia&gt; nbins(h2)
 (10, 10)
 
 julia&gt; project(h2, :x)
-                ┌                              ┐
-   [-5.0, -4.0) ┤ 0
-   [-4.0, -3.0) ┤ 14
-   [-3.0, -2.0) ┤▇▇ 228
-   [-2.0, -1.0) ┤▇▇▇▇▇▇▇▇▇ 1345
-   [-1.0,  0.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 3399
-   [ 0.0,  1.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 3462
-   [ 1.0,  2.0) ┤▇▇▇▇▇▇▇▇▇ 1300
-   [ 2.0,  3.0) ┤▇▇ 237
-   [ 3.0,  4.0) ┤ 15
-   [ 4.0,  5.0) ┤ 0
-                └                              ┘
 edges: -5:5
 bin counts: [0, 14, 228, 1345, 3399, 3462, 1300, 237, 15, 0]
 total count: 10000
@@ -153,4 +95,4 @@ total count: 10000</code></pre><h3 id="D-3"><a class="docs-heading-anchor" href=
 Hist3D{Int64}, edges=(-5:5, -5:5, -5:5), integral=10000
 
 julia&gt; h3 |&gt; project(:x) |&gt; project(:x) |&gt; std
-1.051590599996025</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Wednesday 22 February 2023 04:09">Wednesday 22 February 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+1.051590599996025</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">APIs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Wednesday 22 February 2023 04:16">Wednesday 22 February 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
