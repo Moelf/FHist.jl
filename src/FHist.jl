@@ -26,7 +26,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         sumw2::Array{Float64, $N}
         hlock::SpinLock
         overflow::Bool
-        nentries::Ref{Int}
+        nentries::Base.RefValue{Int}
         function $H(h::Histogram{T,$N,E}, sw2::AbstractArray{<:Real, $N} = copy(h.weights), nentries=sum(h.weights); overflow=_default_overflow) where {T,E}
             isinteger(nentries) || @warn "Weights was probably used but StatsBase.Histogram doesn't record # of entries"
             return new{T,E}(h, sw2, SpinLock(), overflow, Ref(round(Int, nentries)))
