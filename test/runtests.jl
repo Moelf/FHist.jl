@@ -518,6 +518,23 @@ end
     @test_throws AssertionError restrict(h, 10, Inf)
 end
 
+# https://github.com/Moelf/FHist.jl/issues/81
+@testset "0-allocation" begin
+    data = randn(100)
+    h = Hist1D(; bins=-10:1:10)
+
+    # warm up
+    for d in data
+        push!(h,d)
+    end
+
+    aloc = @allocated for d in data
+        push!(h,d)
+    end
+
+    @test aloc == 0
+end
+
 @testset "Overflow" begin
     a = randn(10^5)
     b = randn(10^5)
