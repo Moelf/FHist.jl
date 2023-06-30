@@ -9,6 +9,8 @@ Fast, error-aware, and thread-safe 1D/2D/3D histograms compatible with `StatsBas
 ## Changelog
 - 0.10
   - due to huge latency issue, UnicodePlots.jl (for text based terminal display) has been dropped.
+- 0.11
+  - renamed `bins` keyword for all constructors to `binedges` for consistency.
 
 ## Quick Start
 ```julia
