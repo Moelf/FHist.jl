@@ -10,6 +10,7 @@ export Hist3D, collabtext!, statbox!, ATLASTHEME
 
 using StatsBase, Statistics, Measurements
 export Weights
+
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
@@ -23,11 +24,11 @@ const _default_overflow = false
 for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
     @eval struct $H{T<:Real,E} <: AbstractHistogram{T,$N,E}
         hist::Histogram{T,$N,E}
-        sumw2::Array{Float64, $N}
+        sumw2::Array{Float64,$N}
         hlock::SpinLock
         overflow::Bool
         nentries::Base.RefValue{Int}
-        function $H(h::Histogram{T,$N,E}, sw2::AbstractArray{<:Real, $N} = copy(h.weights), nentries=sum(h.weights); overflow=_default_overflow) where {T,E}
+        function $H(h::Histogram{T,$N,E}, sw2::AbstractArray{<:Real,$N}=copy(h.weights), nentries=sum(h.weights); overflow=_default_overflow) where {T,E}
             isinteger(nentries) || @warn "Weights was probably used but StatsBase.Histogram doesn't record # of entries"
             return new{T,E}(h, sw2, SpinLock(), overflow, Ref(round(Int, nentries)))
         end
@@ -40,11 +41,11 @@ include("./hist2d.jl")
 include("./hist3d.jl")
 include("./displays.jl")
 include("./arithmatics.jl")
-nentries(h::Union{Hist1D, Hist2D, Hist3D}) = h.nentries[]
+nentries(h::Union{Hist1D,Hist2D,Hist3D}) = h.nentries[]
 
 function __init__()
-    @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("./plots.jl")
-    @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("./makie.jl")
-    @require CairoMakie="13f3f980-e62b-5c42-98c6-ff1f3baf88f0" include("./cairomakie.jl")
+    @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("./plots.jl")
+    @require Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("./makie.jl")
+    @require CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0" include("./cairomakie.jl")
 end
 end

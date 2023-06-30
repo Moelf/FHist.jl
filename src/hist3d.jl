@@ -1,3 +1,107 @@
+"""
+    Hist3D(elT::Type{T}, binedges; overflow) where {T}
+
+Initialize an empty histogram with bin content typed as `T` and bin edges.
+To be used with [`push!`](@ref). Default overflow behavior (`false`)
+will exclude values that are outside of `binedges`.
+"""
+function Hist3D(elT::Type{T}=Float64; binedges, overflow=_default_overflow) where T
+    counts = zeros(elT, length.(binedges) .- 1)
+    return Hist3D(Histogram(binedges, counts); overflow=overflow)
+end
+
+"""
+    Hist3D(tuple, binedges::NTuple{3,AbstractRange}; overflow)
+    Hist3D(tuple, binedges::NTuple{3,AbstractVector}; overflow)
+
+Create a `Hist3D` with given bin `binedges` and values from
+a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
+"""
+function Hist3D(A::NTuple{3,AbstractVector}, binedges::NTuple{3,AbstractRange}; overflow=_default_overflow)
+    h = Hist3D(Int; binedges=binedges, overflow=overflow)
+    push!.(h, A[1], A[2], A[3])
+    return h
+end
+
+function Hist3D(A::NTuple{3,AbstractVector}, binedges::NTuple{3,AbstractVector}; overflow=_default_overflow)
+    if all(_is_uniform_bins.(binedges))
+        r = (range(first(binedges[1]), last(binedges[1]), length=length(binedges[1])),
+            range(first(binedges[2]), last(binedges[2]), length=length(binedges[2])),
+            range(first(binedges[3]), last(binedges[3]), length=length(binedges[3])))
+        return Hist3D(A, r; overflow=overflow)
+    else
+        h = Hist3D(Int; binedges=binedges, overflow=overflow)
+        push!.(h, A[1], A[2], A[3])
+        return h
+    end
+end
+
+"""
+    Hist3D(tuple, wgts::AbstractWeights, binedges::NTuple{3,AbstractRange}; overflow)
+    Hist3D(tuple, wgts::AbstractWeights, binedges::NTuple{3,AbstractVector}; overflow)
+
+Create a `Hist3D` with given bin `binedges` and values from
+a 2-tuple of arrays of x, y values.
+`wgts` should have the same `size` as elements of `tuple`.
+"""
+function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, binedges::NTuple{3,AbstractRange}; overflow=_default_overflow)
+    @boundscheck @assert size(A[1]) == size(A[2]) == size(A[3]) == size(wgts)
+    h = Hist3D(eltype(wgts); binedges=binedges, overflow=overflow)
+    push!.(h, A[1], A[2], A[3], wgts)
+    return h
+end
+
+function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, binedges::NTuple{3,AbstractVector}; overflow=_default_overflow)
+    if all(_is_uniform_bins.(binedges))
+        r = (range(first(binedges[1]), last(binedges[1]), length=length(binedges[1])),
+            range(first(binedges[2]), last(binedges[2]), length=length(binedges[2])),
+            range(first(binedges[3]), last(binedges[3]), length=length(binedges[3])))
+        return Hist3D(A, wgts, r; overflow=overflow)
+    else
+        h = Hist3D(Int; binedges=binedges, overflow=overflow)
+        push!.(h, A[1], A[2], A[3], wgts)
+        return h
+    end
+end
+
+"""
+    Hist3D(A::AbstractVector{T}; nbins::NTuple{3,Integer}, overflow) where T
+    Hist3D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{3,Integer}, overflow) where T
+
+Automatically determine number of bins based on `Sturges` algo.
+"""
+function Hist3D(A::NTuple{3,AbstractVector{T}};
+    nbins::NTuple{3,Integer}=_sturges.(A),
+    overflow=_default_overflow
+) where {T}
+    F = float(T)
+    nbinsx, nbinsy, nbinsz = nbins
+    lox, hix = minimum(A[1]), maximum(A[1])
+    loy, hiy = minimum(A[2]), maximum(A[2])
+    loz, hiz = minimum(A[3]), maximum(A[3])
+    rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
+    ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
+    rz = StatsBase.histrange(F(loz), F(hiz), nbinsz)
+    r = (rx, ry, rz)
+    return Hist3D(A, r; overflow=overflow)
+end
+
+function Hist3D(A::NTuple{3,AbstractVector{T}}, wgts::AbstractWeights;
+    nbins::NTuple{3,Integer}=_sturges.(A),
+    overflow=_default_overflow
+) where {T}
+    F = float(T)
+    nbinsx, nbinsy, nbinsz = nbins
+    lox, hix = minimum(A[1]), maximum(A[1])
+    loy, hiy = minimum(A[2]), maximum(A[2])
+    loz, hiz = minimum(A[3]), maximum(A[3])
+    rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
+    ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
+    rz = StatsBase.histrange(F(loz), F(hiz), nbinsz)
+    r = (rx, ry, rz)
+    return Hist3D(A, wgts, r; overflow=overflow)
+end
+
 Base.lock(h::Hist3D) = lock(h.hlock)
 Base.unlock(h::Hist3D) = unlock(h.hlock)
 
@@ -30,9 +134,8 @@ end
 
 Calculate the bin errors from `sumw2` with a Gaussian default.
 """
-binerrors(f::T, h::Hist3D) where T<:Function = f.(h.sumw2)
+binerrors(f::T, h::Hist3D) where {T<:Function} = f.(h.sumw2)
 binerrors(h::Hist3D) = binerrors(sqrt, h)
-
 
 """
     nbins(h::Hist3D)
@@ -70,15 +173,7 @@ end
 Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `atomic_push!` is a slower version of `push!` that is thread-safe.
-
 """
-@inline function atomic_push!(h::Hist3D{T,E}, valx::Real, valy::Real, valz::Real, wgt::Real=1) where {T,E}
-    lock(h)
-    push!(h, valx, valy, valz, wgt)
-    unlock(h)
-    return nothing
-end
-
 @inline function Base.push!(h::Hist3D{T,E}, valx::Real, valy::Real, valz::Real, wgt::Real=1) where {T,E}
     rx, ry, rz = binedges(h)
     Lx, Ly, Lz = nbins(h)
@@ -90,120 +185,25 @@ end
         binidxx = clamp(binidxx, 1, Lx)
         binidxy = clamp(binidxy, 1, Ly)
         binidxz = clamp(binidxz, 1, Lz)
-        @inbounds h.hist.weights[binidxx,binidxy,binidxz] += wgt
-        @inbounds h.sumw2[binidxx,binidxy,binidxz] += wgt^2
+        @inbounds h.hist.weights[binidxx, binidxy, binidxz] += wgt
+        @inbounds h.sumw2[binidxx, binidxy, binidxz] += wgt^2
     else
         if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly) && (unsigned(binidxz - 1) < Lz)
-            @inbounds h.hist.weights[binidxx,binidxy,binidxz] += wgt
-            @inbounds h.sumw2[binidxx,binidxy,binidxz] += wgt^2
+            @inbounds h.hist.weights[binidxx, binidxy, binidxz] += wgt
+            @inbounds h.sumw2[binidxx, binidxy, binidxz] += wgt^2
         end
     end
     return nothing
 end
 
+@inline function atomic_push!(h::Hist3D{T,E}, valx::Real, valy::Real, valz::Real, wgt::Real=1) where {T,E}
+    lock(h)
+    push!(h, valx, valy, valz, wgt)
+    unlock(h)
+    return nothing
+end
+
 Base.broadcastable(h::Hist3D) = Ref(h)
-
-"""
-    Hist3D(elT::Type{T}=Float64; binedges, overflow) where {T}
-
-Initialize an empty histogram with bin content typed as `T` and bin edges.
-To be used with [`push!`](@ref). Default overflow behavior (`false`)
-will exclude values that are outside of `binedges`.
-"""
-function Hist3D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
-    counts = zeros(elT, length.(bins) .- 1)
-    return Hist3D(Histogram(bins, counts); overflow=overflow)
-end
-
-"""
-    Hist3D(tuple, edges::NTuple{3,AbstractRange}; overflow)
-    Hist3D(tuple, edges::NTuple{3,AbstractVector}; overflow)
-
-Create a `Hist3D` with given bin `edges` and values from
-a 2-tuple of arrays of x, y values. Weight for each value is assumed to be 1.
-"""
-function Hist3D(A::NTuple{3,AbstractVector}, r::NTuple{3,AbstractRange}; overflow=_default_overflow)
-    h = Hist3D(Int; bins=r, overflow=overflow)
-    push!.(h, A[1], A[2], A[3])
-    return h
-end
-function Hist3D(A::NTuple{3,AbstractVector}, edges::NTuple{3,AbstractVector}; overflow=_default_overflow)
-    if all(_is_uniform_bins.(edges))
-        r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
-             range(first(edges[2]), last(edges[2]), length=length(edges[2])),
-             range(first(edges[3]), last(edges[3]), length=length(edges[3])))
-        return Hist3D(A, r; overflow=overflow)
-    else
-        h = Hist3D(Int; bins=edges, overflow=overflow)
-        push!.(h, A[1], A[2], A[3])
-        return h
-    end
-end
-
-"""
-    Hist3D(tuple, wgts::AbstractWeights, edges::NTuple{3,AbstractRange}; overflow)
-    Hist3D(tuple, wgts::AbstractWeights, edges::NTuple{3,AbstractVector}; overflow)
-
-Create a `Hist3D` with given bin `edges` and values from
-a 2-tuple of arrays of x, y values.
-`wgts` should have the same `size` as elements of `tuple`.
-"""
-function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, r::NTuple{3,AbstractRange}; overflow=_default_overflow)
-    @boundscheck @assert size(A[1]) == size(A[2]) == size(A[3]) == size(wgts)
-    h = Hist3D(eltype(wgts); bins=r, overflow=overflow)
-    push!.(h, A[1], A[2], A[3], wgts)
-    return h
-end
-function Hist3D(A::NTuple{3,AbstractVector}, wgts::AbstractWeights, edges::NTuple{3,AbstractVector}; overflow=_default_overflow)
-    if all(_is_uniform_bins.(edges))
-        r = (range(first(edges[1]), last(edges[1]), length=length(edges[1])),
-             range(first(edges[2]), last(edges[2]), length=length(edges[2])),
-             range(first(edges[3]), last(edges[3]), length=length(edges[3])))
-        return Hist3D(A, wgts, r; overflow=overflow)
-    else
-        h = Hist3D(Int; bins=edges, overflow=overflow)
-        push!.(h, A[1], A[2], A[3], wgts)
-        return h
-    end
-end
-
-"""
-    Hist3D(A::AbstractVector{T}; nbins::NTuple{3,Integer}, overflow) where T
-    Hist3D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::NTuple{3,Integer}, overflow) where T
-
-Automatically determine number of bins based on `Sturges` algo.
-"""
-function Hist3D(A::NTuple{3,AbstractVector{T}};
-        nbins::NTuple{3,Integer}=_sturges.(A),
-        overflow=_default_overflow,
-    ) where {T}
-    F = float(T)
-    nbinsx, nbinsy, nbinsz = nbins
-    lox, hix = minimum(A[1]), maximum(A[1])
-    loy, hiy = minimum(A[2]), maximum(A[2])
-    loz, hiz = minimum(A[3]), maximum(A[3])
-    rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
-    ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
-    rz = StatsBase.histrange(F(loz), F(hiz), nbinsz)
-    r = (rx, ry, rz)
-    return Hist3D(A, r; overflow=overflow)
-end
-
-function Hist3D(A::NTuple{3,AbstractVector{T}}, wgts::AbstractWeights;
-        nbins::NTuple{3,Integer}=_sturges.(A),
-        overflow=_default_overflow,
-    ) where {T}
-    F = float(T)
-    nbinsx, nbinsy, nbinsz = nbins
-    lox, hix = minimum(A[1]), maximum(A[1])
-    loy, hiy = minimum(A[2]), maximum(A[2])
-    loz, hiz = minimum(A[3]), maximum(A[3])
-    rx = StatsBase.histrange(F(lox), F(hix), nbinsx)
-    ry = StatsBase.histrange(F(loy), F(hiy), nbinsy)
-    rz = StatsBase.histrange(F(loz), F(hiz), nbinsz)
-    r = (rx, ry, rz)
-    return Hist3D(A, wgts, r; overflow=overflow)
-end
 
 """
     function lookup(h::Hist3D, x, y)
@@ -219,16 +219,14 @@ function lookup(h::Hist3D, x, y, z)
     return bincounts(h)[_edge_binindex(rx, x), _edge_binindex(ry, y), _edge_binindex(rz, z)]
 end
 
-
 """
     normalize(h::Hist3D)
 
 Create a normalized histogram via division by `integral(h)`.
 """
 function normalize(h::Hist3D)
-    return h*(1/integral(h))
+    return h * (1 / integral(h))
 end
-
 
 """
     project(h::Hist3D, axis::Symbol=:x)
@@ -240,15 +238,16 @@ summing over the specified axis. Returns a `Hist2D`.
 function project(h::Hist3D, axis::Symbol=:x)
     @assert axis ∈ (:x, :y, :z)
     dimremove, dimskeep = if axis == :z
-        3, [1,2]
+        3, [1, 2]
     elseif axis == :y
-        2, [1,3]
+        2, [1, 3]
     else
-        1, [2,3]
+        1, [2, 3]
     end
     counts = dropdims(sum(bincounts(h), dims=dimremove), dims=dimremove)
     sumw2 = dropdims(sum(h.sumw2, dims=dimremove), dims=dimremove)
     edges = binedges(h)[dimskeep]
     return Hist2D(Histogram(edges, counts), sumw2; overflow=h.overflow)
 end
+
 project(axis::Symbol=:x) = h::Union{Hist2D,Hist3D} -> project(h, axis)

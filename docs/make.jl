@@ -16,7 +16,6 @@ makedocs(;
     modules=[FHist],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
-        # assets = ["assets/logo.ico"],
     ),
     pages=[
         "Introduction" => "index.md",
