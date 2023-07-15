@@ -19,6 +19,8 @@ using Requires
 using BayesHistogram
 export BayesHistogram
 
+using DeprecateKeywords
+
 const _default_overflow = false
 
 for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))

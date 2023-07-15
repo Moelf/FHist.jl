@@ -12,6 +12,7 @@ RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+DeprecateKeywords = "83f0f1bf-2a81-4f2a-8178-033dcab3e60b"
 
 [compat]
 BayesHistogram = "1.0.7"
