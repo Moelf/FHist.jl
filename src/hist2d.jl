@@ -5,8 +5,8 @@ Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
-@depkws function Hist2D(elT::Type{T}=Float64; binedges, overflow=_default_overflow,
-    @deprecate(bins, binedges)) where T
+@depkws function Hist2D(elT::Type{T}=Float64; binedges=(-1:1, -1:1), overflow=_default_overflow,
+    @deprecate(bins, binedges)) where {T}
     counts = zeros(elT, length.(binedges) .- 1)
     return Hist2D(Histogram(binedges, counts); overflow=overflow)
 end
@@ -282,7 +282,7 @@ function project(h::Hist2D, axis::Symbol, val::Real)
     wgts = bincounts(h)
     ex = ex[1:end-1]
     ey = ey[1:end-1]
-    if axis == :x 
+    if axis == :x
         i = _edge_binindex(ey, val)
         if i > length(ey)
             i = length(ey)
