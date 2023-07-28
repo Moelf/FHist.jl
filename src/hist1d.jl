@@ -5,7 +5,7 @@ Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with [`push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
-@depkws function Hist1D(elT::Type{T}=Float64; binedges=-1:1, overflow=_default_overflow,
+@depkws function Hist1D(elT::Type{T}=Float64; binedges, overflow=_default_overflow,
     @deprecate(bins, binedges)) where {T}
     counts = zeros(elT, length(binedges) - 1)
     return Hist1D(Histogram(binedges, counts); overflow=overflow)
