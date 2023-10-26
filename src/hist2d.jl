@@ -330,14 +330,14 @@ function project(h::Hist2D, axis::Symbol, val::Real)
         if i > length(ey)
             i = length(ey)
         end
-        h = Hist1D(; binedges=ex)
+        h = Hist1D(; bins=ex)
         push!.(h, ex, wgts[:, i])
     else
         i = _edge_binindex(ex, val)
         if i > length(ex)
             i = length(ex)
         end
-        h = Hist1D(; binedges=ey)
+        h = Hist1D(; bins=ey)
         push!.(h, ey, wgts[i, :])
     end
     h

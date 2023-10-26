@@ -587,7 +587,7 @@ end
     r = 0:0.1:1
     h2 = Hist2D((xs, ys), (r, r))
     pr = project(h2, :x, 0.475)
-    h1 = Hist1D(; binedges=binedges(pr))
+    h1 = Hist1D(; bins=binedges(pr))
     i = findall(y -> 0.40 ≤ y ≤ 0.50, ys)
     for val in xs[i]
         push!(h1, val)
