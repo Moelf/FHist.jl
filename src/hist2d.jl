@@ -313,3 +313,32 @@ function profile(h::Hist2D, axis::Symbol=:x)
     return Hist1D(Histogram(edges, val), sw2, nentries(h); overflow=h.overflow)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
+
+"""
+    project(h::Hist2D, axis::Symbol, val::Real)
+Computes the projection along either `:x` or `:y` axis for a given
+slice of value `val` in the chosen axis. Returns a `Hist1D`
+"""
+function project(h::Hist2D, axis::Symbol, val::Real)
+    @assert axis ∈ (:x, :y)
+    ex, ey = binedges(h)
+    wgts = bincounts(h)
+    ex = ex[1:end-1]
+    ey = ey[1:end-1]
+    if axis == :x
+        i = _edge_binindex(ey, val)
+        if i > length(ey)
+            i = length(ey)
+        end
+        h = Hist1D(; binedges=ex)
+        push!.(h, ex, wgts[:, i])
+    else
+        i = _edge_binindex(ex, val)
+        if i > length(ex)
+            i = length(ex)
+        end
+        h = Hist1D(; binedges=ey)
+        push!.(h, ey, wgts[i, :])
+    end
+    h
+end

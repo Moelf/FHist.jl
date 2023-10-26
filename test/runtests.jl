@@ -580,3 +580,24 @@ end
     h = Hist1D(randn(10^3))
     @test FHist.hists_to_bars([h]) == (binedges(h)[1:end-1], bincounts(h), ones(nbins(h)))
 end
+
+@testset "Projection slice" begin
+    xs = rand(10)
+    ys = rand(10)
+    r = 0:0.1:1
+    h2 = Hist2D((xs, ys), (r, r))
+    pr = project(h2, :x, 0.475)
+    h1 = Hist1D(; binedges=binedges(pr))
+    i = findall(y -> 0.40 ≤ y ≤ 0.50, ys)
+    for val in xs[i]
+        push!(h1, val)
+    end
+    @test h1 == pr
+    pr = project(h2, :y, 0.65)
+    empty!(h1)
+    i = findall(x -> 0.60 ≤ x ≤ 0.70, xs)
+    for val in ys[i]
+        push!(h1, val)
+    end
+    @test h1 == pr
+end
