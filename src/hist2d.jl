@@ -325,8 +325,8 @@ will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
 function restrict(h::Hist2D, xlow=-Inf, xhigh=Inf, ylow=-Inf, yhigh=Inf)
     xsel = xlow .<= bincenters(h)[1] .<= xhigh
     ysel = ylow .<= bincenters(h)[2] .<= yhigh
-    @assert sum(xsel) > 0 "No bin centers contained in [$(xlow), $(xhigh)]"
-    @assert sum(ysel) > 0 "No bin centers contained in [$(ylow), $(yhigh)]"
+    @assert count(xsel) > 0 "No bin centers contained in [$(xlow), $(xhigh)]"
+    @assert count(ysel) > 0 "No bin centers contained in [$(ylow), $(yhigh)]"
     xedgesel = push!(copy(xsel), false)
     yedgesel = push!(copy(ysel), false)
 
