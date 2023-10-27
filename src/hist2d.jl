@@ -313,3 +313,46 @@ function profile(h::Hist2D, axis::Symbol=:x)
     return Hist1D(Histogram(edges, val), sw2, nentries(h); overflow=h.overflow)
 end
 profile(axis::Symbol=:x) = h::Hist2D -> profile(h, axis)
+
+"""
+    restrict(h::Hist2D, xlow=-Inf, xhigh=Inf, ylow=-Inf, yhigh=Inf)
+    restrict(xlow=-Inf, xhigh=Inf, ylow=-Inf, yhigh=Inf) = h::Hist2D -> restrict(h, xlow, xhigh, ylow, yhigh)
+
+Returns a new histogram with a restricted x-axis.
+`restrict(h, 0, 3)` (or `h |> restrict(0, 3)`)
+will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
+"""
+function restrict(h::Hist2D, xlow=-Inf, xhigh=Inf, ylow=-Inf, yhigh=Inf)
+    xsel = xlow .<= bincenters(h)[1] .<= xhigh
+    ysel = ylow .<= bincenters(h)[2] .<= yhigh
+    @assert count(xsel) > 0 "No bin centers contained in [$(xlow), $(xhigh)]"
+    @assert count(ysel) > 0 "No bin centers contained in [$(ylow), $(yhigh)]"
+    xedgesel = push!(copy(xsel), false)
+    yedgesel = push!(copy(ysel), false)
+
+    xlastidx = findlast(xedgesel)
+    if xlastidx !== nothing
+        xedgesel[xlastidx+1] = 1
+    end
+
+    ylastidx = findlast(yedgesel)
+    if ylastidx !== nothing
+        yedgesel[ylastidx+1] = 1
+    end
+
+    xedges = binedges(h)[1][xedgesel]
+    if _is_uniform_bins(xedges)
+        xedges = range(first(xedges), last(xedges), length=length(xedges))
+    end
+
+    yedges = binedges(h)[2][yedgesel]
+    if _is_uniform_bins(yedges)
+        yedges = range(first(yedges), last(yedges), length=length(yedges))
+    end
+
+    c = bincounts(h)[xsel,ysel]
+    sumw2 = h.sumw2[xsel,ysel]
+
+    Hist2D(Histogram((xedges,yedges), c), sumw2, nentries(h); overflow=h.overflow)
+end
+restrict(xlow, xhigh, ylow, yhigh) = h::Hist2D -> restrict(h, xlow, xhigh, ylow, yhigh)

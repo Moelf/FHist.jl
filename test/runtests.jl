@@ -580,3 +580,25 @@ end
     h = Hist1D(randn(10^3))
     @test FHist.hists_to_bars([h]) == (binedges(h)[1:end-1], bincounts(h), ones(nbins(h)))
 end
+
+@testset "2D Restrict" begin
+    h = Hist2D((randn(500), randn(500)), (-5:0.2:5, -5:0.2:5))
+    hleftx = restrict(h, -Inf, 0.0)
+    hrightx = restrict(h, 0.0, Inf)
+
+    @test h == restrict(h)
+    @test nentries(h) == nentries(restrict(h))
+    @test restrict(h, -1, 1, -Inf, Inf) == (h |> restrict(-1, 1, -Inf, Inf))
+    @test integral(hleftx) + integral(hrightx) == integral(h)
+    @test nbins(hleftx)[1] + nbins(hrightx)[1] == nbins(h)[1]
+    @test sum(hleftx.sumw2) + sum(hrightx.sumw2) == sum(h.sumw2)
+
+    @test all(-1 .<= bincenters(restrict(h, -1, 1) |> project(:x)) .<= 1)
+    @test_throws AssertionError restrict(h, 10, Inf)
+
+    hlefty = restrict(h, -Inf, Inf, -Inf, 0.0)
+    hrighty = restrict(h, -Inf, Inf, 0.0, Inf)
+    @test integral(hlefty) + integral(hrighty) == integral(h)
+    @test nbins(hlefty)[2] + nbins(hrighty)[2] == nbins(h)[2]
+    @test sum(hlefty.sumw2) + sum(hrighty.sumw2) == sum(h.sumw2)
+end
