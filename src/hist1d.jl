@@ -349,4 +349,4 @@ function restrict(h::Hist1D, low=-Inf, high=Inf)
     end
     Hist1D(Histogram(edges, c), sumw2, nentries(h); overflow=h.overflow)
 end
-restrict(low=-Inf, high=Inf) = h::Hist1D->restrict(h, low, high)
+restrict(low, high) = h::Hist1D->restrict(h, low, high)
