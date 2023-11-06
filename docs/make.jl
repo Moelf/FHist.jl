@@ -27,7 +27,6 @@ makedocs(;
     repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
     sitename="FHist.jl",
     authors="Jerry Ling",
-    assets=String[],
 )
 
 deploydocs(;
