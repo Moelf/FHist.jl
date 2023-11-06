@@ -157,9 +157,26 @@ array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
-    for x in A
-        push!(h, x)
+    firstr = first(r)
+    invstep = inv(step(r))
+    L = nbins(h)
+    nentries = 0
+    for val in A
+        cursor = floor(Int, (val - firstr) * invstep)
+        binidx = cursor + 1
+        if overflow
+            binidx = clamp(binidx, 1, L)
+            nentries += 1
+            @inbounds h.hist.weights[binidx] += 1
+        else
+            if unsigned(cursor) < L
+                nentries += 1
+                @inbounds h.hist.weights[binidx] += 1
+            end
+        end
     end
+    h.nentries[] = nentries
+    h.sumw2 .= h.hist.weights
     return h
 end
 function Hist1D(A, edges::AbstractVector; overflow=_default_overflow)
