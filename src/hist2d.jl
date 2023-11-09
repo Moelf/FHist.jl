@@ -105,7 +105,7 @@ Base.broadcastable(h::Hist2D) = Ref(h)
     Hist2D(elT::Type{T}=Float64; binedges, overflow) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
-To be used with [`push!`](@ref). Default overflow behavior (`false`)
+To be used with `push!` or [`atomic_push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
 function Hist2D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}

@@ -140,7 +140,7 @@ Base.broadcastable(h::Hist1D) = Ref(h)
     Hist1D(elT::Type{T}=Float64; bins, overflow) where {T}
 
 Initialize an empty histogram with bin content typed as `T` and bin edges.
-To be used with [`push!`](@ref). Default overflow behavior (`false`)
+To be used with `push!` or [`atomic_push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
 function Hist1D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
@@ -157,9 +157,26 @@ array. Weight for each value is assumed to be 1.
 """
 function Hist1D(A, r::AbstractRange; overflow=_default_overflow)
     h = Hist1D(Int; bins=r, overflow=overflow)
-    for x in A
-        push!(h, x)
+    firstr = first(r)
+    invstep = inv(step(r))
+    L = nbins(h)
+    nentries = 0
+    for val in A
+        cursor = floor(Int, (val - firstr) * invstep)
+        binidx = cursor + 1
+        if overflow
+            binidx = clamp(binidx, 1, L)
+            nentries += 1
+            @inbounds h.hist.weights[binidx] += 1
+        else
+            if unsigned(cursor) < L
+                nentries += 1
+                @inbounds h.hist.weights[binidx] += 1
+            end
+        end
     end
+    h.nentries[] = nentries
+    h.sumw2 .= h.hist.weights
     return h
 end
 function Hist1D(A, edges::AbstractVector; overflow=_default_overflow)
