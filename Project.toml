@@ -1,7 +1,7 @@
 name = "FHist"
 uuid = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
-version = "0.10.3"
+version = "0.10.4"
 
 [deps]
 BayesHistogram = "000d9b38-65fe-4c81-bdb9-69f01f102479"
@@ -15,10 +15,12 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 BayesHistogram = "1.0.7"
+LinearAlgebra = "1"
 MakieCore = "0.6"
 Measurements = "^2.7"
 RecipesBase = "^1"
 Requires = "^1.3"
+Statistics = "1"
 StatsBase = "^0.33, 0.34"
 julia = "1.6"
 
