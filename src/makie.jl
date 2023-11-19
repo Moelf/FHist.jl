@@ -1,4 +1,7 @@
-using .Makie
+module PlottingMakieExt
+#using .Makie
+using RecipesBase, Statistics
+isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 """
 
@@ -214,4 +217,5 @@ function collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=
     text!(relative_projection, "$colabname $stage", position = pos, 
         font=[fill("TeX Gyre Heros Bold Italic Makie", length(colabname)); fill("TeX Gyre Heros Makie", length(stage)+1)]
     )
+end
 end
