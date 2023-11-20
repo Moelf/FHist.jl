@@ -13,6 +13,16 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
+[weakdeps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+
+[extensions]
+PlottingCairoMakieExt = "CairoMakie"
+PlottingMakieExt = "Makie"
+PlottingPlotsExt = "Plots"
+
 [compat]
 BayesHistogram = "1.0.7"
 LinearAlgebra = "1"

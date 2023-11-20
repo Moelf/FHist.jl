@@ -1,5 +1,9 @@
+module PlottingPlotsExt
 using RecipesBase, Statistics
 
+isdefined(Base, :get_extension) ? (using Plots) : (using ..Plots)
+
+#
 @recipe function f(h::Hist1D)
     seriestype --> :barbins
     N = nentries(h)
@@ -17,5 +21,6 @@ end
     y := h.hist.edges[2]
     z := (surf = h.hist.weights, )
     ()
+end
 end
 

@@ -1,4 +1,7 @@
-using .CairoMakie
+module PlottingCairoMakieExt
+#using .CairoMakie
+
+isdefined(Base, :get_extension) ? (using CairoMakie) : (using ..CairoMakie)
 
 #FIXME remove piracy
 function CairoMakie.Cairo.CairoPattern(color::Makie.AbstractPattern)
@@ -8,5 +11,6 @@ function CairoMakie.Cairo.CairoPattern(color::Makie.AbstractPattern)
     cairoimage = CairoMakie.Cairo.CairoImageSurface(bitmappattern)
     cairopattern = CairoMakie.Cairo.CairoPattern(cairoimage)
     return cairopattern
+end
 end
 
