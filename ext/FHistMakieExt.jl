@@ -1,4 +1,4 @@
-module PlottingMakieExt
+module FHistMakieExt
 #using .Makie
 using RecipesBase, Statistics
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)

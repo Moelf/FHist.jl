@@ -1,4 +1,4 @@
-module PlottingCairoMakieExt
+module FHistCairoMakieExt
 #using .CairoMakie
 
 isdefined(Base, :get_extension) ? (using CairoMakie) : (using ..CairoMakie)
