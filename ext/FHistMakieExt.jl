@@ -1,6 +1,7 @@
 module FHistMakieExt
+using FHist
 #using .Makie
-using RecipesBase, Statistics
+using MakieCore, Statistics
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 """
