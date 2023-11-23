@@ -1,37 +1,10 @@
 module FHistMakieExt
-using FHist
+using FHist, FHist.Measurements
 #using .Makie
 using MakieCore, Statistics
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
-"""
-
-## Example
-```
-with_theme(ATLASTHEME) do
-    h1 = Hist1D(randn(10^4))
-    hist(h1; label="atlas style histogram")
-end
-```
-"""
-const ATLASTHEME = 
-Theme(
-      Axis = (
-              xtickalign=1, ytickalign=1, 
-              xticksmirrored=1, yticksmirrored=1,
-              xminortickalign=1, yminortickalign=1,
-              xticksize=10, yticksize=10,
-              xminorticksize=6, yminorticksize=6,
-              xgridvisible = false, ygridvisible = false,
-              xminorticksvisible = true, yminorticksvisible = true,
-              limits = (nothing, nothing, 0, nothing), 
-             ),
-      Colorbar = (
-                  colormap = :haline,
-                  highclip = :red,
-                  lowclip = :black
-                 )
-     )
+import FHist: stackedhist, stackedhist!
 
 """
     stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors())
@@ -101,6 +74,13 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     input
 end
 
+import FHist: ratiohist, ratiohist!
+
+"""
+    ratiohist(h::Hist1D; color=:black, errors=true)
+
+Plot a histogram that represents a ratio (i.e. `h = h1/h3`), you can pass `color` to fix the error bar colors, and use `error` to turn on or off the error bars in the ratio plot.
+"""
 @recipe(RatioHist) do scene 
     Attributes(
         errors = true,
@@ -113,9 +93,11 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D}})
     xs = bincenters(hratio)
     ys = bincounts(hratio)
 
-    scatter!(input, xs, ys)
+    color = input[:color][]
+
+    scatter!(input, xs, ys; color=color)
     if input[:errors][]
-        errorbars!(input, xs, ys, binerrors(hratio); whiskerwidth=input[:whiskerwidth][])
+        errorbars!(input, xs, ys, binerrors(hratio); color=color, whiskerwidth=input[:whiskerwidth][])
     end
     hlines!(input, 1; color=RGBf(0.2,0.2,0.2), linestyle=:dashdot)
     input
@@ -161,12 +143,12 @@ afp = hist(h1; label="a")
 statbox!(afp, h1)
 ```
 """
-function statbox!(fig::Makie.FigureAxisPlot, h; position = (1,2))
+function FHist.statbox!(fig::Makie.FigureAxisPlot, h; position = (1,2))
     f, _, _ = fig
     statbox!(f, h; position)
     fig
 end
-function statbox!(fig::Makie.Figure, h::Hist1D; position = (1,2))
+function FHist.statbox!(fig::Makie.Figure, h::Hist1D; position = (1,2))
     N = nentries(h)
     M = round(mean(h); sigdigits= 2)
     S = round(std(h); sigdigits= 2)
@@ -175,7 +157,7 @@ function statbox!(fig::Makie.Figure, h::Hist1D; position = (1,2))
     Legend(getindex(fig, position...), elements, labels)
     fig
 end
-function statbox!(fig::Makie.Figure, h::Hist2D; position = (1,2))
+function FHist.statbox!(fig::Makie.Figure, h::Hist2D; position = (1,2))
     N = nentries(h)
     xM, yM = round.(mean(h); sigdigits= 2)
     xS, yS = round.(std(h); sigdigits= 2)
@@ -207,7 +189,7 @@ with_theme(ATLASTHEME) do
     fig
 end
 """
-function collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
+function FHist.collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
     relative_projection = Makie.camrelative(axis.scene);
     pos = if position isa Symbol
         length(String(position)) != 2 && throw("`position` must be length == 2, support `lt` or `rt`")

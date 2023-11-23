@@ -2,5 +2,6 @@
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
 PlutoStaticHTML = "359b1769-a58e-495b-9770-312e911026ad"

@@ -6,7 +6,7 @@ export atomic_push!
 
 export Hist2D, project, profile, transpose
 
-export Hist3D, collabtext!, statbox!, ATLASTHEME, stackedhist
+export Hist3D, collabtext!, statbox!
 
 using StatsBase, Statistics, Measurements
 export Weights
@@ -44,6 +44,10 @@ include("./hist3d.jl")
 include("./displays.jl")
 include("./arithmatics.jl")
 nentries(h::Union{Hist1D, Hist2D, Hist3D}) = h.nentries[]
+
+using MakieCore
+include("./MakieThemes.jl")
+export ATLASTHEME, stackedhist, stackedhist!, ratiohist, ratiohist!
 
 function stackedhist end
 function stackedhist! end
