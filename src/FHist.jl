@@ -45,6 +45,15 @@ include("./displays.jl")
 include("./arithmatics.jl")
 nentries(h::Union{Hist1D, Hist2D, Hist3D}) = h.nentries[]
 
+function stackedhist end
+function stackedhist! end
+
+function ratiohist end
+function ratiohist! end
+
+function statbox! end
+function collabtext! end
+
 function __init__()
 
     @static if !isdefined(Base, :get_extension)
