@@ -8,8 +8,7 @@ with_theme(ATLASTHEME) do
 end
 ```
 """
-ATLASTHEME = 
-MakieCore.Attributes(
+const ATLASTHEME = MakieCore.Attributes(
       Axis = (
               xtickalign=1, ytickalign=1, 
               xticksmirrored=1, yticksmirrored=1,
