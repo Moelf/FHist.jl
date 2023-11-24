@@ -205,7 +205,7 @@ function Hist1D(A, wgts::AbstractWeights, r::AbstractRange; overflow=_default_ov
     push!.(h, A, wgts)
     return h
 end
-function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector, overflow=_default_overflow)
+function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; overflow=_default_overflow)
     @inbounds if _is_uniform_bins(edges)
         r = range(first(edges), last(edges), length=length(edges))
         return Hist1D(A, wgts, r; overflow=overflow)
