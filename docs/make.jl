@@ -16,6 +16,7 @@ makedocs(;
     modules=[FHist],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
+        size_threshold = 5*10^6
         # assets = ["assets/logo.ico"],
     ),
     pages=[
@@ -26,7 +27,7 @@ makedocs(;
     ],
     repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
     sitename="FHist.jl",
-    authors="Jerry Ling",
+    authors="Jerry Ling"
 )
 
 deploydocs(;
