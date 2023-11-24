@@ -45,7 +45,7 @@ begin
 	p1, ax1= plot(fig[1, 1],h1; label = "plot(h1)")
 	p2, ax2 = stairs(fig[1, 2], h1, label = "stairs(h1)")
 	p3, ax3 = hist(fig[2, 1], h1, label = "hist(h1)")
-	p4, ax4 = errorbars(fig[2, 2], h1, whiskerwidth=6, label = "errorbars(h1)")
+	p4, ax4 = errorbars(fig[2, 2], h1, color=:black, whiskerwidth=6, label = "errorbars(h1)")
 	axislegend.([p1, p2, p3, p4])
 	fig
 end
@@ -110,7 +110,7 @@ We also have a recipe for that:
 
 # ╔═╡ 70a5ba34-53c5-4e12-93b9-49eace436524
 with_theme(ATLASTHEME) do
-	f, a, p = stackedhist([h2, h2, h1 ]; errors=true) #errors defaults to `true`
+	f, a, p = stackedhist([h2, h2, h1 ])
 	labels = ["proc1", "blah", "third one"]
 	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
 	title = "Legend title"
@@ -136,10 +136,10 @@ with_theme(ATLASTHEME) do
 	errorbars!(a, h3)
 	
     axislegend()
-    ratioax = Axis(f_ratio[2, 1], aspect = 5.5, xlabel = "my x-axis", ylabel="h11/ h3")
+    ratioax = Axis(f_ratio[2, 1], aspect = 5.5, xlabel = "my x-axis", ylabel="h1 / h3")
     linkxaxes!(ratioax, a)
     hidexdecorations!(a)
-    ratiohist!(ratioax, h1/h3; errors=true)
+    ratiohist!(ratioax, h1/h3; color=:black, errors=true)
     rowsize!(f_ratio.layout, 1, Aspect(1, 0.5))
     f_ratio
 end
@@ -165,12 +165,18 @@ begin
 end
 
 # ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
-with_theme(ATLASTHEME) do
-    f, a, p = stackedhist([h1, h1 ]; error_color=Pattern('/'))
+let
+    f, a, p = stackedhist([h1, h1 ]; error_color=(:black, 0.5))
 	labels = ["proc1", "blah"]
 	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
 	title = "Legend title"
 	Legend(f[1,2], elements, labels, title)
+	f
+end
+
+# ╔═╡ fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
+let
+    f, a, p = stackedhist([h1, h1 ]; error_color=Pattern('/'))
 	f
 end
 
@@ -195,3 +201,4 @@ end
 # ╟─2f97d05b-9103-451e-8fce-bb7458acf2ba
 # ╠═f120fa84-6d27-4561-a8d0-fb619c94c490
 # ╠═b114c8a7-5f01-44fe-9660-b5021d359399
+# ╠═fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
