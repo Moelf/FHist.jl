@@ -18,9 +18,6 @@ end;
 # ╔═╡ 5a884f80-7c0a-4345-b2d3-1785b1b5a46a
 using Statistics
 
-# ╔═╡ b74d736e-ce33-4a54-9fb0-8011efe57e1a
-using RecipesBase
-
 # ╔═╡ 58b588b6-4b8f-447d-b205-e31b52e99e4e
 using FHist
 
@@ -28,7 +25,6 @@ using FHist
 using Plots
 
 # ╔═╡ a354ab2a-e809-4b0f-829d-1f6b33ed5634
-using CairoMakie
 
 md"""
 # Documents some of the functions of the FHist package.
@@ -233,9 +229,7 @@ FHist.bayes_rebin_edges(h1)
 
 # ╔═╡ Cell order:
 # ╠═be0b45f2-86dc-11ee-2dce-2994fb540eec
-# ╠═b58ee345-2495-4b67-8cc7-afd7ce66b1aa
 # ╠═5a884f80-7c0a-4345-b2d3-1785b1b5a46a
-# ╠═b74d736e-ce33-4a54-9fb0-8011efe57e1a
 # ╠═58b588b6-4b8f-447d-b205-e31b52e99e4e
 # ╠═cb7cecc9-e7ec-4555-83ef-5f70a84b4e15
 # ╠═a354ab2a-e809-4b0f-829d-1f6b33ed5634
