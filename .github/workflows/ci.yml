@@ -40,6 +40,8 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: julia-actions/cache@v1
       - uses: actions/checkout@v2
@@ -60,3 +62,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        if: github.event_name == 'pull_request'
