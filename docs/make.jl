@@ -25,7 +25,6 @@ makedocs(;
         "Writing to `.root`" => "writingtoroot.md",
         "Tutorials" => T,
     ],
-    repo="https://github.com/Moelf/FHist.jl/blob/{commit}{path}#L{line}",
     sitename="FHist.jl",
     authors="Jerry Ling"
 )
