@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "Cite this paper whenever FHist.jl played an important role in your research"
+authors:
+- family-names: "Ling"
+  given-names: "Jerry"
+  orcid: "https://orcid.org/0000-0002-3359-0380"
+- family-names: "Amin"
+  given-names: "Nick"
+  orcid: "https://orcid.org/0000-0003-2560-0013"
+title: "FHist.jl: Fast and featureful histogram in pure Julia"
+version: "v0.10"
+license: "MIT"
+doi: "10.5281/zenodo.10091098"
+date-released: 2023-02-22
+url: "https://github.com/Moelf/FHist.jl/"
