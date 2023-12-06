@@ -4,6 +4,7 @@ using PlutoStaticHTML
 
 notebooks = [
     "Makie Plotting",
+    "Plots Plotting",
 ]
 
 include("build.jl")
