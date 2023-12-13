@@ -58,6 +58,7 @@ function ratiohist! end
 function statbox! end
 function collabtext! end
 
+export h5dumphist, h5readhist
 function h5dumphist end
 function h5readhist end
 
