@@ -1,7 +1,8 @@
 module FHistHDF5Ext
 
 using FHist
-using HDF5, StatsBase, Base.Threads: SpinLock
+using HDF5, StatsBase
+using Base.Threads: SpinLock
 
 import FHist: h5readhist, h5dumphist
 
