@@ -2,8 +2,8 @@
 
 `FHist.jl` provides an `HDF5.jl` extension to dump and read histograms
 (`Hist1D`, `Hist2D` and `Hist3D`) to HDF5 files. Once the `HDF5` package is
-loaded, the corresponding methods for [`h5dumphist`](@ref) and
-[`h5readhist`](@ref) will become available:
+loaded, the corresponding methods for `h5dumphist` and
+`h5readhist` will become available:
 
 
 ```@example 1
