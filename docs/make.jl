@@ -24,6 +24,7 @@ makedocs(;
         "Introduction" => "index.md",
         "APIs" => "api.md",
         "Writing to `.root`" => "writingtoroot.md",
+        "Writing to `HDF5`" => "writingtohdf5.md",
         "Tutorials" => T,
     ],
     sitename="FHist.jl",
