@@ -11,10 +11,22 @@ using Test, FHist, HDF5
     h5dumphist(fname, "a/h2", h2)
     h5dumphist(fname, "a/b/h3", h3)
     h5dumphist(fname, "a/b/c/h3_int", h3_int)
+
+    # Explicit type specifications
     h1_from_h5 = h5readhist(fname, "h1", Hist1D)
     h2_from_h5 = h5readhist(fname, "a/h2", Hist2D)
     h3_from_h5 = h5readhist(fname, "a/b/h3", Hist3D)
     h3_int_from_h5 = h5readhist(fname, "a/b/c/h3_int", Hist3D)
+    @test h1 == h1_from_h5
+    @test h2 == h2_from_h5
+    @test h3 == h3_from_h5
+    @test h3_int == h3_int_from_h5
+
+    # Without type specification
+    h1_from_h5 = h5readhist(fname, "h1")
+    h2_from_h5 = h5readhist(fname, "a/h2")
+    h3_from_h5 = h5readhist(fname, "a/b/h3")
+    h3_int_from_h5 = h5readhist(fname, "a/b/c/h3_int")
     @test h1 == h1_from_h5
     @test h2 == h2_from_h5
     @test h3 == h3_from_h5

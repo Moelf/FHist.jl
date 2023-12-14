@@ -36,28 +36,45 @@ end
 
 
 """
-    function h5readhist(filename::AbstractString, path::AbstractString, H::Type{Hist1D})
+    function h5readhist(filename::AbstractString, path::AbstractString [, H::Type{<: Union{Hist1D, Hist2D, Hist3D}}])
+    function h5readhist(f::HDF5.File, path::AbstractString [, H::Type{<: Union{Hist1D, Hist2D, Hist3D}}])
 
-Reads a histogram from an HDF5 file which has been dumped using [`h5dumphist`](@ref).
+Reads a histogram from an HDF5 file which has been dumped using
+[`h5dumphist`](@ref). The type parameter is optional.
 
 # Examples
-h = h5readhist("foo.h5", "some/path/to/myhist", Hist1D)
+h = h5readhist("foo.h5", "some/path/to/myhist")
 """
 function h5readhist(filename::AbstractString, path::AbstractString, H::Type{<: Union{Hist1D, Hist2D, Hist3D}})
     h5open(filename, "r") do f
-        weights = _read_dset(f["$path/weights"], H)
-        dims = parse(Int, match(r"\d+", string(H)).match)
-        edges = tuple([f["$path/edges_$dim"][:] for dim in 1:dims]...)
-        isdensity = read_attribute(f[path], "isdensity")
-        closed = Symbol(read_attribute(f[path], "closed"))
-
-        hist = Histogram(edges, weights, closed, isdensity)
-
-        sumw2 = _read_dset(f["$path/sumw2"], H)
-        overflow = parse(Bool, read_attribute(f[path], "overflow"))
-        nentries = Base.RefValue{Int}(read_attribute(f[path], "nentries"))
-        H(hist, sumw2, SpinLock(), overflow, nentries)
+        h5readhist(f, path, H)
     end
+end
+function h5readhist(f::HDF5.File, path::AbstractString)
+    dims = length(filter(g->startswith(g, "edges_"), keys(f[path])))
+    dims == 1 && return h5readhist(f, path, Hist1D)
+    dims == 2 && return h5readhist(f, path, Hist2D)
+    dims == 3 && return h5readhist(f, path, Hist3D)
+    error("Histograms with $dims dimensions are not supported yet.")
+end
+function h5readhist(filename::AbstractString, path::AbstractString)
+    h5open(filename, "r") do f
+        h5readhist(f, path)
+    end
+end
+function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D, Hist2D, Hist3D}})
+    weights = _read_dset(f["$path/weights"], H)
+    dims = parse(Int, match(r"\d+", string(H)).match)
+    edges = tuple([f["$path/edges_$dim"][:] for dim in 1:dims]...)
+    isdensity = read_attribute(f[path], "isdensity")
+    closed = Symbol(read_attribute(f[path], "closed"))
+
+    hist = Histogram(edges, weights, closed, isdensity)
+
+    sumw2 = _read_dset(f["$path/sumw2"], H)
+    overflow = parse(Bool, read_attribute(f[path], "overflow"))
+    nentries = Base.RefValue{Int}(read_attribute(f[path], "nentries"))
+    H(hist, sumw2, SpinLock(), overflow, nentries)
 end
 
 _read_dset(d::HDF5.Dataset, ::Type{Hist1D}) = d[:]
