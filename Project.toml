@@ -27,7 +27,7 @@ FHistPlotsExt = "Plots"
 
 [compat]
 BayesHistogram = "1.0.7"
-HDF5 = "0.17"
+HDF5 = "0.16, 0.17"
 LinearAlgebra = "1"
 Makie = "0.19, ^0.20.1"
 MakieCore = "0.6, 0.7"
@@ -44,4 +44,4 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "HDF5"]
