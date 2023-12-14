@@ -10,7 +10,7 @@ loaded, the corresponding methods for `h5dumphist` and
 using FHist
 using HDF5
 
-h = Hist1D(rand(1000), -3:0.3:3)
+h = Hist1D(randn(10_000), -3:0.1:3)
 h5dumphist("foo.h5", "some/path/to/myhist", h)
 ```
 
