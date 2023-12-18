@@ -18,16 +18,6 @@ function sample(h::Hist1D; n::Int=1)
 end
 
 """
-    binerrors(f::T, h::Hist1D) where T<:Function = f.(h.sumw2)
-    binerrors(h::Hist1D) = binerrors(sqrt, h)
-
-Calculate the bin errors from `sumw2` with a Gaussian default.
-"""
-binerrors(f::T, h::Hist1D) where T<:Function = f.(h.sumw2)
-binerrors(h::Hist1D) = binerrors(sqrt, h)
-
-
-"""
     nbins(h::Hist1D)
 
 Get the number of bins of a histogram.
@@ -37,10 +27,13 @@ function nbins(h::Hist1D)
 end
 
 """
-    integral(h::Hist1D; width=false)
+    integral(h; width=false)
 
 Get the integral a histogram; `width` means multiply each bincount
 by their bin width when calculating the integral.
+
+!!! warning
+    `width` keyword argument only works with 1D histogram at the moment.
 
 !!! warning
     Be aware of the approximation you make

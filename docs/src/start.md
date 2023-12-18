@@ -16,7 +16,7 @@ There are two possible ways to make a histogram:
 We call the first one "constructor like" use case and the second one "fit like" use case (as in "fit
 data to a histogram").
 
-Each of the two options imply a set of options that can go with them. The the two sets of options
+Each of the two options imply a set of options that can go with them. The two sets of options
 have some overlap, e.g. `binedges`, `overflow`; but there are also options only make sense of one of
 them, e.g., `nbins` only works in the "fit like" use case.
 

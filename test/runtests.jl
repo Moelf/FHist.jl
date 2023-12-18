@@ -380,6 +380,7 @@ end
     h1 = Hist1D(randn(100); binedges = -3:3)
     h2 = Hist1D(randn(100); binedges = -3:3)
     @test merge(h1,h2) == h1+h2
+    @test merge(h1,h2,h1) == h1+h2+h1
 
     h1 = Hist2D((randn(10),randn(10)); binedges = (-3:3,-3:3))
     h2 = Hist2D((randn(10),randn(10)); binedges = (-3:3,-3:3))
@@ -582,3 +583,9 @@ end
 end
 
 include("hdf5.jl")
+@testset "Simple Significance" begin
+    h1 = Hist1D(rand(1000);  binedges = [0, 1.0])
+    h2 = Hist1D(rand(10000); binedges = [0, 1.0]);
+
+    @test all(significance(h1,h2) .≈ (9.839916447569484, 0.30998654607114046))
+end

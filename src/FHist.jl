@@ -117,11 +117,46 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
         Base.lock(h::$H) = lock(h.hlock)
         Base.unlock(h::$H) = unlock(h.hlock)
+        @doc """
+                bincounts(h::$($H))
+            Get the bin counts (weights) of the histogram.
+        """
         bincounts(h::$H) = h.bincounts
+        @doc """
+            binedges(h)
+
+        Get the bin edges of the histogram
+
+        !!! note
+            For 1D histogram, it returns just a vector. For others, it returns a tuple of vectors. If you need a tuple of vectors, use `h.binedges` at your own risk.
+        """
         binedges(h::$H) = _from_tuple(h.binedges)
+
+        @doc """
+            bincenters(h::$($H))
+        Get the bin centers of the histogram
+
+        !!! note
+            For 1D histogram, it returns just a vector. For others, it returns a tuple of vectors.
+        """
         bincenters(h::$H) = _from_tuple(StatsBase.midpoints.(h.binedges))
+        @doc """
+                nentries(h::$($H))
+            Get the number of times a histogram is filled (`push!`ed)
+        """
         nentries(h::$H) = h.nentries[]
+        @doc """
+                sumw2(h)
+            Get the sum of weights squared of the histogram, it has the same shape as `bincounts(h)`.
+        """
         sumw2(h::$H) = h.sumw2
+
+        @doc """
+                binerrors(f=sqrt, h)
+            Get the error (uncertainty) of each bin. By default, calls `sqrt` on `sumw2(h)` bin by bin as an approximation.
+        """
+        binerrors(f::T, h::$H) where T<:Function = f.(sumw2(h))
+        binerrors(h::$H) = binerrors(sqrt, h)
 
         function Base.:(==)(h1::$H, h2::$H)
             bincounts(h1) == bincounts(h2) &&

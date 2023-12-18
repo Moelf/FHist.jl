@@ -53,7 +53,7 @@ end
 function merge(hists...)
     h = deepcopy(first(hists))
     length(hists) == 1 && return h
-    foreach(x-> merge!(h, x), @view hists[2:end])
+    foreach(x-> merge!(h, x), hists[2:end])
     h
 end
 

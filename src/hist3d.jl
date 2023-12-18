@@ -12,16 +12,6 @@ function auto_bins(ary, ::Val{3}; nbins=nothing)
 end
 
 """
-    binerrors(f::T, h::Hist3D) where T<:Function = f.(h.sumw2)
-    binerrors(h::Hist3D) = binerrors(sqrt, h)
-
-Calculate the bin errors from `sumw2` with a Gaussian default.
-"""
-binerrors(f::T, h::Hist3D) where T<:Function = f.(h.sumw2)
-binerrors(h::Hist3D) = binerrors(sqrt, h)
-
-
-"""
     nbins(h::Hist3D)
 
 Get a 3-tuple of the number of x and y bins of a histogram.
@@ -30,11 +20,6 @@ function nbins(h::Hist3D)
     size(bincounts(h))
 end
 
-"""
-    integral(h::Hist3D)
-
-Get the integral a histogram.
-"""
 function integral(h::Hist3D)
     sum(bincounts(h))
 end
