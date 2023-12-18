@@ -1,5 +1,11 @@
-Base.lock(h::Hist1D) = lock(h.hlock)
-Base.unlock(h::Hist1D) = unlock(h.hlock)
+function auto_bins(ary, ::Val{1}; nbins=nothing)
+    xs = only(ary)
+    E = eltype(xs)
+    F = E <: Number ? float(E) : Float64
+    nbins = isnothing(nbins) ? _sturges(xs) : nbins
+    lo, hi = minimum(xs), maximum(xs)
+    (StatsBase.histrange(F(lo), F(hi), nbins),)
+end
 
 """
     sample(h::Hist1D, n::Int=1)
@@ -9,23 +15,6 @@ The sampled values are the bins' lower edges.
 """
 function sample(h::Hist1D; n::Int=1)
     StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
-end
-
-# 1D case
-_edge_binindex(r::Tuple{T}, x::Real) where T = _edge_binindex(r[1], x)
-
-@inline function _edge_binindex(r::AbstractRange, x::Real)
-    return floor(Int, (x - first(r)) * inv(step(r))) + 1
-    # # 20% faster and assigns -Inf, Inf, NaN to typemin(Int64)
-    # return Base.unsafe_trunc(Int, round((x - first(r)) * inv(step(r)), RoundDown)) + 1
-end
-
-@inline function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
-    return (x - first(r))÷step(r) + 1
-end
-
-@inline function _edge_binindex(v::AbstractVector, x::Real)
-    return searchsortedlast(v, x)
 end
 
 """

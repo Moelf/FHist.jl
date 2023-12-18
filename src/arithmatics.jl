@@ -1,13 +1,5 @@
 import Base: ==, +, -, *, /, merge, merge!
 
-#for StatsBase histogram
-for op in (:+, :-, :*, :/)
-    @eval function ($op)(h1::Histogram, h2::Histogram)
-        (==)(h1.edges,h2.edges) ? Histogram(h1.edges, broadcast($op, h1.weights, h2.weights)) : throw(DimensionMismatch("The bins of the two histograms don't match"))
-    end
-    @eval ($op)(h1::Histogram, n::Real) = Histogram(h1.edges, broadcast($op, h1.weights, n))
-end
-
 for T in (:Hist1D,:Hist2D,:Hist3D)
     for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))

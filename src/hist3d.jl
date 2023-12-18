@@ -1,5 +1,15 @@
-Base.lock(h::Hist3D) = lock(h.hlock)
-Base.unlock(h::Hist3D) = unlock(h.hlock)
+function auto_bins(ary, ::Val{3}; nbins=nothing)
+    xs, ys, zs = ary
+    E = eltype(xs)
+    xnbins, ynbins, znbins = isnothing(nbins) ? _sturges.(xs) : nbins
+    F = E <: Number ? float(E) : Float64
+    lo, hi = minimum(xs), maximum(xs)
+    loy, hiy = minimum(ys), maximum(ys)
+    loz, hiz = minimum(zs), maximum(zs)
+    (StatsBase.histrange(F(lo), F(hi), xnbins),
+        StatsBase.histrange(F(loy), F(hiy), ynbins),
+        StatsBase.histrange(F(loz), F(hiz), znbins),)
+end
 
 """
     binerrors(f::T, h::Hist3D) where T<:Function = f.(h.sumw2)

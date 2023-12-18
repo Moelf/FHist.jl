@@ -10,16 +10,16 @@ isdefined(Base, :get_extension) ? (using Plots) : (using ..Plots)
     M = round(mean(h); sigdigits= 2)
     S = round(std(h); sigdigits= 2)
     label --> "Entries = $N\nMean = $M\nStd Dev = $S\nOverflow = $(h.overflow)"
-    x:=h.hist.edges[1]
-    y:=h.hist.weights
+    x:= binedges(h)
+    y:= bincounts(h)
     ()
 end
 
 @recipe function f(h::Hist2D)
     seriestype --> :bins2d
-    x := h.hist.edges[1]
-    y := h.hist.edges[2]
-    z := (surf = h.hist.weights, )
+    x := binedges(h)[1]
+    y := binedges(h)[2]
+    z := (surf = bincounts(h), )
     ()
 end
 end

@@ -32,9 +32,9 @@ Let's generate three dummy histograms sampled from three different distributions
 
 # ╔═╡ 316167ab-4d59-4978-a3b0-539e23c1eaaa
 begin
-	h1 = Hist1D(randn(10^3), -2:0.3:2)
-	h2 = Hist1D(randn(10^4), -2:0.3:2)
-	h3 = Hist1D(randn(10^3) .+ 0.5, -2:0.3:2)
+	h1 = Hist1D(randn(10^3); binedges = -2:0.3:2)
+	h2 = Hist1D(randn(10^4); binedges = -2:0.3:2)
+	h3 = Hist1D(randn(10^3) .+ 0.5; binedges = -2:0.3:2)
 end
 
 # ╔═╡ 2d857d08-f9c2-4a60-86dd-2afbd3b599f6

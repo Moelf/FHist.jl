@@ -7,6 +7,9 @@
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Changelog
+- 0.11
+  - Breaking change to the main constructor API, now the API is sanely divided into "constructor for
+    empty histogram" and "make histogram given data". See documentation.
 - 0.10
   - due to huge latency issue, UnicodePlots.jl (for text based terminal display) has been dropped.
 
@@ -16,12 +19,12 @@ julia> using FHist
 
 julia> a = randn(1000);
 
-julia> h1 = Hist1D(a, -4:1.0:4)
+julia> h1 = Hist1D(a; binedges = -4:1.0:4)
 edges: -4.0:1.0:4.0
 bin counts: [0, 23, 123, 377, 320, 134, 21, 2]
 total count: 1000
 
-julia> h2 = Hist1D(Int; bins=-4.0:1.0:4.0);
+julia> h2 = Hist1D(; counttype = Int, binedges = -4.0:1.0:4.0);
 
 julia> push!.(h2, a);
 
@@ -36,7 +39,7 @@ true
 Additionally, one can specify `overflow=true` when creating a histogram to clamp out-of-bounds values into 
 the edge bins.
 ```julia
-julia> Hist1D(rand(1000),0:0.2:0.9; overflow=true)
+julia> Hist1D(rand(1000); binedges = 0:0.2:0.9, overflow=true)
 edges: 0.0:0.2:0.8
 bin counts: [218, 183, 198, 401]
 total count: 1000
@@ -44,14 +47,13 @@ total count: 1000
 
 ## Speed
 
-Single-threaded filling happens at almost 400 MHz
+Single-threaded filling happens at 400 MHz
 ```julia
 julia> a = randn(10^6);
 
-julia> @benchmark Hist1D(a, -3:0.01:3)
- Range (min … max):  2.591 ms …   4.746 ms  ┊ GC (min … max): 0.00% … 0.00%
- Time  (median):     2.802 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   2.864 ms ± 195.931 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+julia> @benchmark Hist1D(a; binedges = -3:0.01:3)
+BenchmarkTools.Trial: 2578 samples with 1 evaluation.
+ Range (min … max):  1.871 ms …  3.360 ms  ┊ GC (min … max): 0.00% … 0.00%
 ```
 
 ## Features
@@ -59,12 +61,9 @@ julia> @benchmark Hist1D(a, -3:0.01:3)
 ### 1D
 
 ```julia
-julia> using FHist, Statistics, Random
+julia> using FHist, Statistics
 
-julia> Random.seed!(42)
-MersenneTwister(42)
-
-julia> h1 = Hist1D(randn(10^4).+2, -5:0.5:5);
+julia> h1 = Hist1D(randn(10^4).+2; binedges = -5:0.5:5);
 
 julia> h1 = (h1 + h1*2)
 edges: -5.0:0.5:5.0
@@ -107,7 +106,7 @@ julia> h1 |> normalize |> integral
 ### 2D
 
 ```julia
-julia> h2 = Hist2D((randn(10^4),randn(10^4)), (-5:5,-5:5))
+julia> h2 = Hist2D((randn(10^4),randn(10^4)); binedges = (-5:5,-5:5))
 
 edges: (-5:5, -5:5)
 bin counts: [0 0 … 0 0; 0 0 … 0 0; … ; 0 0 … 0 0; 0 0 … 0 0]
@@ -137,7 +136,7 @@ total count: 10000
 ### 3D
 
 ```julia
-julia> h3 = Hist3D((randn(10^4),randn(10^4),randn(10^4)), (-5:5,-5:5,-5:5))
+julia> h3 = Hist3D((randn(10^4),randn(10^4),randn(10^4)); binedges = (-5:5,-5:5,-5:5))
 Hist3D{Int64}, edges=(-5:5, -5:5, -5:5), integral=10000
 
 julia> h3 |> project(:x) |> project(:x) |> std
