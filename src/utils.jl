@@ -35,3 +35,5 @@ end
 function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
     true
 end
+
+Base.convert(::Type{StatsBase.Histogram}, h::Union{Hist1D, Hist2D, Hist3D}) = StatsBase.Histogram(binedges(h), bincounts(h))
