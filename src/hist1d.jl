@@ -112,6 +112,21 @@ end
     return nothing
 end
 
+function Base.append!(h::Hist1D{T,E}, val::AbstractVector, wgt=nothing) where {T,E}
+    lock(h)
+    if isnothing(wgt)
+        for v in val
+            push!(h, v)
+        end
+    else
+        for (v, w) in zip(val, wgt)
+            push!(h, v, w)
+        end
+    end
+    unlock(h)
+    return h
+end
+
 Base.broadcastable(h::Hist1D) = Ref(h)
 
 """

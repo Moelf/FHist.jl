@@ -40,6 +40,19 @@ end
     @test all(bincounts(h1) .≈ bincounts(h2))
 end
 
+@testset "1D append!" begin
+    a = rand(10^5)
+    r1 = [0, 0.3, 0.4, 0.8, 1]
+    h1 = Hist1D(; binedges = r1)
+    h2 = Hist1D(; binedges = r1)
+    for ele in a
+        push!(h1, ele)
+    end
+    append!(h2, a)
+
+    @test all(bincounts(h1) .≈ bincounts(h2))
+end
+
 @testset "Weighted" begin
     a = rand(10^5)
     wgts1 = ones(10^5) |> weights
