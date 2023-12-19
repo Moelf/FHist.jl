@@ -25,8 +25,6 @@ function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hi
         for (dim, edges) in enumerate(h.hist.edges)
             write(g, "edges_$dim", collect(edges))
         end
-        attributes(g)["isdensity"] = h.hist.isdensity
-        attributes(g)["closed"] = string(h.hist.closed)
         attributes(g)["overflow"] = string(h.overflow)
         attributes(g)["nentries"] = h.nentries.x
         attributes(g)["_producer"] = "FHist.jl"
@@ -66,10 +64,8 @@ function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D,
     weights = _read_dset(f["$path/weights"], H)
     dims = parse(Int, match(r"\d+", string(H)).match)
     edges = tuple([f["$path/edges_$dim"][:] for dim in 1:dims]...)
-    isdensity = read_attribute(f[path], "isdensity")
-    closed = Symbol(read_attribute(f[path], "closed"))
 
-    hist = Histogram(edges, weights, closed, isdensity)
+    hist = Histogram(edges, weights)
 
     sumw2 = _read_dset(f["$path/sumw2"], H)
     overflow = parse(Bool, read_attribute(f[path], "overflow"))

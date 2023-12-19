@@ -38,8 +38,6 @@ f = HDF5.File: (read-only) foo.h5
       └─ 📂 to
          └─ 📂 myhist
             ├─ 🏷️ _producer
-            ├─ 🏷️ closed
-            ├─ 🏷️ isdensity
             ├─ 🏷️ nentries
             ├─ 🏷️ overflow
             ├─ 🔢 edges_1
