@@ -6,8 +6,8 @@ using Base.Threads: SpinLock
 
 import FHist: h5readhist, h5writehist
 
-const CURRENT_H5HIST_VERSION = v"1.0"
-const SUPPORTED_H5HIST_VERSIONS = [v"1.0"]
+const CURRENT_H5HIST_VERSION = v"1.1"
+const SUPPORTED_H5HIST_VERSIONS = [v"1.1"]
 
 
 """
@@ -28,7 +28,7 @@ function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hi
         for (dim, edges) in enumerate(h.hist.edges)
             write(g, "edges_$dim", collect(edges))
         end
-        attributes(g)["overflow"] = string(h.overflow)
+        attributes(g)["overflow"] = h.overflow
         attributes(g)["nentries"] = h.nentries.x
         attributes(g)["_producer"] = "FHist.jl"
         attributes(g)["_h5hist_version"] = string(CURRENT_H5HIST_VERSION)
@@ -79,7 +79,8 @@ function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D,
     hist = Histogram(edges, weights)
 
     sumw2 = _read_dset(f["$path/sumw2"], H)
-    overflow = parse(Bool, read_attribute(f[path], "overflow"))
+    _overflow = read_attribute(f[path], "overflow")
+    overflow = typeof(_overflow) == Bool ? _overflow : parse(Bool, _overflow)
     nentries = Base.RefValue{Int}(read_attribute(f[path], "nentries"))
     H(hist, sumw2, SpinLock(), overflow, nentries)
 end
