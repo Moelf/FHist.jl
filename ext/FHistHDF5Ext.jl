@@ -6,8 +6,8 @@ using Base.Threads: SpinLock
 
 import FHist: h5readhist, h5writehist
 
-const CURRENT_H5HIST_VERSION = v"1.1"
-const SUPPORTED_H5HIST_VERSIONS = [v"1.0", v"1.1"]
+const CURRENT_H5HIST_VERSION = v"1.0"
+const SUPPORTED_H5HIST_VERSIONS = [v"1.0"]
 
 
 """
@@ -67,7 +67,7 @@ end
 function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D, Hist2D, Hist3D}})
     version = VersionNumber(read_attribute(f[path], "_h5hist_version"))
     version >= v"2" && error("h5hist $(version) is not supported")
-    version > v"1.1" && @warn """
+    version > sort(SUPPORTED_H5HIST_VERSIONS)[end] && @warn """
         h5hist $(version) is higher than the currently supperted one, some features might be missing.
         Supported versions: $(join(SUPPORTED_H5HIST_VERSIONS, ", "))
     """
@@ -79,8 +79,7 @@ function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D,
     hist = Histogram(edges, weights)
 
     sumw2 = _read_dset(f["$path/sumw2"], H)
-    _overflow = read_attribute(f[path], "overflow")
-    overflow = typeof(_overflow) == Bool ? _overflow : parse(Bool, _overflow)
+    overflow = read_attribute(f[path], "overflow")
     nentries = Base.RefValue{Int}(read_attribute(f[path], "nentries"))
     H(hist, sumw2, SpinLock(), overflow, nentries)
 end

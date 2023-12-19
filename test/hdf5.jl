@@ -14,7 +14,7 @@ using Test, FHist, HDF5
 
     h5open(fname) do f
         version = VersionNumber(read_attribute(f["h1"], "_h5hist_version"))
-        @test v"1.1" == version
+        @test v"1.0" == version
     end
 
     # Explicit type specifications
