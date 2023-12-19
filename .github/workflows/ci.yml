@@ -43,9 +43,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: "~1.10.0-rc3"
       - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-docdeploy@latest
+      - uses: julia-actions/julia-buildpkg@1
+      - uses: julia-actions/julia-docdeploy@1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
