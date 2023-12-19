@@ -12,6 +12,11 @@ using Test, FHist, HDF5
     h5writehist(fname, "a/b/h3", h3)
     h5writehist(fname, "a/b/c/h3_int", h3_int)
 
+    h5open(fname) do f
+        version = VersionNumber(read_attribute(f["h1"], "_h5hist_version"))
+        @test v"1.0" == version
+    end
+
     # Explicit type specifications
     h1_from_h5 = h5readhist(fname, "h1", Hist1D)
     h2_from_h5 = h5readhist(fname, "a/h2", Hist2D)

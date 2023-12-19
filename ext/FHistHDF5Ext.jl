@@ -6,6 +6,9 @@ using Base.Threads: SpinLock
 
 import FHist: h5readhist, h5writehist
 
+const CURRENT_H5HIST_VERSION = v"1.0"
+const SUPPORTED_H5HIST_VERSIONS = [v"1.0"]
+
 
 """
     function h5writehist(filename::AbstractString, path::AbstractString, h::Hist1D)
@@ -28,6 +31,7 @@ function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hi
         attributes(g)["overflow"] = string(h.overflow)
         attributes(g)["nentries"] = h.nentries.x
         attributes(g)["_producer"] = "FHist.jl"
+        attributes(g)["_h5hist_version"] = string(CURRENT_H5HIST_VERSION)
     end
     nothing
 end
@@ -61,6 +65,13 @@ function h5readhist(filename::AbstractString, path::AbstractString)
     end
 end
 function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<: Union{Hist1D, Hist2D, Hist3D}})
+    version = VersionNumber(read_attribute(f[path], "_h5hist_version"))
+    version >= v"2" && error("h5hist $(version) is not supported")
+    version > v"1" && @warn """
+        h5hist $(version) is higher than the currently supperted one, some features might be missing.
+        Supported versions: $(join(SUPPORTED_H5HIST_VERSIONS, ", "))
+    """
+
     weights = _read_dset(f["$path/weights"], H)
     dims = parse(Int, match(r"\d+", string(H)).match)
     edges = tuple([f["$path/edges_$dim"][:] for dim in 1:dims]...)
