@@ -1,8 +1,9 @@
 module FHistHDF5Ext
 
 using FHist
-using HDF5, StatsBase
-using Base.Threads: SpinLock
+import FHist: stackedhist, stackedhist!
+isdefined(Base, :get_extension) ? (using HDF5) : (using ..HDF5)
+using StatsBase
 
 import FHist: h5readhist, h5writehist
 
