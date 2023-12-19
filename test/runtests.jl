@@ -585,10 +585,11 @@ end
     @test sum(sumw2(hlefty)) + sum(sumw2(hrighty)) == sum(sumw2(h))
 end
 
-include("hdf5.jl")
 @testset "Simple Significance" begin
     h1 = Hist1D(rand(1000);  binedges = [0, 1.0])
     h2 = Hist1D(rand(10000); binedges = [0, 1.0]);
 
     @test all(significance(h1,h2) .≈ (9.839916447569484, 0.30998654607114046))
 end
+
+include("hdf5.jl")
