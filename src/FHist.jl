@@ -88,30 +88,25 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
             !!! note
                 Everything other than data (`array`) is optional (infered from data).
             """
-        function $H(_ary::E;
+        function $H(ary::E;
             counttype::Type{T}=Float64,
             binedges=nothing,
             weights=nothing,
             nbins=nothing,
             overflow=false) where {T,E<:NTuple{$N,Any}}
 
-            ary = _to_tuple(_ary)
+            length(ary) == $N || throw(DimensionMismatch("Data must be a tuple of $N vectors"))
+            isnothing(weights) || length(ary[1]) == length(weights) || throw(DimensionMismatch("Data and weights must have the same length"))
+
             binedges = if !isnothing(binedges)
                 binedges
             else
                 auto_bins(ary, Val($N); nbins)
             end
 
-            h = $H(; binedges=_to_tuple(binedges), overflow=overflow)
-            if isnothing(weights)
-                for t in zip(ary...)
-                    push!(h, t...)
-                end
-            else
-                for (t, w) in zip(zip(ary...), weights)
-                    push!(h, t..., w)
-                end
-            end
+            bs = _to_tuple(binedges)
+            h = $H(; counttype, binedges=bs, overflow=overflow)
+            _fast_bincounts!(h, ary, binedges, weights)
             return h
         end
 
@@ -169,6 +164,44 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         function Base.empty!(h1::$H)
             bincounts(h1) .= false
             sumw2(h1) .= false
+        end
+    end
+end
+
+# fall back one-shot implementation
+function _fast_bincounts!(h::Hist1D, A, binedges, weights)
+    xs = A[1]
+    if isnothing(weights)
+        for x in xs
+            push!(h, x)
+        end
+    else
+        for (x, w) in zip(xs, weights)
+            push!(h, x, w)
+        end
+    end
+end
+function _fast_bincounts!(h::Hist2D, A, binedges, weights)
+    xs, ys = A
+    if isnothing(weights)
+        for (x, y) in zip(xs, ys)
+            push!(h, x,y)
+        end
+    else
+        for (x, y, w) in zip(xs, ys, weights)
+            push!(h, x, y, w)
+        end
+    end
+end
+function _fast_bincounts!(h::Hist3D, A, binedges, weights)
+    xs, ys, zs = A
+    if isnothing(weights)
+        for (x, y, z) in zip(xs, ys, zs)
+            push!(h, x, y, z)
+        end
+    else
+        for (x, y, z, w) in zip(xs, ys, zs, weights)
+            push!(h, x, y, z, w)
         end
     end
 end

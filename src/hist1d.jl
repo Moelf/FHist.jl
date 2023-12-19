@@ -1,3 +1,30 @@
+function _fast_bincounts!(h::Hist1D, TA::Tuple{T}, r::AbstractRange, weights::Nothing) where T
+    A = TA[1]
+    overflow = h.overflow
+    counts = bincounts(h)
+    s2 = sumw2(h)
+    firstr = first(r)
+    invstep = inv(step(r))
+    L = nbins(h)
+    nentries = 0
+    for val in A
+        cursor = floor(Int, (val - firstr) * invstep)
+        binidx = cursor + 1
+        if overflow
+            binidx = clamp(binidx, 1, L)
+            nentries += 1
+            @inbounds counts[binidx] += 1
+        else
+            if unsigned(cursor) < L
+                nentries += 1
+                @inbounds counts[binidx] += 1
+            end
+        end
+    end
+    sumw2(h) .= counts
+    h.nentries[] += nentries
+end
+
 function auto_bins(ary, ::Val{1}; nbins=nothing)
     xs = only(ary)
     E = eltype(xs)

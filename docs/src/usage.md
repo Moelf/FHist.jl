@@ -15,8 +15,12 @@ integral
 ```
 
 ## Manipulating histogram
+
+This section includes adding data to histogram, and other operations that return a histogram (may
+with reduced dimensionality)
 ```@docs
 atomic_push!
+cumulative
 rebin
 restrict
 profile

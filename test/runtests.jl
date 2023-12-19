@@ -11,6 +11,9 @@ using Test
         sth1 = fit(Histogram, a, r)
         @test all(bincounts(h1) .≈ sth1.weights)
     end
+
+    @test_throws DimensionMismatch Hist1D(rand(10); weights=rand(9))
+    @test_throws DimensionMismatch Hist2D((rand(10), rand(10)); weights=rand(9))
 end
 
 @testset "Slow route" begin
