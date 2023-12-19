@@ -58,8 +58,8 @@ function ratiohist! end
 function statbox! end
 function collabtext! end
 
-export h5dumphist, h5readhist
-function h5dumphist end
+export h5writehist, h5readhist
+function h5writehist end
 function h5readhist end
 
 function __init__()

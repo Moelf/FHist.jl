@@ -4,20 +4,20 @@ using FHist
 using HDF5, StatsBase
 using Base.Threads: SpinLock
 
-import FHist: h5readhist, h5dumphist
+import FHist: h5readhist, h5writehist
 
 
 """
-    function h5dumphist(filename::AbstractString, path::AbstractString, h::Hist1D)
+    function h5writehist(filename::AbstractString, path::AbstractString, h::Hist1D)
 
 Writes a [`Hist1D`](@ref) instance to an HDF5 file. The histogram can be retrieved
 using [`h5readhist`](@ref).
 
 # Examples
 h = Hist1D(rand(1000), -3:0.3:3)
-h5dumphist("foo.h5", "some/path/to/myhist", h)
+h5writehist("foo.h5", "some/path/to/myhist", h)
 """
-function h5dumphist(filename::AbstractString, path::AbstractString, h::Union{Hist1D, Hist2D, Hist3D})
+function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hist1D, Hist2D, Hist3D})
     h5open(filename, "cw") do f
         g = create_group(f, path)
         write(g, "weights", h.hist.weights)
@@ -39,8 +39,8 @@ end
     function h5readhist(filename::AbstractString, path::AbstractString [, H::Type{<: Union{Hist1D, Hist2D, Hist3D}}])
     function h5readhist(f::HDF5.File, path::AbstractString [, H::Type{<: Union{Hist1D, Hist2D, Hist3D}}])
 
-Reads a histogram from an HDF5 file which has been dumped using
-[`h5dumphist`](@ref). The type parameter is optional.
+Reads a histogram from an HDF5 file which has been written using
+[`h5writehist`](@ref). The type parameter is optional.
 
 # Examples
 h = h5readhist("foo.h5", "some/path/to/myhist")

@@ -7,10 +7,10 @@ using Test, FHist, HDF5
     h2 = Hist2D((rand(10), rand(10)), (0:0.1:1, 0:0.2:1))
     h3 = Hist3D((rand(10), rand(10), rand(10)), (0:0.1:1, 0:0.2:1, 0:0.3:1))
     h3_int = Hist3D((rand(1:10, 10), rand(1:5, 10), rand(1:9999, 10)), (0:10, 0:5, 0:3); overflow=true)
-    h5dumphist(fname, "h1", h1)
-    h5dumphist(fname, "a/h2", h2)
-    h5dumphist(fname, "a/b/h3", h3)
-    h5dumphist(fname, "a/b/c/h3_int", h3_int)
+    h5writehist(fname, "h1", h1)
+    h5writehist(fname, "a/h2", h2)
+    h5writehist(fname, "a/b/h3", h3)
+    h5writehist(fname, "a/b/c/h3_int", h3_int)
 
     # Explicit type specifications
     h1_from_h5 = h5readhist(fname, "h1", Hist1D)
