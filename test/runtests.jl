@@ -1,4 +1,4 @@
-using FHist, StatsBase, Statistics
+using FHist, StatsBase, Statistics, HDF5
 using Test
 
 @testset "The basics" begin
@@ -602,3 +602,5 @@ end
     @test nbins(hlefty)[2] + nbins(hrighty)[2] == nbins(h)[2]
     @test sum(hlefty.sumw2) + sum(hrighty.sumw2) == sum(h.sumw2)
 end
+
+include("hdf5.jl")
