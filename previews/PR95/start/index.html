@@ -37,7 +37,7 @@
 
 <div class="admonition is-info"><header class="admonition-header">Default / infer strategy for empty histogram</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>binedges</code> must be provided by user</li><li><code>bincounts</code> defaults to all zero, with <code>eltype == counttype</code> and appropriate shape</li><li><code>sumw2</code> defaults to all zero with appropriate shape</li><li><code>nentries</code> defaults to 0</li><li><code>overflow</code> defaults to <code>false</code></li></ol></div></div><h2 id="Make-a-filled-histogram-given-data"><a class="docs-heading-anchor" href="#Make-a-filled-histogram-given-data">Make a filled histogram given data</a><a id="Make-a-filled-histogram-given-data-1"></a><a class="docs-heading-anchor-permalink" href="#Make-a-filled-histogram-given-data" title="Permalink"></a></h2><p>The minimal information needed is <code>data</code>, which is a <strong>positional</strong> argument:</p><pre><code class="language-julia hljs">h3 = Hist1D(randn(2000))</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,179.05743740795288,40.625,179.05743740795288,40.625,170.33873343151694,68.75,170.33873343151694,68.75,109.77908689248896,96.875,109.77908689248896,96.875,19.99999999999997,125.0,19.99999999999997,125.0,22.120765832106027,153.125,22.120765832106027,153.125,117.79086892488952,181.25,117.79086892488952,181.25,169.86745213549338,209.375,169.86745213549338,209.375,179.76435935198822,237.5,179.76435935198822,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,179.08440629470672,40.625,179.08440629470672,40.625,173.13304721030042,68.75,173.13304721030042,68.75,119.34191702432044,96.875,119.34191702432044,96.875,19.999999999999996,125.0,19.999999999999996,125.0,28.240343347639474,153.125,28.240343347639474,153.125,113.16165951359083,181.25,113.16165951359083,181.25,169.92846924177397,209.375,169.92846924177397,209.375,179.31330472103005,237.5,179.31330472103005,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
@@ -46,8 +46,8 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: -4.0:1.0:4.0</li>
-            <li>bin counts: [4.0, 41.0, 298.0, 679.0, 670.0, 264.0, 43.0, 1.0]</li>
-            <li>maximum count: 679.0</li>
+            <li>bin counts: [4.0, 30.0, 265.0, 699.0, 663.0, 292.0, 44.0, 3.0]</li>
+            <li>maximum count: 699.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -55,7 +55,7 @@
 
 <p>You can provide more (in keyword arguments) if you want granular control over the binning behavior (e.g. number of bins, the exact bins to use):</p><pre><code class="language-julia hljs">h4 = Hist1D(randn(2000); nbins=4)</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,171.21243523316062,68.75,171.21243523316062,68.75,23.97927461139897,125.0,23.97927461139897,125.0,19.999999999999996,181.25,19.999999999999996,181.25,173.2020725388601,237.5,173.2020725388601,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,174.20523138832996,68.75,174.20523138832996,68.75,19.999999999999996,125.0,19.999999999999996,125.0,31.428571428571406,181.25,31.428571428571406,181.25,172.43460764587525,237.5,172.43460764587525,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
@@ -64,8 +64,8 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: -4.0:2.0:4.0</li>
-            <li>bin counts: [53.0, 941.0, 965.0, 41.0]</li>
-            <li>maximum count: 965.0</li>
+            <li>bin counts: [36.0, 994.0, 923.0, 47.0]</li>
+            <li>maximum count: 994.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -73,7 +73,7 @@
 
 <div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p><code>nbins</code> is not strictly enforced, use <code>binedges</code> if you need exact control.</p></div></div><p>We can do non-uniform binning for example:</p><pre><code class="language-julia hljs">h5 = Hist1D(randn(2000); binedges = [0, 0.5, 0.8, 0.9, 1.0])</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,19.999999999999996,125.0,19.999999999999996,125.0,101.48541114058354,192.50000000000003,101.48541114058354,192.50000000000003,156.23342175066313,215.00000000000003,156.23342175066313,215.00000000000003,149.86737400530507,237.50000000000003,149.86737400530507,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,20.000000000000018,125.0,20.000000000000018,125.0,97.51295336787565,192.50000000000003,97.51295336787565,192.50000000000003,158.4455958549223,215.00000000000003,158.4455958549223,215.00000000000003,157.61658031088083,237.50000000000003,157.61658031088083,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">0.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">1.0</text>
@@ -82,11 +82,11 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [0.0, 0.5, 0.8, 0.9, 1.0]</li>
-            <li>bin counts: [377.0, 185.0, 56.0, 71.0]</li>
-            <li>maximum count: 377.0</li>
-            <li>total count: 689.0</li>
+            <li>bin counts: [386.0, 199.0, 52.0, 54.0]</li>
+            <li>maximum count: 386.0</li>
+            <li>total count: 691.0</li>
         </ul>
     </div>
 </div>
 
-<div class="admonition is-info"><header class="admonition-header">Default / infer strategy for filled histogram with data</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Wednesday 20 December 2023 14:11">Wednesday 20 December 2023</span>. Using Julia version 1.10.0-rc3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<div class="admonition is-info"><header class="admonition-header">Default / infer strategy for filled histogram with data</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Wednesday 20 December 2023 15:45">Wednesday 20 December 2023</span>. Using Julia version 1.10.0-rc3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
