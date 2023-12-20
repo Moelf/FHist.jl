@@ -29,7 +29,7 @@ function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hi
             write(g, "edges_$dim", collect(edges))
         end
         attributes(g)["overflow"] = h.overflow
-        attributes(g)["nentries"] = h.nentries.x
+        attributes(g)["nentries"] = h.nentries[]
         attributes(g)["_producer"] = "FHist.jl"
         attributes(g)["_h5hist_version"] = string(CURRENT_H5HIST_VERSION)
     end
