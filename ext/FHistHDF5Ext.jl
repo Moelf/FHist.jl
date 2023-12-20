@@ -79,7 +79,7 @@ function h5readhist(f::HDF5.File, path::AbstractString, H::Type{<:Union{Hist1D,H
 
     sumw2 = _read_dset(f["$path/sumw2"], H)
     overflow = read_attribute(f[path], "overflow")
-    nentries = Base.RefValue{Int}(read_attribute(f[path], "nentries"))
+    nentries = read_attribute(f[path], "nentries")
     H(; binedges, bincounts, sumw2, overflow, nentries)
 end
 
