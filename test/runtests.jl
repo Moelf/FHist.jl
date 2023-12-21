@@ -45,12 +45,16 @@ end
     r1 = [0, 0.3, 0.4, 0.8, 1]
     h1 = Hist1D(; binedges = r1)
     h2 = Hist1D(; binedges = r1)
+    h3 = Hist1D(; binedges = r1)
     for ele in a
         push!(h1, ele)
     end
-    append!(h2, a)
 
+    append!(h2, a)
     @test all(bincounts(h1) .≈ bincounts(h2))
+
+    append!(h3, a, zero(a) .+ 0.1)
+    @test all(bincounts(h1) .* 0.1 .≈ bincounts(h3))
 end
 
 @testset "Weighted" begin

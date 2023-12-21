@@ -112,16 +112,20 @@ end
     return nothing
 end
 
-function Base.append!(h::Hist1D{T,E}, val::AbstractVector, wgt=nothing) where {T,E}
+function Base.append!(h::Hist1D, val::AbstractVector, wgt::AbstractVector)
+    length(val) == length(wgt) || throw(DimensionMismatch("append! to histogram expect same length values and weights"))
     lock(h)
-    if isnothing(wgt)
-        for v in val
-            push!(h, v)
-        end
-    else
-        for (v, w) in zip(val, wgt)
-            push!(h, v, w)
-        end
+    for (v, w) in zip(val, wgt)
+        push!(h, v, w)
+    end
+    unlock(h)
+    return h
+end
+
+function Base.append!(h::Hist1D, val::AbstractVector)
+    lock(h)
+    for v in val
+        push!(h, v)
     end
     unlock(h)
     return h
