@@ -310,8 +310,8 @@ The returned histogram will have `nbins(h)/n` bins.
 """
 function rebin(h::Hist1D, n::Int=1)
     if nbins(h) % n != 0
-        rebin_values = join(valid_rebin_values(h), ", ")
-        error("Invalid rebin value ($n) for a 1D histogram with $(nbins(h)) bins. Valid rebin values are: $(rebin_values)")
+        rebin_values = join(sort(collect(valid_rebin_values(h))), ", ", " or ")
+        error("Invalid rebin value ($n) for a 1D histogram with $(nbins(h)) bins. It has to be a multiple of $(rebin_values)")
     end
     p = x->Iterators.partition(x, n)
     counts = sum.(p(bincounts(h)))
