@@ -35,3 +35,33 @@ end
 function _is_uniform_bins(A::AbstractRange{T}) where T<:Real
     true
 end
+
+"""
+    valid_rebin_values(h::Union{Hist1D, Hist2D, Hist3D})
+
+Calculates the legal values for rebinning, essentially the prime factors of
+the number of bins. For a 1D histogram, a `Set` of numbers is return, for higher
+dimensional histograms a `Vector{Set}` for each dimension.
+"""
+valid_rebin_values(h::Hist1D) = _factor(nbins(h))
+valid_rebin_values(h::Union{Hist2D, Hist3D}) = [_factor(x) for x in nbins(h)]
+
+"""
+    function _factor(n::Integer)
+
+Helper function to calculate the prime factors of a given integer.
+"""
+function _factor(n::Integer)
+    factors = Set{Int}()
+    limit = n
+    factor = 2
+    while n > 1 & factor < limit
+        while n % factor == 0
+            n /= factor
+            push!(factors, factor)
+            limit = sqrt(n)
+        end
+        factor += 1
+    end
+    factors
+end
