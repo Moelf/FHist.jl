@@ -238,7 +238,10 @@ Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
 """
 function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     sx, sy = nbins(h)
-    @assert sx % nx == sy % ny == 0
+    if !(sx % nx == sy % ny == 0)
+        rebin_values_x, rebin_values_y = map(x->join(x, ", "), valid_rebin_values(h))
+        error("Invalid rebin values (nx: $nx, ny: $ny) for a 2D histogram with $(nbins(h)) bins. Valid rebin values are nx: $(rebin_values_x) and ny: $(rebin_values_y)")
+    end
     p1d = (x,n)->Iterators.partition(x, n)
     p2d = x->(x[i:i+(nx-1),j:j+(ny-1)] for i=1:nx:sx, j=1:ny:sy)
     counts = sum.(p2d(bincounts(h)))
@@ -250,6 +253,7 @@ function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     return Hist2D(Histogram((ex,ey), counts), sumw2, nentries(h); overflow=h.overflow)
 end
 rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
+
 
 """
     project(h::Hist2D, axis::Symbol=:x)

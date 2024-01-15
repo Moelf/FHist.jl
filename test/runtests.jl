@@ -419,6 +419,7 @@ end
     @test integral(h1) == integral(rebin(h1, 5))
     @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
     @test binedges(rebin(h1, 5)) == [0, 0.5, 1.0]
+    @test Set([2, 5]) == FHist.valid_rebin_values(h1)
 
     h2 = Hist1D(rand(10^2), [0.0, 0.1, 0.7, 0.9, 1.0])
     @test h2 == rebin(h2, 1)
@@ -426,6 +427,7 @@ end
     @test nentries(h2) == nentries(rebin(h2, 1))
     @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
     @test binedges(rebin(h2, 2)) == [0, 0.7, 1.0]
+    @test Set([2]) == FHist.valid_rebin_values(h2)
 
     @test rebin(h1, 2) == (h1 |> rebin(2))
 
@@ -434,6 +436,7 @@ end
     @test integral(h1) == integral(rebin(h1, 5))
     @test sum(h1.sumw2) == sum(rebin(h1, 5).sumw2)
     @test binedges(rebin(h1, 5)) == ([0, 0.5, 1.0], [0, 0.5, 1.0])
+    @test Set([2]) == FHist.valid_rebin_values(h2)
 
     bins = [0.0, 0.1, 0.7, 0.9, 1.0]
     h2 = Hist2D((rand(10^2),rand(10^2)), (bins,bins))
@@ -441,10 +444,12 @@ end
     @test integral(h2) == integral(rebin(h2, 2))
     @test sum(h2.sumw2) == sum(rebin(h2, 2).sumw2)
     @test binedges(rebin(h2, 2)) == ([0, 0.7, 1.0], [0, 0.7, 1.0])
+    @test [Set([2]), Set([2])] == FHist.valid_rebin_values(h2)
 
     h2 = Hist2D((rand(10^2),rand(10^2)), (0:0.1:1,0:0.5:1))
     @test nbins(rebin(h2, 10, 2)) == (1, 1)
-    @test_throws AssertionError rebin(h2, 2, 10)
+    @test_throws ErrorException rebin(h2, 2, 10)
+    @test [Set([5, 2]), Set([2])] == FHist.valid_rebin_values(h2)
 end
 
 @testset "Profile" begin

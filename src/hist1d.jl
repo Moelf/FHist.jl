@@ -309,7 +309,10 @@ Merges `n` consecutive bins into one.
 The returned histogram will have `nbins(h)/n` bins.
 """
 function rebin(h::Hist1D, n::Int=1)
-    @assert nbins(h) % n == 0
+    if nbins(h) % n != 0
+        rebin_values = join(valid_rebin_values(h), ", ")
+        error("Invalid rebin value ($n) for a 1D histogram with $(nbins(h)) bins. Valid rebin values are: $(rebin_values)")
+    end
     p = x->Iterators.partition(x, n)
     counts = sum.(p(bincounts(h)))
     sumw2 = sum.(p(h.sumw2))
