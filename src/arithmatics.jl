@@ -45,9 +45,10 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
     @eval function merge!(h1::$T, h2::$T)
         h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("The dimension doesn't match"))
         lock(h1)
+        nentries_total = nentries(h1) + nentries(h2)
         h1.hist.weights .+= h2.hist.weights
         h1.sumw2 .+= h2.sumw2
-        h1.nentries[] += nentries(h2)
+        h1.nentries[] = nentries_total
         unlock(h1)
         ($T)(h1.hist)
     end
