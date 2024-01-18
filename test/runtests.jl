@@ -410,6 +410,11 @@ end
     h1 = Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3))
     h2 = Hist3D((randn(10),randn(10),randn(10)), (-3:3,-3:3,-3:3))
     @test merge(h1,h2) == h1+h2
+
+    h1 = Hist1D(randn(100), -3:3)
+    h2 = Hist1D(randn(100), -3:3)
+    merge!(h1,h2)
+    @test 200 == nentries(h1)
 end
 
 @testset "Rebinning" begin

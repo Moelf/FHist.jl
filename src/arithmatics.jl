@@ -47,6 +47,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         lock(h1)
         h1.hist.weights .+= h2.hist.weights
         h1.sumw2 .+= h2.sumw2
+        h1.nentries[] += nentries(h2)
         unlock(h1)
         ($T)(h1.hist)
     end
