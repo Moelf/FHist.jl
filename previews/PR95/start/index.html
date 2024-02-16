@@ -37,17 +37,17 @@
 
 <div class="admonition is-info"><header class="admonition-header">Default / infer strategy for empty histogram</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>binedges</code> must be provided by user</li><li><code>bincounts</code> defaults to all zero, with <code>eltype == counttype</code> and appropriate shape</li><li><code>sumw2</code> defaults to all zero with appropriate shape</li><li><code>nentries</code> defaults to 0</li><li><code>overflow</code> defaults to <code>false</code></li></ol></div></div><h2 id="Make-a-filled-histogram-given-data"><a class="docs-heading-anchor" href="#Make-a-filled-histogram-given-data">Make a filled histogram given data</a><a id="Make-a-filled-histogram-given-data-1"></a><a class="docs-heading-anchor-permalink" href="#Make-a-filled-histogram-given-data" title="Permalink"></a></h2><p>The minimal information needed is <code>data</code>, which is a <strong>positional</strong> argument:</p><pre><code class="language-julia hljs">h3 = Hist1D(randn(2000))</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,179.32678821879384,40.625,179.32678821879384,40.625,168.10659186535764,68.75,168.10659186535764,68.75,119.85974754558204,96.875,119.85974754558204,96.875,19.999999999999996,125.0,19.999999999999996,125.0,31.444600280504908,153.125,31.444600280504908,153.125,121.43057503506311,181.25,121.43057503506311,181.25,171.47265077138852,209.375,171.47265077138852,209.375,179.55119214586256,237.5,179.55119214586256,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,179.60591133004925,28.571428571428573,179.60591133004925,28.571428571428573,176.45320197044336,44.642857142857146,176.45320197044336,44.642857142857146,165.41871921182266,60.71428571428572,165.41871921182266,60.71428571428572,141.3793103448276,76.78571428571429,141.3793103448276,76.78571428571429,106.69950738916256,92.85714285714286,106.69950738916256,92.85714285714286,62.95566502463053,108.92857142857144,62.95566502463053,108.92857142857144,19.99999999999997,125.00000000000001,19.99999999999997,125.00000000000001,32.21674876847289,141.07142857142858,32.21674876847289,141.07142857142858,60.197044334975345,157.14285714285717,60.197044334975345,157.14285714285717,115.36945812807882,173.21428571428572,115.36945812807882,173.21428571428572,152.01970443349754,189.2857142857143,152.01970443349754,189.2857142857143,163.8423645320197,205.3571428571429,163.8423645320197,205.3571428571429,176.84729064039408,221.42857142857144,176.84729064039408,221.42857142857144,178.8177339901478,237.50000000000003,178.8177339901478,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
-    <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
-    <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
+    <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-3.5</text>
+    <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">3.5</text>
 </svg>
 </div>
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
-            <li>edges: -4.0:1.0:4.0</li>
-            <li>bin counts: [3.0, 53.0, 268.0, 713.0, 662.0, 261.0, 38.0, 2.0]</li>
-            <li>maximum count: 713.0</li>
+            <li>edges: -3.5:0.5:3.5</li>
+            <li>bin counts: [1.0, 9.0, 37.0, 98.0, 186.0, 297.0, 406.0, 375.0, 304.0, 164.0, 71.0, 41.0, 8.0, 3.0]</li>
+            <li>maximum count: 406.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -55,7 +55,7 @@
 
 <p>You can provide more (in keyword arguments) if you want granular control over the binning behavior (e.g. number of bins, the exact bins to use):</p><pre><code class="language-julia hljs">h4 = Hist1D(randn(2000); nbins=4)</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,173.9591836734694,68.75,173.9591836734694,68.75,19.999999999999996,125.0,19.999999999999996,125.0,28.653061224489782,181.25,28.653061224489782,181.25,170.85714285714286,237.5,170.85714285714286,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,173.14984709480123,68.75,173.14984709480123,68.75,27.013251783893978,125.0,27.013251783893978,125.0,19.999999999999996,181.25,19.999999999999996,181.25,173.63914373088684,237.5,173.63914373088684,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
@@ -64,8 +64,8 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: -4.0:2.0:4.0</li>
-            <li>bin counts: [37.0, 980.0, 927.0, 56.0]</li>
-            <li>maximum count: 980.0</li>
+            <li>bin counts: [42.0, 938.0, 981.0, 39.0]</li>
+            <li>maximum count: 981.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -73,7 +73,7 @@
 
 <div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p><code>nbins</code> is not strictly enforced, use <code>binedges</code> if you need exact control.</p></div></div><p>We can do non-uniform binning for example:</p><pre><code class="language-julia hljs">h5 = Hist1D(randn(2000); binedges = [0, 0.5, 0.8, 0.9, 1.0])</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,19.999999999999996,125.0,19.999999999999996,125.0,91.11111111111111,192.50000000000003,91.11111111111111,192.50000000000003,155.28455284552848,215.00000000000003,155.28455284552848,215.00000000000003,159.62059620596207,237.50000000000003,159.62059620596207,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,19.999999999999996,125.0,19.999999999999996,125.0,93.16804407713498,192.50000000000003,93.16804407713498,192.50000000000003,154.87603305785126,215.00000000000003,154.87603305785126,215.00000000000003,154.87603305785126,237.50000000000003,154.87603305785126,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">0.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">1.0</text>
@@ -82,11 +82,11 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [0.0, 0.5, 0.8, 0.9, 1.0]</li>
-            <li>bin counts: [369.0, 205.0, 57.0, 47.0]</li>
-            <li>maximum count: 369.0</li>
-            <li>total count: 678.0</li>
+            <li>bin counts: [363.0, 197.0, 57.0, 57.0]</li>
+            <li>maximum count: 363.0</li>
+            <li>total count: 674.0</li>
         </ul>
     </div>
 </div>
 
-<div class="admonition is-info"><header class="admonition-header">Default / infer strategy for filled histogram with data</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 21 December 2023 02:37">Thursday 21 December 2023</span>. Using Julia version 1.10.0-rc3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<div class="admonition is-info"><header class="admonition-header">Default / infer strategy for filled histogram with data</header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 16 February 2024 00:20">Friday 16 February 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
