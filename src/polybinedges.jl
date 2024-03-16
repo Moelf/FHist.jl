@@ -15,7 +15,7 @@ struct BinEdges <: AbstractVector{Float64}
         end
         if edges isa AbstractRange
             new(true, Float64[], edges, inv(step(edges)), first(edges))
-        else
+        elseif edges isa AbstractVector
             if !issorted(edges)
                 throw(ArgumentError("BinEdges must be sorted"))
             end
@@ -30,13 +30,14 @@ end
 Base.@constprop :aggressive isuniform(b::BinEdges) = b.isuniform
 Base.size(b::BinEdges) = if isuniform(b) size(b.uniform_edges) else size(b.nonuniform_edges) end
 Base.getindex(b::BinEdges, i) = if isuniform(b) b.uniform_edges[i] else b.nonuniform_edges[i] end
+# Base.collect(b::BinEdges) = if isuniform(b) collect(b.uniform_edges) else copy(b.nonuniform_edges) end
 
 Base.convert(::Type{BinEdges}, edges::AbstractRange) = BinEdges(edges)
 Base.convert(::Type{BinEdges}, edges::AbstractVector) = BinEdges(edges)
 
 function Base.searchsortedlast(r::BinEdges, x::Real)
     if isuniform(r)
-        return floor(Int, (x - first(r)) * r.inv_step) + 1
+        return floor(Int, (x - r.rfirst) * r.inv_step) + 1
     else
         return searchsortedlast(r.nonuniform_edges, x)
     end
@@ -44,9 +45,10 @@ end
 
 function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, b::BinEdges) 
     if isuniform(b)
-        println(io, "Uniform binning: $(first(b)) : $(last(b)) with step $(step(b))")
+        print(io, "Uniform FHist.BinEdges: ")
+        show(io, mime, b.uniform_edges)
     else
-        println(io, "Non-uniform BinEdges:")
-        show(io, mime, b.nonuniform_edges)
+        print(io, "Non-uniform FHist.BinEdges: ")
+        show(io, b.nonuniform_edges)
     end
 end
