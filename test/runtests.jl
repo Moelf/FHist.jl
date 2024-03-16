@@ -321,8 +321,6 @@ end
 end
 
 @testset "Broadcast" begin
-    lookup(h::Hist1D, value) = bincounts(h)[FHist._edge_binindex(binedges(h), value)]
-
     h1 = Hist1D(; counttype = Int, binedges = 0:3)
 
     push!.(h1, [0.5, 1.5])

@@ -86,17 +86,17 @@ Adding one value at a time into histogram.
 N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-@inline function atomic_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function atomic_push!(h::Hist1D, val::Real, wgt::Real=1)
     lock(h)
     push!(h, val, wgt)
     unlock(h)
     return nothing
 end
 
-@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist1D, val::Real, wgt::Real=1)
     r = binedges(h)
     L = nbins(h)
-    binidx = _edge_binindex(r, val)
+    binidx = searchsortedlast(r, val)
     if h.overflow
         binidx = clamp(binidx, 1, L)
         h.nentries[] += 1
@@ -170,7 +170,7 @@ If a value is out of the histogram range, return `missing`.
 function lookup(h::Hist1D, x)
     r = binedges(h)
     !(first(r) <= x <= last(r)) && return missing
-    return bincounts(h)[_edge_binindex(r, x)]
+    return bincounts(h)[searchsortedlast(r, x)]
 end
 
 """

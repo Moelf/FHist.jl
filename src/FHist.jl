@@ -26,11 +26,13 @@ _to_tuple(x) = tuple(x)
 _from_tuple(x::Tuple{Any}) = only(x)
 _from_tuple(x) = x
 
+include("./polybinedges.jl")
+
 for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
     @eval begin
-        struct $H{T<:Real,E<:NTuple{$N,AbstractVector}} <: AbstractHistogram{T,$N,E}
-            binedges::E
+        struct $H{T<:Real} <: AbstractHistogram{T,$N,NTuple{$N, BinEdges}}
+            binedges::NTuple{$N, BinEdges}
             bincounts::Array{T,$N}
             sumw2::Array{Float64,$N}
             nentries::Base.RefValue{Int}
@@ -49,7 +51,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
                     throw(DimensionMismatch("Binedges must be tuple of each axes, and each dimension has one more than the corresponding
                     dimension of `bincounts`"))
 
-                return new{T,typeof(es)}(es, bincounts, sumw2, Ref(round(Int, nentries)), overflow, SpinLock())
+                return new{T}(es, bincounts, sumw2, Ref(round(Int, nentries)), overflow, SpinLock())
             end
         end
 
@@ -204,20 +206,6 @@ function _fast_bincounts!(h::Hist3D, A, binedges, weights)
             push!(h, x, y, z, w)
         end
     end
-end
-
-function _edge_binindex(r::AbstractRange, x::Real)
-    return floor(Int, (x - first(r)) * inv(step(r))) + 1
-    # # 20% faster and assigns -Inf, Inf, NaN to typemin(Int64)
-    # return Base.unsafe_trunc(Int, round((x - first(r)) * inv(step(r)), RoundDown)) + 1
-end
-
-function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
-    return (x - first(r)) ÷ step(r) + 1
-end
-
-function _edge_binindex(v::AbstractVector, x::Real)
-    return searchsortedlast(v, x)
 end
 
 include("./utils.jl")

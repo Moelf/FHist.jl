@@ -31,18 +31,18 @@ Adding one value at a time into histogram.
 `atomic_push!` is a slower version of `push!` that is thread-safe.
 
 """
-@inline function atomic_push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function atomic_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
     lock(h)
     push!(h, valx, valy, wgt)
     unlock(h)
     return nothing
 end
 
-@inline function Base.push!(h::Hist2D{T,E}, valx::Real, valy::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
     rx, ry = binedges(h)
     Lx, Ly = nbins(h)
-    binidxx = _edge_binindex(rx, valx)
-    binidxy = _edge_binindex(ry, valy)
+    binidxx = searchsortedlast(rx, valx)
+    binidxy = searchsortedlast(ry, valy)
     h.nentries[] += 1
     if h.overflow
         binidxx = clamp(binidxx, 1, Lx)
@@ -78,7 +78,7 @@ function lookup(h::Hist2D, x, y)
     rx, ry = binedges(h)
     !(first(rx) <= x <= last(rx)) && return missing
     !(first(ry) <= y <= last(ry)) && return missing
-    return bincounts(h)[_edge_binindex(rx, x), _edge_binindex(ry, y)]
+    return bincounts(h)[searchsortedlast(rx, x), searchsortedlast(ry, y)]
 end
 
 
