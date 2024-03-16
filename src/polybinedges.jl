@@ -1,7 +1,10 @@
 """
     BinEdges <: AbstractVector{Float64}
 
-This type implements a vector-like data structure to be used for histogram bin edges, it can handle both uniform and non-uniform binning in a single type thus reduce the amount of parametric typing in packages like FHist.jl. It would switch to fast implementation of functions like `searchsortedfirst` and `searchsortedlast` based if the binning is uniform or not.
+    This type implements a vector-like data structure to be used for histogram bin edges, it can handle both uniform and non-uniform binnings in a single type to reduce the amount of parametric types. It would switch to O(1) `searchsortedlast` if the binning is uniform.
+
+!!! note
+    Due to the usage of Float64, bin edges shouldn't contain element with absolute value larger than 9007199254740992, which is the `maxintfloat(Float64)`.
 """
 struct BinEdges <: AbstractVector{Float64}
     isuniform::Bool
@@ -21,6 +24,9 @@ struct BinEdges <: AbstractVector{Float64}
             end
             if !allunique(edges)
                 throw(ArgumentError("BinEdges must be unique"))
+            end
+            if any(x -> abs(x) > maxintfloat(Float64), edges)
+                throw(ArgumentError("BinEdges cannot contain element with absolute value larger than $(maxintfloat(Float64))"))
             end
             new(false, edges, 0.0:-1.0, Inf, -Inf)
         end
