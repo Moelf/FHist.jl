@@ -17,7 +17,6 @@ const ATLASTHEME = MakieCore.Attributes(
               xminorticksize=6, yminorticksize=6,
               xgridvisible = false, ygridvisible = false,
               xminorticksvisible = true, yminorticksvisible = true,
-              limits = (nothing, nothing, 0, nothing), 
              ),
       Colorbar = (
                   colormap = :haline,

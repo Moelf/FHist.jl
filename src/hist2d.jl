@@ -1,7 +1,7 @@
 function auto_bins(ary, ::Val{2}; nbins=nothing)
     xs, ys = ary
     E = eltype(xs)
-    xnbins, ynbins = isnothing(nbins) ? _sturges.(xs) : nbins
+    xnbins, ynbins = isnothing(nbins) ? _sturges.((xs, ys)) : nbins
     F = E <: Number ? float(E) : Float64
     lo, hi = minimum(xs), maximum(xs)
     loy, hiy = minimum(ys), maximum(ys)

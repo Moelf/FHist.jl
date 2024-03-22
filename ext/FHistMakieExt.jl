@@ -60,9 +60,9 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
         gap = 0,
     )
     
-    error_color = input[:error_color][]
+    error_color = input[:error_color]
     if error_color ∈ (true, :bar)
-        errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth][])
+        errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth])
     else
         crossbar!(input, centers, totals, totals .+ errs/2, totals .- errs/2;
                   gap = 0,
@@ -111,7 +111,8 @@ Makie.MakieCore.plottype(::Hist1D) = Hist
 function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
-    convert_arguments(P, vcat(edges, phantomedge), vcat(0.0, bincounts(h), 0.0))
+    bot = eps()
+    convert_arguments(P, vcat(edges, phantomedge), vcat(bot, bincounts(h), bot))
 end
 Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
@@ -121,14 +122,23 @@ function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
     es = binerrors(h)
     convert_arguments(P, bincenters(h), cs, cs .- es/2, cs .+ es/2)
 end
-function Makie.plot!(input::Hist{<:Tuple{<:Hist1D}})
-    h = input[1][]
-    label = haskey(input, :label) ? input[:label][] : nothing
-    C = input[:color][]
-    # this is a hack, it seems always has non-empty color
-    color = C == Makie.RGBA{Float32}(0.0f0,0.0f0,0.0f0,0.6f0) ? Makie.RGB(0/255, 114/255, 178/255) : C
-    Makie.barplot!(input, h; gap = 0, label, color=color)
-    input
+function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
+    scene = Makie.parent_scene(plot)
+    attributes = Makie.default_theme(scene, Makie.BarPlot)
+    for key in keys(attributes)
+        attributes[key] = get(plot.attributes, key, attributes[key])
+    end
+    barplot!(plot, plot[1]; attributes..., gap=0, fillto=eps())
+    plot
+end
+function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
+    scene = Makie.parent_scene(plot)
+    attributes = Makie.default_theme(scene, Makie.Stairs)
+    for key in keys(attributes)
+        attributes[key] = get(plot.attributes, key, attributes[key])
+    end
+    stairs!(plot, plot[1]; attributes...)
+    plot
 end
 
 """
@@ -183,7 +193,7 @@ Inject collaboration text such as `ATLAS/CMS Preliminary` into the plot. The pos
 ```
 h1 = Hist1D(randn(10^4))
 with_theme(ATLASTHEME) do
-    fig, ax, p = stairs(h1)
+    fig, ax, p = tairs(h1)
     errorbars!(h1)
     collabtext!(ax)
     fig

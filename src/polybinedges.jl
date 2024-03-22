@@ -33,15 +33,14 @@ struct BinEdges <: AbstractVector{Float64}
     end
 end
 
-Base.@constprop :aggressive isuniform(b::BinEdges) = b.isuniform
+isuniform(b::BinEdges) = b.isuniform
 Base.size(b::BinEdges) = if isuniform(b) size(b.uniform_edges) else size(b.nonuniform_edges) end
 Base.getindex(b::BinEdges, i) = if isuniform(b) b.uniform_edges[i] else b.nonuniform_edges[i] end
-# Base.collect(b::BinEdges) = if isuniform(b) collect(b.uniform_edges) else copy(b.nonuniform_edges) end
 
 Base.convert(::Type{BinEdges}, edges::AbstractRange) = BinEdges(edges)
 Base.convert(::Type{BinEdges}, edges::AbstractVector) = BinEdges(edges)
 
-function Base.searchsortedlast(r::BinEdges, x::Real)
+Base.@constprop :aggressive function Base.searchsortedlast(r::BinEdges, x::Real)
     if isuniform(r)
         return floor(Int, (x - r.rfirst) * r.inv_step) + 1
     else
