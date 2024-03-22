@@ -17,7 +17,7 @@ let
 end;
 
 # ╔═╡ 82a6fb18-e9c9-450d-9c93-e05bd6cf5859
-using Revise, FHist, CairoMakie
+using FHist, CairoMakie
 
 # ╔═╡ 180e65b9-13db-4b0c-8b16-369b6978cec0
 md"""
