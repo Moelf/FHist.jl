@@ -1,5 +1,38 @@
-Base.lock(h::Hist1D) = lock(h.hlock)
-Base.unlock(h::Hist1D) = unlock(h.hlock)
+function _fast_bincounts!(h::Hist1D, TA::Tuple{T}, r::AbstractRange, weights::Nothing) where T
+    A = TA[1]
+    overflow = h.overflow
+    counts = bincounts(h)
+    s2 = sumw2(h)
+    firstr = first(r)
+    invstep = inv(step(r))
+    L = nbins(h)
+    nentries = 0
+    for val in A
+        cursor = floor(Int, (val - firstr) * invstep)
+        binidx = cursor + 1
+        if overflow
+            binidx = clamp(binidx, 1, L)
+            nentries += 1
+            @inbounds counts[binidx] += 1
+        else
+            if unsigned(cursor) < L
+                nentries += 1
+                @inbounds counts[binidx] += 1
+            end
+        end
+    end
+    sumw2(h) .= counts
+    h.nentries[] += nentries
+end
+
+function auto_bins(ary, ::Val{1}; nbins=nothing)
+    xs = only(ary)
+    E = eltype(xs)
+    F = E <: Number ? float(E) : Float64
+    nbins = isnothing(nbins) ? _sturges(xs) : nbins
+    lo, hi = minimum(xs), maximum(xs)
+    (StatsBase.histrange(F(lo), F(hi), nbins),)
+end
 
 """
     sample(h::Hist1D, n::Int=1)
@@ -11,53 +44,6 @@ function sample(h::Hist1D; n::Int=1)
     StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
 end
 
-@inline function _edge_binindex(r::AbstractRange, x::Real)
-    return floor(Int, (x - first(r)) * inv(step(r))) + 1
-    # # 20% faster and assigns -Inf, Inf, NaN to typemin(Int64)
-    # return Base.unsafe_trunc(Int, round((x - first(r)) * inv(step(r)), RoundDown)) + 1
-end
-
-@inline function _edge_binindex(r::AbstractRange{<:Integer}, x::Integer)
-    return (x - first(r))÷step(r) + 1
-end
-
-@inline function _edge_binindex(v::AbstractVector, x::Real)
-    return searchsortedlast(v, x)
-end
-
-"""
-    bincounts(h::Hist1D)
-
-Get the bin counts of a histogram.
-"""
-@inline bincounts(h::Hist1D) = h.hist.weights
-
-"""
-    binedges(h::Hist1D)
-
-Get the bin edges of a histogram.
-"""
-@inline binedges(h::Hist1D) = h.hist.edges[1]
-
-"""
-    bincenters(h::Hist1D)
-
-Get the bin centers of a histogram.
-"""
-function bincenters(h::Hist1D)
-    StatsBase.midpoints(binedges(h))
-end
-
-"""
-    binerrors(f::T, h::Hist1D) where T<:Function = f.(h.sumw2)
-    binerrors(h::Hist1D) = binerrors(sqrt, h)
-
-Calculate the bin errors from `sumw2` with a Gaussian default.
-"""
-binerrors(f::T, h::Hist1D) where T<:Function = f.(h.sumw2)
-binerrors(h::Hist1D) = binerrors(sqrt, h)
-
-
 """
     nbins(h::Hist1D)
 
@@ -68,10 +54,13 @@ function nbins(h::Hist1D)
 end
 
 """
-    integral(h::Hist1D; width=false)
+    integral(h; width=false)
 
 Get the integral a histogram; `width` means multiply each bincount
 by their bin width when calculating the integral.
+
+!!! warning
+    `width` keyword argument only works with 1D histogram at the moment.
 
 !!! warning
     Be aware of the approximation you make
@@ -87,17 +76,6 @@ function integral(h::Hist1D; width=false)
 end
 
 """
-    empty!(h::Hist1D)
-
-Resets a histogram's bin counts and `sumw2`.
-"""
-function Base.empty!(h::Hist1D{T,E}) where {T,E}
-    h.hist.weights .= zero(T)
-    h.sumw2 .= 0.0
-    return h
-end
-
-"""
     push!(h::Hist1D, val::Real, wgt::Real=1)
     atomic_push!(h::Hist1D, val::Real, wgt::Real=1)
 
@@ -108,30 +86,49 @@ Adding one value at a time into histogram.
 N.B. To append multiple values at once, use broadcasting via
 `push!.(h, [-3.0, -2.9, -2.8])` or `push!.(h, [-3.0, -2.9, -2.8], 2.0)`
 """
-@inline function atomic_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function atomic_push!(h::Hist1D, val::Real, wgt::Real=1)
     lock(h)
     push!(h, val, wgt)
     unlock(h)
     return nothing
 end
 
-@inline function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1) where {T,E}
+@inline function Base.push!(h::Hist1D, val::Real, wgt::Real=1)
     r = binedges(h)
     L = nbins(h)
-    binidx = _edge_binindex(r, val)
+    binidx = searchsortedlast(r, val)
     if h.overflow
         binidx = clamp(binidx, 1, L)
         h.nentries[] += 1
-        @inbounds h.hist.weights[binidx] += wgt
-        @inbounds h.sumw2[binidx] += wgt^2
+        @inbounds bincounts(h)[binidx] += wgt
+        @inbounds sumw2(h)[binidx] += wgt^2
     else
         if unsigned(binidx - 1) < L
             h.nentries[] += 1
-            @inbounds h.hist.weights[binidx] += wgt
-            @inbounds h.sumw2[binidx] += wgt^2
+            @inbounds bincounts(h)[binidx] += wgt
+            @inbounds sumw2(h)[binidx] += wgt^2
         end
     end
     return nothing
+end
+
+function Base.append!(h::Hist1D, val::AbstractVector, wgt::AbstractVector)
+    length(val) == length(wgt) || throw(DimensionMismatch("append! to histogram expect same length values and weights"))
+    lock(h)
+    for (v, w) in zip(val, wgt)
+        push!(h, v, w)
+    end
+    unlock(h)
+    return h
+end
+
+function Base.append!(h::Hist1D, val::AbstractVector)
+    lock(h)
+    for v in val
+        push!(h, v)
+    end
+    unlock(h)
+    return h
 end
 
 Base.broadcastable(h::Hist1D) = Ref(h)
@@ -143,104 +140,10 @@ Initialize an empty histogram with bin content typed as `T` and bin edges.
 To be used with `push!` or [`atomic_push!`](@ref). Default overflow behavior (`false`)
 will exclude values that are outside of `binedges`.
 """
-function Hist1D(elT::Type{T}=Float64; bins, overflow=_default_overflow) where {T}
-    counts = zeros(elT, length(bins) - 1)
-    return Hist1D(Histogram(bins, counts); overflow=overflow)
+
+function Hist1D(ary; kws...)
+    Hist1D((ary, ); kws...)
 end
-
-"""
-    Hist1D(array, edges::AbstractRange; overflow)
-    Hist1D(array, edges::AbstractVector; overflow)
-
-Create a `Hist1D` with given bin `edges` and vlaues from
-array. Weight for each value is assumed to be 1.
-"""
-function Hist1D(A, r::AbstractRange; overflow=_default_overflow)
-    h = Hist1D(Int; bins=r, overflow=overflow)
-    firstr = first(r)
-    invstep = inv(step(r))
-    L = nbins(h)
-    nentries = 0
-    for val in A
-        cursor = floor(Int, (val - firstr) * invstep)
-        binidx = cursor + 1
-        if overflow
-            binidx = clamp(binidx, 1, L)
-            nentries += 1
-            @inbounds h.hist.weights[binidx] += 1
-        else
-            if unsigned(cursor) < L
-                nentries += 1
-                @inbounds h.hist.weights[binidx] += 1
-            end
-        end
-    end
-    h.nentries[] = nentries
-    h.sumw2 .= h.hist.weights
-    return h
-end
-function Hist1D(A, edges::AbstractVector; overflow=_default_overflow)
-    if _is_uniform_bins(edges)
-        r = range(first(edges), last(edges), length=length(edges))
-        return Hist1D(A, r; overflow=overflow)
-    else
-        h = Hist1D(Int; bins=edges, overflow=overflow)
-        for x in A
-            push!(h, x)
-        end
-        return h
-    end
-end
-
-"""
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractRange; overflow)
-    Hist1D(array, wgts::AbstractWeights, edges::AbstractVector; overflow)
-
-Create a `Hist1D` with given bin `edges` and vlaues from
-array. `wgts` should have the same `size` as `array`.
-"""
-function Hist1D(A, wgts::AbstractWeights, r::AbstractRange; overflow=_default_overflow)
-    @boundscheck @assert size(A) == size(wgts)
-    h = Hist1D(eltype(wgts); bins=r, overflow=overflow)
-    push!.(h, A, wgts)
-    return h
-end
-function Hist1D(A, wgts::AbstractWeights, edges::AbstractVector; overflow=_default_overflow)
-    @inbounds if _is_uniform_bins(edges)
-        r = range(first(edges), last(edges), length=length(edges))
-        return Hist1D(A, wgts, r; overflow=overflow)
-    else
-        h = Hist1D(eltype(wgts); bins=edges, overflow=overflow)
-        push!.(h, A, wgts)
-        return h
-    end
-end
-
-"""
-    Hist1D(A::AbstractVector{T}; nbins::Integer=_sturges(A), overflow) where T
-    Hist1D(A::AbstractVector{T}, wgts::AbstractWeights; nbins::Integer=_sturges(A), overflow) where T
-
-Automatically determine number of bins based on `Sturges` algo.
-"""
-function Hist1D(A::AbstractVector{T}; nbins::Integer=_sturges(A), overflow=_default_overflow) where {T}
-    F = float(T)
-    lo, hi = minimum(A), maximum(A)
-    r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, r; overflow=overflow)
-end
-
-function Hist1D(
-    A::AbstractVector{T},
-    wgts::AbstractWeights;
-    nbins::Integer=_sturges(A),
-    overflow=_default_overflow,
-) where {T}
-    F = float(T)
-    lo, hi = minimum(A), maximum(A)
-    r = StatsBase.histrange(F(lo), F(hi), nbins)
-    return Hist1D(A, wgts, r; overflow=overflow)
-end
-
 
 """
     Statistics.mean(h)
@@ -267,7 +170,7 @@ If a value is out of the histogram range, return `missing`.
 function lookup(h::Hist1D, x)
     r = binedges(h)
     !(first(r) <= x <= last(r)) && return missing
-    return bincounts(h)[_edge_binindex(r, x)]
+    return bincounts(h)[searchsortedlast(r, x)]
 end
 
 """
@@ -295,8 +198,11 @@ function cumulative(h::Hist1D; forward=true)
     # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
     f = forward ? identity : reverse
     h = deepcopy(h)
-    h.hist.weights .= f(cumsum(f(h.hist.weights)))
-    h.sumw2 .= f(cumsum(f(h.sumw2)))
+    bc = bincounts(h)
+    bc .= f(cumsum(f(bc)))
+
+    s2 = sumw2(h)
+    s2 .= f(cumsum(f(s2)))
     return h
 end
 
@@ -320,7 +226,7 @@ function rebin(h::Hist1D, n::Int=1)
     if _is_uniform_bins(edges)
         edges = range(first(edges), last(edges), length=length(edges))
     end
-    return Hist1D(Histogram(edges, counts), sumw2, nentries(h); overflow=h.overflow)
+    return Hist1D(; binedges = edges, bincounts = counts, sumw2, nentries = nentries(h), overflow = h.overflow)
 end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
 
@@ -367,6 +273,6 @@ function restrict(h::Hist1D, low=-Inf, high=Inf)
     if _is_uniform_bins(edges)
         edges = range(first(edges), last(edges), length=length(edges))
     end
-    Hist1D(Histogram(edges, c), sumw2, nentries(h); overflow=h.overflow)
+    Hist1D(; binedges = edges, bincounts = c, sumw2, nentries = nentries(h), overflow=h.overflow)
 end
 restrict(low, high) = h::Hist1D->restrict(h, low, high)

@@ -1,54 +1,50 @@
 import Base: ==, +, -, *, /, merge, merge!
 
-#for StatsBase histogram
-for op in (:+, :-, :*, :/)
-    @eval ($op)(h1::Histogram, h2::Histogram) = 
-    (==)(h1.edges,h2.edges) ? Histogram(h1.edges, broadcast($op, h1.weights, h2.weights)) : throw(DimensionMismatch("The bins of the two histograms don't match"))
-    @eval ($op)(h1::Histogram, n::Real) = Histogram(h1.edges, broadcast($op, h1.weights, n))
-end
-
 for T in (:Hist1D,:Hist2D,:Hist3D)
     for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))
-            h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("Edges don't match"))
+            edge1 = h1.binedges
+            edge1 != h2.binedges && throw(DimensionMismatch("Binedges don't match"))
             h1.overflow != h2.overflow && throw("Can't $op histograms with different overflow settings.")
-            _f(counts) = any(x -> x<0, counts)
-            _hist = ($op)(h1.hist,  h2.hist)
-            ($T)(_hist, h1.sumw2 + h2.sumw2, nentries(h1) + nentries(h2); overflow = h1.overflow)
+            newcounts = broadcast($op, bincounts(h1),  bincounts(h2))
+
+            ($T)(; binedges = copy.(edge1), bincounts = newcounts, sumw2 = sumw2(h1) + sumw2(h2), nentries = nentries(h1) + nentries(h2), overflow = h1.overflow)
         end
     end
 
     @eval function *(h1::($T), num::Real)
-        _f(counts) = any(x -> x<0, counts)
-        _f(h1.hist.weights) && error("Can't do * when bin count is negative")
-        _hist = *(h1.hist, num)
-        ($T)(_hist, h1.sumw2 * num^2, nentries(h1); overflow = h1.overflow)
+        any(<(0), bincounts(h1)) && error("Can't scale (*) a histogram when some bin count is negative")
+        newcounts = bincounts(h1) * num
+
+        ($T)(; bincounts = newcounts, binedges = copy.(binedges(h1)), sumw2 = sumw2(h1) * num^2, nentries = nentries(h1), overflow = h1.overflow)
     end
 
     # https://github.com/aminnj/yahist/blob/4a5767f181ec7fdcc4af18cf15ceedd1c2f89019/yahist/hist1d.py#L427-L430
     @eval function /(h1::($T), h2::($T))
         _f(counts) = any(x -> x<0, counts)
-        (_f(h1.hist.weights) || _f(h2.hist.weights)) && error("Can't do / when bin count is negative")
-        h1.overflow != h2.overflow && throw("Can't divide two histograms with different overflow settings.")
-        _hist = /(h1.hist, h2.hist)
-        _sumw2 =  @. h1.sumw2 / (h2.hist.weights ^ 2) +
-                (sqrt(h2.sumw2) * h1.hist.weights / (h2.hist.weights ^ 2)) ^ 2
-                       
-        ($T)(_hist, _sumw2, nentries(h1) ÷ nentries(h2); overflow=h1.overflow)
-    end
+        counts1 = bincounts(h1)
+        counts2 = bincounts(h2)
+        edge1 = binedges(h1)
+        edge1 != binedges(h2) && throw(DimensionMismatch("Binedges don't match in h1/h2"))
+        (_f(counts1) || _f(counts2)) && error("Can't divide (/) when some bin counts are negative")
+        h1.overflow != h2.overflow && throw("Can't divide two histograms with different overflow settings")
 
-    @eval function ==(h1::$T, h2::$T)
-        h1.hist == h2.hist &&
-        h1.sumw2 == h2.sumw2
+        newcounts = counts1 ./ counts2
+        _sumw2 =  sumw2(h1) ./ (counts2 .^ 2) .+
+            (sqrt.(sumw2(h2)) .* counts1 ./ (counts2 .^ 2)) .^ 2
+                       
+        ($T)(bincounts = newcounts, binedges = edge1, sumw2 = _sumw2, nentries = nentries(h1) ÷ nentries(h2); overflow=h1.overflow)
     end
 
     @eval function merge!(h1::$T, h2::$T)
-        h1.hist.edges != h2.hist.edges && throw(DimensionMismatch("The dimension doesn't match"))
+        edge1 = h1.binedges
+        edge1 != h2.binedges && throw(DimensionMismatch("The dimension doesn't match"))
         lock(h1)
-        h1.hist.weights .+= h2.hist.weights
-        h1.sumw2 .+= h2.sumw2
+        bincounts(h1) .+= bincounts(h2)
+        sumw2(h1) .+= sumw2(h2)
+        h1.nentries[] += nentries(h2)
         unlock(h1)
-        ($T)(h1.hist)
+        h1
     end
 
     @eval merge(h1::$T, h2::$T) = merge!(deepcopy(h1), h2)
@@ -71,8 +67,8 @@ Ref: https://cds.cern.ch/record/2736148/files/ATL-PHYS-PUB-2020-025.pdf
 
 ## Example:
 ```julia
-h1 = Hist1D(rand(1000), [0, 0.5])
-h2 = Hist1D(rand(10000), [0, 0.5]);
+h1 = Hist1D(rand(1000);  binedges = [0, 0.5])
+h2 = Hist1D(rand(10000); binedges = [0, 0.5]);
 
 julia> s1 = significance(h1,h2)
 (6.738690967342175, 0.3042424717261312)
@@ -82,8 +78,8 @@ function significance(signal, bkg)
     S = integral(signal)
     B = integral(bkg)
     Sig = sqrt(2*((S + B) * log(1 + S/B) - S))
-    dS = sqrt(sum(signal.sumw2))
-    dB = sqrt(sum(bkg.sumw2))
+    dS = sqrt(sum(sumw2(signal)))
+    dB = sqrt(sum(sumw2(bkg)))
     dSigdS = log(1 + S/B) / Sig
     dSigdB = (log(1 + S/B) - S/B) / Sig
     err = sqrt((dSigdS * dS)^2 + (dSigdB * dB)^2)

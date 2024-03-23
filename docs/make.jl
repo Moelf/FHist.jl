@@ -22,10 +22,14 @@ makedocs(;
     ),
     pages=[
         "Introduction" => "index.md",
-        "APIs" => "api.md",
+        "User Guide" => Any[
+            "Creating Histogram" => "start.md",
+            "Using Histogram" => "usage.md",
+        ],
+        "APIs Reference" => "api.md",
         "Writing to `.root`" => "writingtoroot.md",
         "Writing to `HDF5`" => "writingtohdf5.md",
-        "Tutorials" => T,
+        "Plotting Tutorials" => T,
     ],
     sitename="FHist.jl",
     authors="Jerry Ling"

@@ -16,7 +16,7 @@ Let's create a `Hist1D`:
 using FHist
 using HDF5
 
-h = Hist1D(randn(10_000), -3:0.1:3)
+h = Hist1D(randn(10_000); binedges = -3:0.1:3)
 ```
 
 Now write it to an HDF5 file:
