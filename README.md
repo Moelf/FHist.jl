@@ -1,8 +1,7 @@
 # FHist.jl
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://moelf.github.io/FHist.jl/dev/)
-[![Build Status](https://github.com/Moelf/FHist.jl/workflows/CI/badge.svg)](https://github.com/Moelf/FHist.jl/actions)
-[![Codecov](https://codecov.io/gh/Moelf/FHist.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Moelf/FHist.jl)
+[![CI](https://github.com/Moelf/FHist.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Moelf/FHist.jl/actions/workflows/ci.yml)[![Codecov](https://codecov.io/gh/Moelf/FHist.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Moelf/FHist.jl)
 
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
