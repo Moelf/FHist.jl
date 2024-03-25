@@ -128,7 +128,9 @@ function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
     for key in keys(attributes)
         attributes[key] = get(plot.attributes, key, attributes[key])
     end
-    barplot!(plot, plot[1]; attributes..., gap=0, fillto=eps())
+    attributes[:gap][] = 0
+    attributes[:fillto][] = eps()
+    barplot!(plot, attributes, plot[1])
     plot
 end
 function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
@@ -137,7 +139,7 @@ function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
     for key in keys(attributes)
         attributes[key] = get(plot.attributes, key, attributes[key])
     end
-    stairs!(plot, plot[1]; attributes...)
+    stairs!(plot, attributes, plot[1])
     plot
 end
 
