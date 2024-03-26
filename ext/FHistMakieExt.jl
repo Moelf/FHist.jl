@@ -16,8 +16,8 @@ Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar i
 regarding how to make legends semi-manually.
 
 # Examples
-h1 = Hist1D(randn(1000), -3:0.3:3)
-h2 = Hist1D(randn(10000), -3:0.3:3)
+h1 = Hist1D(randn(1000); binedges = -3:0.3:3)
+h2 = Hist1D(randn(10000); binedges = -3:0.3:3)
 
 fig, a, p = stackedhist([h1, h2, h2])
 labels = ["ZZ", "Z+jets", "ttbarZ"]
