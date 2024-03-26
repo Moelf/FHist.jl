@@ -18,7 +18,7 @@ Writes a [`Hist1D`](@ref) instance to an HDF5 file. The histogram can be retriev
 using [`h5readhist`](@ref).
 
 # Examples
-h = Hist1D(rand(1000), -3:0.3:3)
+h = Hist1D(rand(1000); binedges = -3:0.3:3)
 h5writehist("foo.h5", "some/path/to/myhist", h)
 """
 function h5writehist(filename::AbstractString, path::AbstractString, h::Union{Hist1D,Hist2D,Hist3D})
