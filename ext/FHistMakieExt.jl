@@ -183,7 +183,7 @@ Makie.MakieCore.plottype(::Hist2D) = Heatmap
 function Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D)
     counts = bincounts(h2d)
     z = zero(eltype(counts))
-    convert_arguments(P, bincenters(h2d)..., replace(counts, z => NaN))
+    convert_arguments(P, binedges(h2d)..., replace(counts, z => NaN))
 end
 
 """
