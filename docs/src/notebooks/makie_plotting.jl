@@ -79,6 +79,21 @@ begin
 	fig2d
 end
 
+# ╔═╡ 254c736a-79e3-4cf5-a662-77471c5aa465
+begin
+	even_edges = 0:0.1:1
+	uneven_edges = [0, 0.2, 0.5, 1]
+	data = (randn(10000), randn(10000))
+	h2d_even =   Hist2D(data; binedges = (even_edges, even_edges))
+	h2d_uneven = Hist2D(data; binedges = (uneven_edges, even_edges))
+	
+	f2_uneven = Figure()
+	plot(f2_uneven[2,1], h2d_even; axis=(title="even x-binning", ))
+	plot(f2_uneven[1,1], h2d_uneven; axis=(title="uneven x-binning", ))
+	Colorbar(f2_uneven[:,2])
+	f2_uneven
+end
+
 # ╔═╡ d549a735-12a4-443a-98c7-be5cce4e6789
 md"""
 You can freely combine these by using the bang `!` version to plot things on top of each other, for example this is some plot you might see:
@@ -112,7 +127,7 @@ We also have a recipe for that:
 
 # ╔═╡ 70a5ba34-53c5-4e12-93b9-49eace436524
 with_theme(ATLASTHEME) do
-	f, a, p = stackedhist([h2, h2, h1])
+	f, a, p = stackedhist([h2, h2, h1]; )
 	labels = ["proc1", "blah", "third one"]
 	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
 	title = "Legend title"
@@ -150,21 +165,7 @@ end
 md"""
 # Shading/Hatching errorbar band
 
-Until: https://github.com/JuliaPlots/Makie.jl/issues/1385#issuecomment-1166367423 is fixed, we don't have access to `LinePattern` driven shading, so you'd have to be creative and use [crossbar](https://makie.juliaplots.org/dev/examples/plotting_functions/crossbar/):
 """
-
-# ╔═╡ f120fa84-6d27-4561-a8d0-fb619c94c490
-begin
-	f_crossbar = stairs(h1)
-	statbox!(f_crossbar, h1)
-	crossbar!(
-		h1; 
-		show_midline=false, 
-		color=(:black, 0.5), 
-		gap=0, width=diff(binedges(h1))
-	)
-	f_crossbar
-end
 
 # ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
 let
@@ -193,6 +194,7 @@ end
 # ╠═99f8bcde-b823-4c5b-8820-22c403c21d6b
 # ╠═c774440d-c7c1-4b75-b115-64038992174d
 # ╠═f5630dae-870e-45e8-995a-db946687031b
+# ╠═254c736a-79e3-4cf5-a662-77471c5aa465
 # ╠═d549a735-12a4-443a-98c7-be5cce4e6789
 # ╠═12b44438-2af4-4ca5-8569-57de2cadc607
 # ╟─386b8f0e-ad21-4af3-b2b6-b3412f44315c
@@ -201,6 +203,5 @@ end
 # ╠═a3dd8f72-d292-4f85-be76-2647b9433b42
 # ╠═b1188446-d16b-4e0c-93be-c5e3d0de379c
 # ╟─2f97d05b-9103-451e-8fce-bb7458acf2ba
-# ╠═f120fa84-6d27-4561-a8d0-fb619c94c490
 # ╠═b114c8a7-5f01-44fe-9660-b5021d359399
 # ╠═fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
