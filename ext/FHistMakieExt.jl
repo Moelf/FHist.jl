@@ -122,6 +122,7 @@ function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
     es = binerrors(h)
     convert_arguments(P, bincenters(h), cs, cs .- es/2, cs .+ es/2)
 end
+
 function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
     scene = Makie.parent_scene(plot)
     attributes = Makie.default_theme(scene, Makie.BarPlot)
@@ -130,9 +131,12 @@ function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
     end
     attributes[:gap][] = 0
     attributes[:fillto][] = eps()
-    barplot!(plot, attributes, plot[1])
+    myhist = plot[1]
+    attributes[:width][] = diff(binedges(myhist[]))
+    barplot!(plot, attributes, myhist)
     plot
 end
+
 function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
     scene = Makie.parent_scene(plot)
     attributes = Makie.default_theme(scene, Makie.Stairs)
