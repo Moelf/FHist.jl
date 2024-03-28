@@ -50,6 +50,16 @@ begin
 	fig
 end
 
+# ╔═╡ 91a8b01a-54e7-4955-bb56-1803d3f2576a
+begin
+	h1_log = Hist1D(rand(10^5);binedges = [0.001, 0.01, 0.1, 1])
+	ax_log = plot(h1_log; axis=(;xscale=log10, yscale=log10), label = "log-log scale")
+	xlims!(0.0001, nothing)
+	ylims!(1, nothing)
+	axislegend()
+	ax_log
+end
+
 # ╔═╡ 3b4d5b69-dbbb-49dd-b7ad-9ef1605f76eb
 md"""
 When you're studying a single histogram, it's hepful to have statbox (CERN ROOT enjoyer?)
@@ -190,6 +200,7 @@ end
 # ╠═8491f5c3-93b6-4670-8f6e-0d08d7afbf75
 # ╠═da61f742-b530-4aa4-9253-a23f6731f892
 # ╠═4c09d3a5-a034-49fb-aba3-1891c6f90b5a
+# ╠═91a8b01a-54e7-4955-bb56-1803d3f2576a
 # ╠═3b4d5b69-dbbb-49dd-b7ad-9ef1605f76eb
 # ╠═99f8bcde-b823-4c5b-8820-22c403c21d6b
 # ╠═c774440d-c7c1-4b75-b115-64038992174d
