@@ -209,6 +209,7 @@ function _fast_bincounts!(h::Hist3D, A, binedges, weights)
 end
 
 include("./utils.jl")
+export chi2ndf_ww
 include("./hist1d.jl")
 include("./hist2d.jl")
 include("./hist3d.jl")
