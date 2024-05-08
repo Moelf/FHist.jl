@@ -10,8 +10,8 @@ end
 """
 const ATLASTHEME = MakieCore.Attributes(
       Axis = (
-              xtickalign=1, ytickalign=1, 
-              xticksmirrored=1, yticksmirrored=1,
+              xtickalign=true, ytickalign=true,
+              xticksmirrored=true, yticksmirrored=true,
               xminortickalign=1, yminortickalign=1,
               xticksize=10, yticksize=10,
               xminorticksize=6, yminorticksize=6,
