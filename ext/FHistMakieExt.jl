@@ -112,7 +112,10 @@ function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
     bot = eps()
-    convert_arguments(P, vcat(edges, phantomedge), vcat(bot, bincounts(h), bot))
+    bc = bincounts(h)
+    z = zero(eltype(bc))
+    nonzero_bincounts = replace(bc, z => bot)
+    convert_arguments(P, vcat(edges, phantomedge), vcat(bot, nonzero_bincounts, bot))
 end
 Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
