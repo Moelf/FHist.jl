@@ -1,7 +1,7 @@
 name = "FHist"
 uuid = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
-version = "0.11.2"
+version = "0.11.3"
 
 [deps]
 BayesHistogram = "000d9b38-65fe-4c81-bdb9-69f01f102479"
@@ -28,7 +28,7 @@ FHistPlotsExt = "Plots"
 BayesHistogram = "1.0.7"
 HDF5 = "0.16, 0.17"
 LinearAlgebra = "1"
-Makie = "0.19, ^0.20.1"
+Makie = "0.19, ^0.20.1, 0.21"
 MakieCore = "0.6, 0.7, 0.8"
 Measurements = "^2.7"
 RecipesBase = "^1"
