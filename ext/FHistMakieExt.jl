@@ -119,7 +119,27 @@ function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
 end
 Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
 Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h))
-Makie.convert_arguments(P::Type{<:Errorbars}, h::Hist1D) = convert_arguments(P, bincenters(h), bincounts(h), binerrors(h)/2)
+
+function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D)
+    se = FHist.binerrors(FHist.sqrt, h)
+    bincounts = FHist.bincounts(h)
+    if all(==(1.0), FHist.sumw2(h))
+        # no weights used in filling
+        convert_arguments(P, FHist.bincenters(h), bincounts, se)
+    else
+        # weights used, switch to pearson error if error bar dips below zero
+        pe = FHist.binerrors(FHist.pearson_err, h)
+        err_high, pe_low = first.(pe), last.(pe)
+        err_low = se
+        for i in eachindex(bincounts, se, pe_low)
+            if bincounts[i] - err_low[i] <= 0
+                err_low[i] = pe_low[i]
+            end
+        end
+        convert_arguments(P, FHist.bincenters(h), bincounts, err_low, err_high)
+    end   
+end
+
 function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
     cs = bincounts(h)
     es = binerrors(h)
