@@ -6,39 +6,6 @@ isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 import FHist: stackedhist, stackedhist!
 
-const SAFE_LOG = Ref(true)
-
-"""
-    set_safe_log(x::Bool)
-
-Turn on/off SAFE_LOG, to plot histograms without/with negative values. By default is `true`.
-"""
-function set_safe_log(x::Bool)
-    SAFE_LOG[]=x
-end
-
-"""
-    _clip_for_log(c_vec)
-
-Internal fuction to clip counts of histogram. 
-"""
-function _clip_counts!(c_vec)
-    min_positive = 2*eps()  
-    @. c_vec = max(c_vec, min_positive)
-end
-
-"""
-    _clip_errors!(e_vec,c_vec)
-
-Internal fuction to clip errors of histogram. 
-"""
-function _clip_errors!(e_vec,c_vec)
-    min_positive = eps()
-    mask =  c_vec - e_vec .< min_positive
-    e_vec[mask] = c_vec[mask] .- min_positive
-end
-
-
 """
     stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors())
 
@@ -145,39 +112,39 @@ function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
     bc = bincounts(h)
-    SAFE_LOG[] && _clip_counts!(bc)
     convert_arguments(P, vcat(edges, phantomedge), vcat(eps(), bc, eps()))
 end
 
 function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D)
     bc = bincounts(h)
-    SAFE_LOG[] && _clip_counts!(bc)
     convert_arguments(P, bincenters(h), bc)
 end  
 
 function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D)
     bc = bincounts(h)
-    SAFE_LOG[] && _clip_counts!(bc)
     convert_arguments(P, bincenters(h), bc)
 end
 
+function Makie.plot!(plot::Errorbars{<:Tuple{<:Hist1D}})
+    scene = Makie.parent_scene(plot)
+    attributes = Makie.default_theme(scene, Makie.Errorbars)
+    for key in keys(attributes)
+        attributes[key] = get(plot.attributes, key, attributes[key])
+    end
+    err_func = get(plot.attributes, :error_function, Ref(FHist.sqrt))
 
-function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D)
-    se = FHist.binerrors(FHist.sqrt, h)
-    bincounts = FHist.bincounts(h)
-    if all(==(1.0), FHist.sumw2(h))
-        # no weights used in filling
-        convert_arguments(P, FHist.bincenters(h), bincounts, se)
-    else
-        # weights used, switch to pearson error if error bar dips below zero
-        pe = FHist.binerrors(FHist.sqrt_err, h)
-        err_high, err_low = first.(pe), last.(pe)
-        if SAFE_LOG[]
-            _clip_counts!(bincounts)
-            _clip_errors!(err_low, bincounts)
+    h = plot[1]
+    xs = FHist.bincenters(h[])
+    ys = FHist.bincounts(h[])
+    errs = FHist.binerrors(err_func[], h[])
+    hi_errs, lo_errs = first.(errs), last.(errs)
+    for i in eachindex(ys, lo_errs)
+        if ys[i] - lo_errs[i] <= 0
+            lo_errs[i] = ys[i] - eps()
         end
-        convert_arguments(P, FHist.bincenters(h), bincounts, err_low, err_high)
-    end   
+    end
+    errorbars!(plot, attributes, xs, ys, lo_errs, hi_errs)
+    plot
 end
 
 function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
