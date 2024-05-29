@@ -128,9 +128,9 @@ function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D)
     convert_arguments(P, bincenters(h), bc)
 end
 
-Makie.used_attributes(::Type{<: Errorbars}, h::Hist1D) = (:clamp, :error_function)
+Makie.used_attributes(::Type{<: Errorbars}, h::Hist1D) = (:clamp_errors, :error_function)
 
-function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp=true, error_function=nothing)
+function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp_errors=true, error_function=nothing)
     xs = FHist.bincenters(h)
     ys = FHist.bincounts(h)
     errs = if isnothing(error_function)
@@ -139,7 +139,7 @@ function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; cl
         FHist.binerrors(error_function, h)
     end
     hi_errs, lo_errs = first.(errs), last.(errs)
-    if clamp
+    if clamp_errors
         for i in eachindex(ys, lo_errs)
             if ys[i] - lo_errs[i] <= 0
                 lo_errs[i] = ys[i] - eps()
