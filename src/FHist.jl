@@ -168,7 +168,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
             newh = deepcopy(h)
             return clamp!(newh, lo_limit, hi_limit)
         end
-        function clamp!(h::$H, lo_limit, hi_limit)
+        function Base.clamp!(h::$H, lo_limit, hi_limit)
             bc = bincounts(h) 
             @. bc = clamp(bc, lo_limit, hi_limit)
             return h

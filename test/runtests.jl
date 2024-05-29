@@ -617,14 +617,14 @@ end
     h = Hist1D(;binedges=0:2, bincounts=bc_1D, sumw2=[0.1, 0.2])
     h2 = Hist1D(;binedges=0:2, bincounts=clamp.(bc_1D, eps(), Inf), sumw2=[0.1, 0.2])
     @test clamp(h, eps(), Inf) == h2
-    @test h2 == FHist.clamp!(deepcopy(h), eps(), Inf)
+    @test h2 == clamp!(deepcopy(h), eps(), Inf)
 
     bc_2D = [-0.1  1.0;
             -0.2  3.0]
     h2d = Hist2D(;binedges=(0:2, 0:2), bincounts=bc_2D)
     h2d2 = Hist2D(;binedges=(0:2, 0:2), bincounts=clamp.(bc_2D, eps(), Inf))
     @test clamp(h2d, eps(), Inf) == h2d2
-    @test h2d2 == FHist.clamp!(deepcopy(h2d), eps(), Inf)
+    @test h2d2 == clamp!(deepcopy(h2d), eps(), Inf)
 end
 
 include("hdf5.jl")
