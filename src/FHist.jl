@@ -155,6 +155,21 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         binerrors(f::T, h::$H) where T<:Function = f.(sumw2(h))
         binerrors(h::$H) = binerrors(sqrt, h)
 
+        @doc """
+                clamp(hist::H, lo_limit, hi_limit) --> new_hist::H
+                FHist.clamp!(hist, lo_limit, hi_limit) --> hist
+            Clamp the `bincounts()` of a histogram and return a copy of the histogram. `FHist.clamp!()` is the in-place variation.
+        """
+        function Base.clamp(h::$H, lo_limit, hi_limit)
+            newh = deepcopy(h)
+            return clamp!(newh, lo_limit, hi_limit)
+        end
+        function clamp!(h::$H, lo_limit, hi_limit)
+            bc = bincounts(h) 
+            @. bc = clamp(bc, lo_limit, hi_limit)
+            return h
+        end
+
         function Base.:(==)(h1::$H, h2::$H)
             bincounts(h1) == bincounts(h2) &&
                 binedges(h1) == binedges(h2) &&
