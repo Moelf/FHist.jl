@@ -111,6 +111,7 @@ Makie.MakieCore.plottype(::Hist1D) = Hist
 function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
+    bot = eps()
     bc = bincounts(h)
     z = zero(eltype(bc))
     nonzero_bincounts = replace(bc, z => bot)
