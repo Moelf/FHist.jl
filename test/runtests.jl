@@ -612,4 +612,24 @@ end
     @test all(significance(h1,h2) .≈ (9.839916447569484, 0.30998654607114046))
 end
 
+@testset "SafeLog" begin
+
+    FHist.SafeLog.set_safe_log(true)
+    @test FHist.SafeLog.SAFE_LOG[] == true
+    
+    h = Hist1D(bincounts=[0.5,-0.5],binedges=[1,2,3],sumw2=[1.01,1.01])
+    bc = copy(bincounts(h))
+    FHist.SafeLog._clip_counts!(bc)
+    @test all(bc .>= eps())
+
+    bc = copy(bincounts(h))
+    err_up = copy(binerrors(h))
+    err_dn = copy(binerrors(h))
+    FHist.SafeLog._clip_counts!(bc)
+    @test all(@. bc >= eps())
+    @test all(@. bc - err_dn >= eps())
+    @test all(@. bc + err_up == bincounts(h) + binerrors(h))
+
+end
+
 include("hdf5.jl")

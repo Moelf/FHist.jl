@@ -119,7 +119,7 @@ function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
 end
 
 function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D)
-    bc = cpopy(bincounts(h))
+    bc = copy(bincounts(h))
     SAFE_LOG[] && _clip_counts!(bc)
     convert_arguments(P, bincenters(h), bc)
 end  
