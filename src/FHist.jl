@@ -158,7 +158,11 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         @doc """
                 clamp(hist::H, lo_limit, hi_limit) --> new_hist::H
                 FHist.clamp!(hist, lo_limit, hi_limit) --> hist
-            Clamp the `bincounts()` of a histogram and return a copy of the histogram. `FHist.clamp!()` is the in-place variation.
+
+            Clamp (or called clip) the `bincounts()` of a histogram and return a copy of the histogram. `FHist.clamp!()` is the in-place variation.
+
+            !!! note
+                By construction, the `integral()` of the histogram will also change. Clamping does not change `sumw2` values.
         """
         function Base.clamp(h::$H, lo_limit, hi_limit)
             newh = deepcopy(h)
