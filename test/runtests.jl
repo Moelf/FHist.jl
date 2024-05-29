@@ -625,10 +625,10 @@ end
     bc = copy(bincounts(h))
     err_up = copy(binerrors(h))
     err_dn = copy(binerrors(h))
-    FHist.SafeLog._clip_counts!(bc)
+    FHist.SafeLog._clip_counts!(bc, err_dn, err_up)
     @test all(@. bc >= eps())
-    @test all(@. bc - err_dn >= eps())
-    @test all(@. bc + err_up == bincounts(h) + binerrors(h))
+    @test all(@. bc - err_dn >= 0)
+    @test all( abs.(bc .+ err_up  .- (bincounts(h) .+ binerrors(h))) .<= eps())
 
 end
 
