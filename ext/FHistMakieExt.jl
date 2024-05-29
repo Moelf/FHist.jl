@@ -125,26 +125,25 @@ function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D)
     convert_arguments(P, bincenters(h), bc)
 end
 
-function Makie.plot!(plot::Errorbars{<:Tuple{<:Hist1D}})
-    scene = Makie.parent_scene(plot)
-    attributes = Makie.default_theme(scene, Makie.Errorbars)
-    for key in keys(attributes)
-        attributes[key] = get(plot.attributes, key, attributes[key])
-    end
-    err_func = get(plot.attributes, :error_function, Ref(FHist.sqrt))
+Makie.used_attributes(::Type{<: Errorbars}, h::Hist1D) = (:clamp, :error_function)
 
-    h = plot[1]
-    xs = FHist.bincenters(h[])
-    ys = FHist.bincounts(h[])
-    errs = FHist.binerrors(err_func[], h[])
+function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp=true, error_function=nothing)
+    xs = FHist.bincenters(h)
+    ys = FHist.bincounts(h)
+    errs = if isnothing(error_function)
+        FHist.binerrors(FHist.sqrt, h)
+    else
+        FHist.binerrors(error_function, h)
+    end
     hi_errs, lo_errs = first.(errs), last.(errs)
-    for i in eachindex(ys, lo_errs)
-        if ys[i] - lo_errs[i] <= 0
-            lo_errs[i] = ys[i] - eps()
+    if clamp
+        for i in eachindex(ys, lo_errs)
+            if ys[i] - lo_errs[i] <= 0
+                lo_errs[i] = ys[i] - eps()
+            end
         end
     end
-    errorbars!(plot, attributes, xs, ys, lo_errs, hi_errs)
-    plot
+    convert_arguments(P, xs, ys, lo_errs, hi_errs)
 end
 
 function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
