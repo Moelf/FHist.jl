@@ -52,7 +52,7 @@ end
 
 # ╔═╡ 91a8b01a-54e7-4955-bb56-1803d3f2576a
 begin
-	h1_log = Hist1D(rand(10^5);binedges = [0.001, 0.01, 0.1, 1])
+	h1_log = Hist1D(rand(10^5); binedges = [0.001, 0.01, 0.1, 1])
 	ax_log = plot(h1_log; axis=(;xscale=log10, yscale=log10), label = "log-log scale")
 	xlims!(0.0001, nothing)
 	ylims!(1, nothing)
@@ -83,9 +83,9 @@ md"""
 begin
 	fig2d = Figure()
 	h2d = Hist2D((randn(10000), randn(10000)))
-	plot(fig2d[1,2], h2d)
+	_, _heatmap = plot(fig2d[1,2], h2d)
 	statbox!(fig2d, h2d; position=(1,1))
-	Colorbar(fig2d[1,3])
+	Colorbar(fig2d[1,3], _heatmap)
 	fig2d
 end
 
@@ -100,7 +100,6 @@ begin
 	f2_uneven = Figure()
 	plot(f2_uneven[2,1], h2d_even; axis=(title="even x-binning", ))
 	plot(f2_uneven[1,1], h2d_uneven; axis=(title="uneven x-binning", ))
-	Colorbar(f2_uneven[:,2])
 	f2_uneven
 end
 
@@ -171,6 +170,41 @@ begin
     f_ratio
 end
 
+# ╔═╡ 877172c9-df03-4157-af80-a99f3bd5bd3f
+md"""## Clamping/clipping bincounts and errorbars
+
+| - | clamp_bincounts = false (default) | clamp_bincounts = true |
+| --- | -------------------------------- | -------------------------------- |
+| clamp_errors = false | - | - |
+| clamp_errors = true (default) | - | - |
+
+!!! note
+	`clamp_bincounts` only works with `stairs()` and `barplot()` directly. See Makie upstream github issue: [https://github.com/MakieOrg/Makie.jl/issues/3904](https://github.com/MakieOrg/Makie.jl/issues/3904)
+
+"""
+
+# ╔═╡ b9ae652e-75bf-454b-83c6-fa6b4ef74faa
+let h = Hist1D(;binedges=0:2, bincounts=[-0.1, 0.1], sumw2=[0.1, 0.1])
+	fig = Figure()
+	
+	barplot(fig[1,1], h;); errorbars!(h; clamp_errors=false);
+	barplot(fig[2,1], h;); errorbars!(h; clamp_errors=true);
+	barplot(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+
+	fig
+end
+
+# ╔═╡ f9255f7c-fd44-46cc-bccc-a8c4b5033502
+let h = Hist1D(;binedges=0:2, bincounts=[-0.1, 0.1], sumw2=[0.1, 0.1])
+	fig = Figure()
+	
+	stairs(fig[1,1], h;); errorbars!(h; clamp_errors=false);
+	stairs(fig[2,1], h;); errorbars!(h; clamp_errors=true);
+	stairs(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+
+	fig
+end
+
 # ╔═╡ 2f97d05b-9103-451e-8fce-bb7458acf2ba
 md"""
 # Shading/Hatching errorbar band
@@ -213,6 +247,9 @@ end
 # ╠═089fb6a1-3f2a-45f4-b4bf-4013dee3a6da
 # ╠═a3dd8f72-d292-4f85-be76-2647b9433b42
 # ╠═b1188446-d16b-4e0c-93be-c5e3d0de379c
+# ╟─877172c9-df03-4157-af80-a99f3bd5bd3f
+# ╠═b9ae652e-75bf-454b-83c6-fa6b4ef74faa
+# ╠═f9255f7c-fd44-46cc-bccc-a8c4b5033502
 # ╟─2f97d05b-9103-451e-8fce-bb7458acf2ba
 # ╠═b114c8a7-5f01-44fe-9660-b5021d359399
 # ╠═fae56f0f-bac4-4dea-b33c-d45e6f3b51fc

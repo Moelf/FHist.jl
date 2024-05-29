@@ -6,6 +6,30 @@ isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 import FHist: stackedhist, stackedhist!
 
+function _clamp_counts!(c_vec)
+    min_positive = eps()
+    @. c_vec = max(c_vec, min_positive)
+    return nothing
+end
+
+function _clamp_counts_errors!(c_vec, el_vec, eh_vec)
+    # Set the clipping, and make copy of starting counts
+    min_positive = eps()
+    c_vec_def = copy(c_vec)
+
+    _clamp_counts!(c_vec)
+
+    # clip lower errors
+    mask =  c_vec - el_vec .< min_positive
+    @views el_vec[mask] = c_vec[mask] .- min_positive
+
+    # clip higher errors
+    @. eh_vec = max(eh_vec - (c_vec - c_vec_def), min_positive)
+
+    return nothing
+end
+
+
 """
     stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors())
 
@@ -107,39 +131,52 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D, <:Hist1D}})
     ratiohist!(input, hratio)
 end
 
+Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts, )
+function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D; clamp_bincounts=false)
+    ys = copy(bincounts(h))
+    if clamp_bincounts
+        _clamp_counts!(ys)
+    end
+    convert_arguments(P, bincenters(h), ys)
+end
+function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D; clamp_bincounts=false)
+    ys = copy(bincounts(h))
+    if clamp_bincounts
+        _clamp_counts!(ys)
+    end
+    convert_arguments(P, bincenters(h), ys)
+end
+
 Makie.MakieCore.plottype(::Hist1D) = Hist
-function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D)
+function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D; clamp_bincounts=false)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
     bot = eps()
-    bc = bincounts(h)
+    bc = copy(bincounts(h))
+    if clamp_bincounts
+        _clamp_counts!(bc)
+    end
     z = zero(eltype(bc))
     nonzero_bincounts = replace(bc, z => bot)
     convert_arguments(P, vcat(edges, phantomedge), vcat(bot, nonzero_bincounts, bot))
 end
 
-function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D)
-    bc = bincounts(h)
-    convert_arguments(P, bincenters(h), bc)
-end  
-
-function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D)
-    bc = bincounts(h)
-    convert_arguments(P, bincenters(h), bc)
-end
-
-Makie.used_attributes(::Type{<: Errorbars}, h::Hist1D) = (:clamp_errors, :error_function)
-
-function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp_errors=true, error_function=nothing)
+Makie.used_attributes(::Type{<:Errorbars}, h::Hist1D) = (:clamp_bincounts, :clamp_errors, :error_function)
+function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp_bincounts=false, clamp_errors=true, error_function=nothing)
     xs = FHist.bincenters(h)
-    ys = FHist.bincounts(h)
+    ys = copy(FHist.bincounts(h))
     errs = if isnothing(error_function)
         FHist.binerrors(FHist.sqrt, h)
     else
         FHist.binerrors(error_function, h)
     end
     hi_errs, lo_errs = first.(errs), last.(errs)
-    if clamp_errors
+
+    if clamp_bincounts && clamp_errors
+        _clamp_counts_errors!(ys, lo_errs, hi_errs)
+    elseif clamp_bincounts && !clamp_errors
+        _clamp_counts(ys)
+    elseif !clamp_bincounts && clamp_errors
         for i in eachindex(ys, lo_errs)
             if ys[i] - lo_errs[i] <= 0
                 lo_errs[i] = ys[i] - eps()
@@ -171,11 +208,8 @@ end
 
 function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
     scene = Makie.parent_scene(plot)
-    attributes = Makie.default_theme(scene, Makie.Stairs)
-    for key in keys(attributes)
-        attributes[key] = get(plot.attributes, key, attributes[key])
-    end
-    stairs!(plot, attributes, plot[1])
+    valid_attributes = Makie.shared_attributes(plot, Makie.Stairs)
+    stairs!(plot, valid_attributes, plot[1])
     plot
 end
 
@@ -249,4 +283,5 @@ function FHist.collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; pos
         font=[fill("TeX Gyre Heros Bold Italic Makie", length(colabname)); fill("TeX Gyre Heros Makie", length(stage)+1)]
     )
 end
+
 end
