@@ -179,7 +179,8 @@ md"""## Clamping/clipping bincounts and errorbars
 | clamp_errors = true (default) | - | - |
 
 !!! note
-	`clamp_bincounts` only works with `stairs()` and `barplot()` directly. See Makie upstream github issue: [https://github.com/MakieOrg/Makie.jl/issues/3904](https://github.com/MakieOrg/Makie.jl/issues/3904)
+    `clamp_bincounts` only works with `stairs()` and `barplot()` directly (does not work with `stephist(), hist()` for the moment.
+    See Makie upstream github issue: [https://github.com/MakieOrg/Makie.jl/issues/3904](https://github.com/MakieOrg/Makie.jl/issues/3904)
 
 """
 
@@ -187,9 +188,9 @@ md"""## Clamping/clipping bincounts and errorbars
 let h = Hist1D(;binedges=0:2, bincounts=[-0.1, 0.1], sumw2=[0.1, 0.1])
 	fig = Figure()
 	
-	barplot(fig[1,1], h;); errorbars!(h; clamp_errors=false);
-	barplot(fig[2,1], h;); errorbars!(h; clamp_errors=true);
-	barplot(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+	scatter(fig[1,1], h;); errorbars!(h; clamp_errors=false);
+	scatter(fig[2,1], h;); errorbars!(h; clamp_errors=true);
+	scatter(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
 
 	fig
 end
