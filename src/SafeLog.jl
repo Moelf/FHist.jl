@@ -42,7 +42,7 @@ function _clip_counts!(c_vec, el_vec, eh_vec)
     el_vec[mask] = c_vec[mask] .- min_positive
 
     # clip higher errors
-    @. eh_vec = eh_vec - (c_vec - c_vec_def)
+    @. eh_vec = max(eh_vec - (c_vec - c_vec_def), min_positive)
 end
  
 end
