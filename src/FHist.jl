@@ -218,6 +218,7 @@ include("./arithmatics.jl")
 using MakieCore
 include("./MakieThemes.jl")
 export ATLASTHEME, stackedhist, stackedhist!, ratiohist, ratiohist!
+include("./SafeLog.jl")
 
 function stackedhist end
 function stackedhist! end
