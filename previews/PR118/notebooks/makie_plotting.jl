@@ -175,8 +175,8 @@ md"""## Clamping/clipping bincounts and errorbars
 
 | - | clamp_bincounts = false (default) | clamp_bincounts = true |
 | --- | -------------------------------- | -------------------------------- |
-| clamp_errors = false | - | - |
-| clamp_errors = true (default) | - | - |
+| clamp_errors = false | ![image](https://github.com/Moelf/FHist.jl/assets/5306213/e8571535-0d5a-47f1-97a5-efd223f5973b) | Don't do this |
+| clamp_errors = true (default) | ![image](https://github.com/Moelf/FHist.jl/assets/5306213/a29d9dee-481f-4604-bcc2-113125ede1e3) | ![image](https://github.com/Moelf/FHist.jl/assets/5306213/7004f258-5aa9-4d9c-b303-116fec79b17a) |
 
 !!! note
     `clamp_bincounts` only works with `stairs()` and `barplot()` directly (does not work with `stephist(), hist()` for the moment.
@@ -224,7 +224,7 @@ end
 
 # ╔═╡ fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
 let
-    f, a, p = stackedhist([h1, h1 ]; error_color=Pattern('/'))
+    f, a, p = stackedhist([h1, h1]; error_color=Pattern('/'))
 	f
 end
 
