@@ -174,14 +174,14 @@ function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; cl
 
     if clamp_bincounts && clamp_errors
         _clamp_counts_errors!(ys, lo_errs, hi_errs)
-    elseif clamp_bincounts && !clamp_errors
-        _clamp_counts(ys)
     elseif !clamp_bincounts && clamp_errors
         for i in eachindex(ys, lo_errs)
             if ys[i] - lo_errs[i] <= 0
                 lo_errs[i] = ys[i] - eps()
             end
         end
+    elseif clamp_bincounts && !clamp_errors
+        error("Clamping bincounts without also clamping errors will produce incorrect visualization.")
     end
     convert_arguments(P, xs, ys, lo_errs, hi_errs)
 end
