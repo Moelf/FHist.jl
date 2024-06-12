@@ -84,6 +84,7 @@ begin
 	fig2d = Figure()
 	h2d = Hist2D((randn(10000), randn(10000)))
 	_, _heatmap = plot(fig2d[1,2], h2d)
+	contour!(h2d; label=true, colormap=:hsv)
 	statbox!(fig2d, h2d; position=(1,1))
 	Colorbar(fig2d[1,3], _heatmap)
 	fig2d
