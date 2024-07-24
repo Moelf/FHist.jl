@@ -138,33 +138,33 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         """
         bincenters(h::$H) = _from_tuple(StatsBase.midpoints.(h.binedges))
         @doc """
-                nentries(h::$($H))
-            Get the number of times a histogram is filled (`push!`ed)
+            nentries(h::$($H))
+        Get the number of times a histogram is filled (`push!`ed)
         """
         nentries(h::$H) = h.nentries[]
         @doc """
-                sumw2(h)
-            Get the sum of weights squared of the histogram, it has the same shape as `bincounts(h)`.
+            sumw2(h)
+        Get the sum of weights squared of the histogram, it has the same shape as `bincounts(h)`.
         """
         sumw2(h::$H) = h.sumw2
 
         @doc """
-                binerrors(f=sqrt, h)
-            Get the error (uncertainty) of each bin. By default, calls `sqrt` on `sumw2(h)` bin by bin as an approximation.
+            binerrors(f=sqrt, h)
+        Get the error (uncertainty) of each bin. By default, calls `sqrt` on `sumw2(h)` bin by bin as an approximation.
         """
         binerrors(f::T, h::$H) where T<:Function = f.(sumw2(h))
         binerrors(h::$H) = binerrors(sqrt, h)
         
         @doc raw"""
-                effective_entries(h) -> scalar
+            effective_entries(h) -> scalar
 
-            Get the number of effective entries for the entire histogram:
+        Get the number of effective entries for the entire histogram:
 
-            ```math
-            n_{eff} = \frac{(\sum Weights )^2}{(\sum Weight^2 )}
-            ```
+        ```math
+        n_{eff} = \frac{(\sum Weights )^2}{(\sum Weight^2 )}
+        ```
 
-            This is also equivalent to `integral(hist)^2 / sum(sumw2(hist))`, this is the same as `TH1::GetEffectiveEntries()`
+        This is also equivalent to `integral(hist)^2 / sum(sumw2(hist))`, this is the same as `TH1::GetEffectiveEntries()`
         """
         effective_entries(h::$H) = abs2(integral(h)) / sum(sumw2(h))
 
