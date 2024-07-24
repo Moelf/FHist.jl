@@ -154,6 +154,18 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         """
         binerrors(f::T, h::$H) where T<:Function = f.(sumw2(h))
         binerrors(h::$H) = binerrors(sqrt, h)
+        
+        @doc raw"""
+                effective_entries(h) -> scalar
+
+            Get the number of effective entries for the entire histogram:
+            ```math
+            n_{eff} = \frac{(\sum Weights )^2}{(\sum Weight^2 )}
+
+            ```
+            This is also equivalent to `integral(hist)^2 / sum(sumw2(hist))`, this is the same as `TH1::GetEffectiveEntries()`
+        """
+        effective_entries(h::$H) = abs2(integral(h)) / sum(sumw2(h))
 
         function Base.:(==)(h1::$H, h2::$H)
             bincounts(h1) == bincounts(h2) &&

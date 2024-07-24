@@ -612,4 +612,15 @@ end
     @test all(significance(h1,h2) .≈ (9.839916447569484, 0.30998654607114046))
 end
 
+@testset "Effective entries" begin
+    h = Hist1D(; binedges = 1:10)
+    push!(h, 3)
+    push!(h, 3)
+    @test FHist.effective_entries(h) == 2
+    push!(h, 8, 0.2)
+    @test FHist.effective_entries(h) ≈ 2.3725490196078436
+    push!(h, 4, 0.2)
+    @test FHist.effective_entries(h) ≈ 2.76923076923077
+end
+
 include("hdf5.jl")
