@@ -18,6 +18,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
 
         ($T)(; bincounts = newcounts, binedges = copy.(binedges(h1)), sumw2 = sumw2(h1) * num^2, nentries = nentries(h1), overflow = h1.overflow)
     end
+    @eval *(num::Real, h1::($T)) = h1 * num
 
     # https://github.com/aminnj/yahist/blob/4a5767f181ec7fdcc4af18cf15ceedd1c2f89019/yahist/hist1d.py#L427-L430
     @eval function /(h1::($T), h2::($T))
