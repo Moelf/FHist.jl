@@ -256,6 +256,13 @@ function Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D)
     convert_arguments(P, binedges(h2d)..., replace(counts, z => NaN))
 end
 
+Makie.MakieCore.plottype(::Hist3D) = Volume
+function Makie.convert_arguments(P::Type{<:Volume}, h::Hist3D)
+    counts = bincounts(h)
+    z = zero(eltype(counts))
+    convert_arguments(P, binedges(h)..., replace(counts, z => NaN))
+end
+
 """
     collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position::Union{Symbol, Point2f} = :lt)
 
