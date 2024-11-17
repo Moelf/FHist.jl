@@ -169,7 +169,7 @@ If a value is out of the histogram range, return `missing`.
 """
 function lookup(h::Hist1D, x)
     r = binedges(h)
-    !(first(r) <= x <= last(r)) && return missing
+    !(first(r) <= x < last(r)) && return missing
     return bincounts(h)[searchsortedlast(r, x)]
 end
 
