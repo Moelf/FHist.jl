@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Writing to .root · FHist.jl</title><meta name="title" content="Writing to .root · FHist.jl"/><meta property="og:title" content="Writing to .root · FHist.jl"/><meta property="twitter:title" content="Writing to .root · FHist.jl"/><meta name="description" content="Documentation for FHist.jl."/><meta property="og:description" content="Documentation for FHist.jl."/><meta property="twitter:description" content="Documentation for FHist.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">FHist.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="../start/">Creating Histogram</a></li><li><a class="tocitem" href="../usage/">Using Histogram</a></li></ul></li><li><a class="tocitem" href="../api/">APIs Reference</a></li><li class="is-active"><a class="tocitem" href>Writing to <code>.root</code></a></li><li><a class="tocitem" href="../writingtohdf5/">Writing to <code>HDF5</code></a></li><li><span class="tocitem">Plotting Tutorials</span><ul><li><a class="tocitem" href="../notebooks/makie_plotting/">Makie Plotting</a></li><li><a class="tocitem" href="../notebooks/plots_plotting/">Plots Plotting</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Writing to <code>.root</code></a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Writing to <code>.root</code></a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Moelf/FHist.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Moelf/FHist.jl/blob/main/docs/src/writingtoroot.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h3 id="Write-out-a-histogram"><a class="docs-heading-anchor" href="#Write-out-a-histogram">Write out a histogram</a><a id="Write-out-a-histogram-1"></a><a class="docs-heading-anchor-permalink" href="#Write-out-a-histogram" title="Permalink"></a></h3><p>Checkout configuration for PythonCall.jl: https://cjdoris.github.io/PythonCall.jl/stable/pythoncall/#pythoncall-config</p><p>Most importantly, you probably want to set:</p><pre><code class="language-julia hljs">ENV[&quot;JULIA_PYTHONCALL_EXE&quot;] = readchomp(`which python`)</code></pre><p>before the <code>using PythonCall</code> line. Especially if you&#39;re using LCG or Athena or CMSSW environment.</p><pre><code class="language-julia hljs">julia&gt; using PythonCall, FHist
+
+julia&gt; np = pyimport(&quot;numpy&quot;)
+
+julia&gt; up = pyimport(&quot;uproot&quot;)
+
+julia&gt; h = Hist1D(rand(100))
+              ┌                              ┐ 
+   [0.0, 0.2) ┤██████████████████████▊ 22      
+   [0.2, 0.4) ┤██████████████████▋ 18          
+   [0.4, 0.6) ┤█████████████████▋ 17           
+   [0.6, 0.8) ┤██████████████████▋ 18          
+   [0.8, 1.0) ┤██████████████████████████  25  
+              └                              ┘ 
+edges: 0.0:0.2:1.0
+bin counts: [22, 18, 17, 18, 25]
+total count: 100
+
+julia&gt; pywith(up.recreate(&quot;./example.root&quot;)) do file
+           file[&quot;myhist&quot;] = np.array(bincounts(h)), np.array(binedges(h))
+       end;
+(&lt;py array([22, 18, 17, 18, 25])&gt;, &lt;py array([0. , 0.2, 0.4, 0.6, 0.8, 1. ])&gt;)</code></pre><h3 id="Writing-out-a-histogram-with-errors-(sumW2)"><a class="docs-heading-anchor" href="#Writing-out-a-histogram-with-errors-(sumW2)">Writing out a histogram with errors (sumW2)</a><a id="Writing-out-a-histogram-with-errors-(sumW2)-1"></a><a class="docs-heading-anchor-permalink" href="#Writing-out-a-histogram-with-errors-(sumW2)" title="Permalink"></a></h3><p><a href="https://github.com/scikit-hep/uproot5/issues/696#issuecomment-1235918878">ref</a></p><p>Unfourtunately <code>uproot</code> does not support this yet, so we have to use pyROOT:</p><pre><code class="language-julia hljs">using PythonCall
+ROOT = pyimport(&quot;ROOT&quot;)
+
+# h is a FHist.jl histogram but you just need two arrays
+bc = bincounts(h)
+be = binerrors(h)
+
+file = ROOT.TFile(&quot;/tmp/example.root&quot;, &quot;recreate&quot;)
+# 100 bins from 0 to 1
+th1d = ROOT.TH1D(&quot;blah&quot;, &quot;blah blah&quot;, 100, 0, 1)
+for i in eachindex(bc)
+    # ROOT has under/overflow bins outside of normal range
+    # so we&#39;re skipping `0`-th bin by adhering Julia&#39;s 1-based index
+    th1d.SetBinContent(i, bc[i])
+    # similarly, we&#39;re skipping overflow bin
+    th1d.SetBinError(i, be[i])
+end
+th1d.Write()
+file.Close()</code></pre><p>we can veryfy the round trip gives us back the original number:</p><pre><code class="language-julia hljs">julia&gt; binerrors(h)
+100-element Vector{Float64}:
+ 0.0
+ 0.000339284442870306
+ 0.0003276982770686565
+ 0.0020320752377659085
+...
+
+julia&gt; round_h = UnROOT.parseTH(ROOTFile(&quot;/tmp/example.root&quot;)[&quot;blah&quot;]);
+
+# the third array we read back is the sumW2, so we take sqrt() to recover error
+julia&gt; sqrt.(round_h[3])
+100-element Vector{Float64}:
+ 0.0
+ 0.000339284442870306
+ 0.0003276982770686565
+ 0.0020320752377659085
+ 0.0021085552210994537
+...</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« APIs Reference</a><a class="docs-footer-nextpage" href="../writingtohdf5/">Writing to <code>HDF5</code> »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Sunday 17 November 2024 17:47">Sunday 17 November 2024</span>. Using Julia version 1.10.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
