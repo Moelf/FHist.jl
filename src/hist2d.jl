@@ -76,8 +76,8 @@ If a value is out of the histogram range, return `missing`.
 """
 function lookup(h::Hist2D, x, y)
     rx, ry = binedges(h)
-    !(first(rx) <= x <= last(rx)) && return missing
-    !(first(ry) <= y <= last(ry)) && return missing
+    !(first(rx) <= x < last(rx)) && return missing
+    !(first(ry) <= y < last(ry)) && return missing
     return bincounts(h)[searchsortedlast(rx, x), searchsortedlast(ry, y)]
 end
 
