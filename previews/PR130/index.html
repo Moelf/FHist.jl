@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Introduction · FHist.jl</title><meta name="title" content="Introduction · FHist.jl"/><meta property="og:title" content="Introduction · FHist.jl"/><meta property="twitter:title" content="Introduction · FHist.jl"/><meta name="description" content="Documentation for FHist.jl."/><meta property="og:description" content="Documentation for FHist.jl."/><meta property="twitter:description" content="Documentation for FHist.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>FHist.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Introduction</a><ul class="internal"><li><a class="tocitem" href="#Changelog"><span>Changelog</span></a></li><li><a class="tocitem" href="#Quick-Start"><span>Quick Start</span></a></li><li><a class="tocitem" href="#Speed"><span>Speed</span></a></li><li><a class="tocitem" href="#Features"><span>Features</span></a></li></ul></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="start/">Creating Histogram</a></li><li><a class="tocitem" href="usage/">Using Histogram</a></li></ul></li><li><a class="tocitem" href="api/">APIs Reference</a></li><li><a class="tocitem" href="writingtoroot/">Writing to <code>.root</code></a></li><li><a class="tocitem" href="writingtohdf5/">Writing to <code>HDF5</code></a></li><li><span class="tocitem">Plotting Tutorials</span><ul><li><a class="tocitem" href="notebooks/makie_plotting/">Makie Plotting</a></li><li><a class="tocitem" href="notebooks/plots_plotting/">Plots Plotting</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Introduction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Introduction</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Moelf/FHist.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Moelf/FHist.jl/blob/main/README.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="FHist.jl"><a class="docs-heading-anchor" href="#FHist.jl">FHist.jl</a><a id="FHist.jl-1"></a><a class="docs-heading-anchor-permalink" href="#FHist.jl" title="Permalink"></a></h1><p><a href="https://moelf.github.io/FHist.jl/dev/"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev"/></a> <a href="https://github.com/Moelf/FHist.jl/actions/workflows/ci.yml"><img src="https://github.com/Moelf/FHist.jl/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a><a href="https://codecov.io/gh/Moelf/FHist.jl"><img src="https://codecov.io/gh/Moelf/FHist.jl/branch/master/graph/badge.svg" alt="Codecov"/></a></p><p>Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with <code>StatsBase.Histogram</code></p><h2 id="Changelog"><a class="docs-heading-anchor" href="#Changelog">Changelog</a><a id="Changelog-1"></a><a class="docs-heading-anchor-permalink" href="#Changelog" title="Permalink"></a></h2><ul><li>0.11<ul><li>Breaking change to the main constructor API, now the API is sanely divided into &quot;constructor for empty histogram&quot; and &quot;make histogram given data&quot;. See documentation.</li></ul></li><li>0.10<ul><li>due to huge latency issue, UnicodePlots.jl (for text based terminal display) has been dropped.</li></ul></li></ul><h2 id="Quick-Start"><a class="docs-heading-anchor" href="#Quick-Start">Quick Start</a><a id="Quick-Start-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Start" title="Permalink"></a></h2><pre><code class="language-julia hljs">julia&gt; using FHist
+
+julia&gt; a = randn(1000);
+
+julia&gt; h1 = Hist1D(a; binedges = -4:1.0:4)
+edges: -4.0:1.0:4.0
+bin counts: [0, 23, 123, 377, 320, 134, 21, 2]
+total count: 1000
+
+julia&gt; h2 = Hist1D(; counttype = Int, binedges = -4.0:1.0:4.0);
+
+julia&gt; push!.(h2, a);
+
+julia&gt; Threads.@threads for v in a
+           atomic_push!(h2, v) # thread-safe
+       end
+
+julia&gt; h1+h1 == h2
+true</code></pre><p>Additionally, one can specify <code>overflow=true</code> when creating a histogram to clamp out-of-bounds values into  the edge bins.</p><pre><code class="language-julia hljs">julia&gt; Hist1D(rand(1000); binedges = 0:0.2:0.9, overflow=true)
+edges: 0.0:0.2:0.8
+bin counts: [218, 183, 198, 401]
+total count: 1000</code></pre><h2 id="Speed"><a class="docs-heading-anchor" href="#Speed">Speed</a><a id="Speed-1"></a><a class="docs-heading-anchor-permalink" href="#Speed" title="Permalink"></a></h2><p>Single-threaded filling happens at ~1 GHz on modern CPU (Ryzen 7 7840HS)</p><pre><code class="language-julia hljs">julia&gt; a = randn(10^6);
+
+julia&gt; @benchmark Hist1D(a; binedges = -3:0.01:3)
+BenchmarkTools.Trial: 4624 samples with 1 evaluation.
+ Range (min … max):  1.049 ms …  2.035 ms  ┊ GC (min … max): 0.00% … 0.00%</code></pre><h2 id="Features"><a class="docs-heading-anchor" href="#Features">Features</a><a id="Features-1"></a><a class="docs-heading-anchor-permalink" href="#Features" title="Permalink"></a></h2><h3 id="1D"><a class="docs-heading-anchor" href="#1D">1D</a><a id="1D-1"></a><a class="docs-heading-anchor-permalink" href="#1D" title="Permalink"></a></h3><pre><code class="language-julia hljs">julia&gt; using FHist, Statistics
+
+julia&gt; h1 = Hist1D(randn(10^4).+2; binedges = -5:0.5:5);
+
+julia&gt; h1 = (h1 + h1*2)
+edges: -5.0:0.5:5.0
+bin counts: [0, 0, 0, 0, 0, 3, 3, 39, 153, 540, 1356, 2640, 4551, 5757, 5727, 4494, 2652, 1326, 546, 168]
+total count: 29955
+
+julia&gt; bincenters(h1)
+-4.75:0.5:4.75
+
+julia&gt; println(bincounts(h1))
+[0, 0, 0, 0, 0, 3, 3, 39, 153, 540, 1356, 2640, 4551, 5757, 5727, 4494, 2652, 1326, 546, 168]
+
+julia&gt; println(h1.sumw2);
+[0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 65.0, 255.0, 900.0, 2260.0, 4400.0, 7585.0, 9595.0, 9545.0, 7490.0, 4420.0, 2210.0, 910.0, 280.0]
+
+julia&gt; nbins(h1), integral(h1)
+(20, 29955)
+
+julia&gt; mean(h1), std(h1)
+(1.993865798698047, 1.0126978885814524)
+
+julia&gt; median(h1), quantile(h1, 0.5)
+(1.7445284002084418, 1.7445284002084418)
+
+julia&gt; lookup.(h1, [-1.5,0,2.5]) # find bin counts for given x-axis values
+3-element Vector{Int64}:
+   39
+ 1356
+ 4494
+
+julia&gt; Hist1D(sample(h1; n=100))
+edges: -1.0:1.0:5.0
+bin counts: [4, 15, 41, 28, 10, 2]
+total count: 100
+
+julia&gt; h1 |&gt; normalize |&gt; integral
+1.0</code></pre><h3 id="2D"><a class="docs-heading-anchor" href="#2D">2D</a><a id="2D-1"></a><a class="docs-heading-anchor-permalink" href="#2D" title="Permalink"></a></h3><pre><code class="language-julia hljs">julia&gt; h2 = Hist2D((randn(10^4),randn(10^4)); binedges = (-5:5,-5:5))
+
+edges: (-5:5, -5:5)
+bin counts: [0 0 … 0 0; 0 0 … 0 0; … ; 0 0 … 0 0; 0 0 … 0 0]
+total count: 10000
+
+julia&gt; nbins(h2)
+(10, 10)
+
+julia&gt; project(h2, :x)
+edges: -5:5
+bin counts: [0, 14, 228, 1345, 3399, 3462, 1300, 237, 15, 0]
+total count: 10000
+
+julia&gt; h2 |&gt; profile(:x) # or pipe
+
+edges: -5:5
+bin counts: [0.0, -0.21428571428571427, 0.0, 0.03382899628252788, 0.0025007355104442485, 0.012709416522241479, 0.018461538461538463, 0.035864978902953586, 0.1, 0.0]
+total count: -0.010920048606008592
+
+julia&gt; h2 |&gt; rebin(10,5)
+
+edges: (-5.0:10.0:5.0, -5.0:5.0:5.0)
+bin counts: [4953 5047]
+total count: 10000</code></pre><h3 id="3D"><a class="docs-heading-anchor" href="#3D">3D</a><a id="3D-1"></a><a class="docs-heading-anchor-permalink" href="#3D" title="Permalink"></a></h3><pre><code class="language-julia hljs">julia&gt; h3 = Hist3D((randn(10^4),randn(10^4),randn(10^4)); binedges = (-5:5,-5:5,-5:5))
+Hist3D{Int64}, edges=(-5:5, -5:5, -5:5), integral=10000
+
+julia&gt; h3 |&gt; project(:x) |&gt; project(:x) |&gt; std
+1.051590599996025</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="start/">Creating Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 15 January 2025 00:22">Wednesday 15 January 2025</span>. Using Julia version 1.10.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
