@@ -40,6 +40,7 @@ Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar i
 regarding how to make legends semi-manually.
 
 # Examples
+```julia
 h1 = Hist1D(randn(1000); binedges = -3:0.3:3)
 h2 = Hist1D(randn(10000); binedges = -3:0.3:3)
 
@@ -50,6 +51,7 @@ title = "Processes"
 
 Legend(fig[1,2], elements, labels, title)
 fig
+```
 """
 @recipe(StackedHist) do scene 
     Attributes(
