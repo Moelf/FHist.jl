@@ -271,7 +271,7 @@ end
 Inject collaboration text such as `ATLAS/CMS Preliminary` into the plot. The position `Point2f` is in relative x and y.
 
 ## Example
-```
+```julia
 h1 = Hist1D(randn(10^4))
 with_theme(ATLASTHEME) do
     fig, ax, p = tairs(h1)
@@ -279,6 +279,7 @@ with_theme(ATLASTHEME) do
     collabtext!(ax)
     fig
 end
+```
 """
 function FHist.collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
     relative_projection = Makie.camrelative(axis.scene);
