@@ -40,6 +40,7 @@ Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar i
 regarding how to make legends semi-manually.
 
 # Examples
+```julia
 h1 = Hist1D(randn(1000); binedges = -3:0.3:3)
 h2 = Hist1D(randn(10000); binedges = -3:0.3:3)
 
@@ -50,6 +51,7 @@ title = "Processes"
 
 Legend(fig[1,2], elements, labels, title)
 fig
+```
 """
 @recipe(StackedHist) do scene 
     Attributes(
@@ -269,7 +271,7 @@ end
 Inject collaboration text such as `ATLAS/CMS Preliminary` into the plot. The position `Point2f` is in relative x and y.
 
 ## Example
-```
+```julia
 h1 = Hist1D(randn(10^4))
 with_theme(ATLASTHEME) do
     fig, ax, p = tairs(h1)
@@ -277,6 +279,7 @@ with_theme(ATLASTHEME) do
     collabtext!(ax)
     fig
 end
+```
 """
 function FHist.collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
     relative_projection = Makie.camrelative(axis.scene);
