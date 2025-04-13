@@ -157,7 +157,10 @@ by the bin counts.
 When the histogram is `Hist2D`, return tuple instead, e.g `(mean(project(h, :x)), mean(project(h, :y)))` etc.
 """
 Statistics.mean(h::Hist1D) = Statistics.mean(bincenters(h), Weights(bincounts(h)))
-Statistics.std(h::Hist1D) = Statistics.var(bincenters(h), Weights(bincounts(h)); corrected=false) |> sqrt
+Statistics.std(h::Hist1D) = begin
+    var = Statistics.var(bincenters(h), Weights(bincounts(h)); corrected=false)
+    var < 0 ? NaN : sqrt(var)
+end
 Statistics.median(h::Hist1D) = Statistics.median(bincenters(h), Weights(bincounts(h)))
 Statistics.quantile(h::Hist1D, p) = Statistics.quantile(bincenters(h), Weights(bincounts(h)), p)
 
