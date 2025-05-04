@@ -224,7 +224,7 @@ end
 
 # ╔═╡ fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
 let
-    f, a, p = stackedhist([h1, h1]; error_color=Pattern('/'))
+    f, a, p = stackedhist([h1, h1]; error_color=Pattern('/'; width=0.5, tilesize=(4,4)))
 	f
 end
 
