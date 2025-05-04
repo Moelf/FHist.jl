@@ -31,7 +31,7 @@ end
 
 
 """
-    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors())
+    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors(), gap=-0.01)
 
 Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar in the plot.
 `errors = true` and `errors = :bar` are equivalent.
@@ -52,6 +52,10 @@ title = "Processes"
 Legend(fig[1,2], elements, labels, title)
 fig
 ```
+
+!!! note
+    The `gap` attribute is used to control the gap between the bars, it is set to `-0.01` by default to supress
+    artifacts in Cairo backend.
 """
 @recipe(StackedHist) do scene 
     Attributes(
@@ -59,7 +63,7 @@ fig
         color = Makie.wong_colors(),
         labels = nothing,
         whiskerwidth = 10,
-        gap = 0
+        gap = -0.01
     )
 end
 
@@ -83,7 +87,7 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     Makie.barplot!(input, xs, ys;
         stack = grp,
         color = c[grp],
-        gap = 0,
+        gap = input[:gap],
     )
     
     error_color = input[:error_color]
@@ -91,11 +95,11 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
         errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth])
     else
         crossbar!(input, centers, totals, totals .+ errs/2, totals .- errs/2;
-                  gap = 0,
-                  width = diff(_e),
-                  show_midline = false,
-                  color = error_color
-                 )
+            gap = input[:gap],
+            width = diff(_e),
+            show_midline = false,
+            color = error_color
+        )
     end
     input
 end
@@ -111,6 +115,7 @@ Plot a histogram that represents a ratio (i.e. `h = h1/h3`), you can pass `color
     Attributes(
         errors = true,
         whiskerwidth = 10,
+        color = :black
     )
 end
 
@@ -119,7 +124,7 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D}})
     xs = bincenters(hratio)
     ys = bincounts(hratio)
 
-    color = input[:color][]
+    color = input[:color]
 
     scatter!(input, xs, ys; color=color)
     if input[:errors][]
@@ -200,7 +205,6 @@ function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
     for key in keys(attributes)
         attributes[key] = get(plot.attributes, key, attributes[key])
     end
-    attributes[:gap][] = 0
     attributes[:fillto][] = eps()
     myhist = plot[1]
     attributes[:width][] = diff(binedges(myhist[]))
