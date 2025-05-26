@@ -26,6 +26,7 @@ function _fast_bincounts!(h::Hist1D, TA::Tuple{T}, r::AbstractRange, weights::No
 end
 
 function auto_bins(ary, ::Val{1}; nbins=nothing)
+    sleep(3)
     xs = only(ary)
     E = eltype(xs)
     F = E <: Number ? float(E) : Float64
