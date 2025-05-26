@@ -36,7 +36,3 @@ SUITE["Non-Uniform Binning"]["One-shot Uniform input"] = @benchmarkable Hist1D(u
 SUITE["Non-Uniform Binning"]["One-shot Gaussian input"] = @benchmarkable Hist1D(gauss_xs; binedges = [0, 0.1, 0.3, 0.5, 1.0])
 SUITE["Non-Uniform Binning"]["One-shot Uniform input with weights"] = @benchmarkable Hist1D(uniform_xs; weights, binedges = [0, 0.1, 0.3, 0.5, 1.0])
 SUITE["Non-Uniform Binning"]["One-shot Gaussian input with weights"] = @benchmarkable Hist1D(gauss_xs; weights, binedges = [0, 0.1, 0.3, 0.5, 1.0])
-
-tune!(SUITE)
-
-run(SUITE; verbose=true, seconds = 2)
