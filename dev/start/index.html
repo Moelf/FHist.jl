@@ -37,7 +37,7 @@
 
 <div class="admonition is-info" id="Default-/-infer-strategy-for-empty-histogram-f6385a34f24e7a74"><header class="admonition-header">Default / infer strategy for empty histogram<a class="admonition-anchor" href="#Default-/-infer-strategy-for-empty-histogram-f6385a34f24e7a74" title="Permalink"></a></header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../notebooks/plots_plotting/#Hist1D"><code>Hist1D</code></a>. To summarize in words:</p><ol><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>binedges</code> must be provided by user</li><li><code>bincounts</code> defaults to all zero, with <code>eltype == counttype</code> and appropriate shape</li><li><code>sumw2</code> defaults to all zero with appropriate shape</li><li><code>nentries</code> defaults to 0</li><li><code>overflow</code> defaults to <code>false</code></li></ol></div></div><h2 id="Make-a-filled-histogram-given-data"><a class="docs-heading-anchor" href="#Make-a-filled-histogram-given-data">Make a filled histogram given data</a><a id="Make-a-filled-histogram-given-data-1"></a><a class="docs-heading-anchor-permalink" href="#Make-a-filled-histogram-given-data" title="Permalink"></a></h2><p>The minimal information needed is <code>data</code>, which is a <strong>positional</strong> argument:</p><pre><code class="language-julia hljs">h3 = Hist1D(randn(2000))</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,179.53956834532374,40.625,179.53956834532374,40.625,168.02877697841728,68.75,168.02877697841728,68.75,114.61870503597123,96.875,114.61870503597123,96.875,25.985611510791372,125.0,25.985611510791372,125.0,20.000000000000018,153.125,20.000000000000018,153.125,122.44604316546763,181.25000000000003,122.44604316546763,181.25000000000003,169.64028776978418,209.375,169.64028776978418,209.375,179.30935251798562,237.50000000000003,179.30935251798562,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,179.3342579750347,40.625,179.3342579750347,40.625,170.67961165048544,68.75,170.67961165048544,68.75,117.42024965325936,96.875,117.42024965325936,96.875,33.536754507628295,125.0,33.536754507628295,125.0,20.000000000000018,153.125,20.000000000000018,153.125,125.40915395284328,181.25000000000003,125.40915395284328,181.25000000000003,170.67961165048544,209.375,170.67961165048544,209.375,179.1123439667129,237.50000000000003,179.1123439667129,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
@@ -46,8 +46,8 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0]</li>
-            <li>bin counts: [2.0, 52.0, 284.0, 669.0, 695.0, 250.0, 45.0, 3.0]</li>
-            <li>maximum count: 695.0</li>
+            <li>bin counts: [3.0, 42.0, 282.0, 660.0, 721.0, 246.0, 42.0, 4.0]</li>
+            <li>maximum count: 721.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -55,7 +55,7 @@
 
 <p>You can provide more (in keyword arguments) if you want granular control over the binning behavior (e.g. number of bins, the exact bins to use):</p><pre><code class="language-julia hljs">h4 = Hist1D(randn(2000); nbins=4)</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,172.62295081967213,68.75,172.62295081967213,68.75,19.999999999999996,125.0,19.999999999999996,125.0,26.55737704918033,181.25000000000003,26.55737704918033,181.25000000000003,172.95081967213116,237.50000000000003,172.95081967213116,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,171.85877466251299,68.75,171.85877466251299,68.75,19.999999999999996,125.0,19.999999999999996,125.0,24.31983385254415,181.25000000000003,24.31983385254415,181.25000000000003,171.5264797507788,237.50000000000003,171.5264797507788,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
@@ -64,8 +64,8 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [-4.0, -2.0, 0.0, 2.0, 4.0]</li>
-            <li>bin counts: [45.0, 976.0, 936.0, 43.0]</li>
-            <li>maximum count: 976.0</li>
+            <li>bin counts: [49.0, 963.0, 937.0, 51.0]</li>
+            <li>maximum count: 963.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -73,7 +73,7 @@
 
 <div class="admonition is-warning" id="Warning-cd4284be0a5c75d9"><header class="admonition-header">Warning<a class="admonition-anchor" href="#Warning-cd4284be0a5c75d9" title="Permalink"></a></header><div class="admonition-body"><p><code>nbins</code> is not strictly enforced, use <code>binedges</code> if you need exact control.</p></div></div><p>We can do non-uniform binning for example:</p><pre><code class="language-julia hljs">h5 = Hist1D(randn(2000); binedges = [0, 0.5, 0.8, 0.9, 1.0])</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,19.999999999999996,125.0,19.999999999999996,125.0,104.51282051282051,192.50000000000003,104.51282051282051,192.50000000000003,160.30769230769232,215.00000000000003,160.30769230769232,215.00000000000003,156.20512820512823,237.50000000000003,156.20512820512823,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,19.999999999999996,125.0,19.999999999999996,125.0,90.91891891891892,192.50000000000003,90.91891891891892,192.50000000000003,161.4054054054054,215.00000000000003,161.4054054054054,215.00000000000003,165.2972972972973,237.50000000000003,165.2972972972973,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">0.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">1.0</text>
@@ -82,11 +82,11 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [0.0, 0.5, 0.8, 0.9, 1.0]</li>
-            <li>bin counts: [390.0, 184.0, 48.0, 58.0]</li>
-            <li>maximum count: 390.0</li>
-            <li>total count: 680.0</li>
+            <li>bin counts: [370.0, 206.0, 43.0, 34.0]</li>
+            <li>maximum count: 370.0</li>
+            <li>total count: 653.0</li>
         </ul>
     </div>
 </div>
 
-<div class="admonition is-info" id="Default-/-infer-strategy-for-filled-histogram-with-data-9e9ea1c978bc6f46"><header class="admonition-header">Default / infer strategy for filled histogram with data<a class="admonition-anchor" href="#Default-/-infer-strategy-for-filled-histogram-with-data-9e9ea1c978bc6f46" title="Permalink"></a></header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../notebooks/plots_plotting/#Hist1D"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Thursday 12 June 2025 01:14">Thursday 12 June 2025</span>. Using Julia version 1.10.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<div class="admonition is-info" id="Default-/-infer-strategy-for-filled-histogram-with-data-9e9ea1c978bc6f46"><header class="admonition-header">Default / infer strategy for filled histogram with data<a class="admonition-anchor" href="#Default-/-infer-strategy-for-filled-histogram-with-data-9e9ea1c978bc6f46" title="Permalink"></a></header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../notebooks/plots_plotting/#Hist1D"><code>Hist1D</code></a>. To summarize in words:</p><ol><li>data <code>array</code> must be provided by the user</li><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>nbins</code> defaults to sturges approximation</li><li><code>binedges</code> defaults to uniform binning given <code>nbins</code></li><li><code>weights</code> defaults to all unity (i.e. not weighted)</li><li><code>overflow</code> defaults <code>false</code></li></ol></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../usage/">Using Histogram »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Thursday 12 June 2025 01:16">Thursday 12 June 2025</span>. Using Julia version 1.10.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
