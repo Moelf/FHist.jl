@@ -639,4 +639,6 @@ end
     @test FHist.effective_entries(h) ≈ 2.76923076923077
 end
 
+include("test-algebraic-content.jl")
+
 include("hdf5.jl")
