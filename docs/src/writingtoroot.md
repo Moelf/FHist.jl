@@ -49,7 +49,7 @@ julia> function to_pyhist(h::Hist1D)
 end
 
 julia> pywith(up.recreate("./example.root")) do file
-           file["myhist"] = np.array(bincounts(h)), np.array(binedges(h))
+           file["myhist"] = to_pyhist(h)
        end;
 ```
 
