@@ -364,10 +364,12 @@ end
         h = h1 / h2
         @test bincounts(h) == [1.0, 2.0, 0.5]
         @test sumw2(h) == [2.0, 6.0, 0.375]
+        @test nentries(h) == nentries(h1)
 
         h = h1 * 2
         @test bincounts(h) == [2.0, 4.0, 2.0]
         @test sumw2(h) == [4.0, 8.0, 4.0]
+        @test nentries(h) == nentries(h1)
 
         h = h1/(h1+h2*2)
         @test bincounts(h) ≈ [0.333333, 0.5, 0.2] atol=1e-6

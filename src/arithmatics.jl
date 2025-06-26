@@ -34,7 +34,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         _sumw2 =  sumw2(h1) ./ (counts2 .^ 2) .+
             (sqrt.(sumw2(h2)) .* counts1 ./ (counts2 .^ 2)) .^ 2
                        
-        ($T)(bincounts = newcounts, binedges = edge1, sumw2 = _sumw2, nentries = nentries(h1) ÷ nentries(h2); overflow=h1.overflow)
+        ($T)(bincounts = newcounts, binedges = edge1, sumw2 = _sumw2, nentries = nentries(h1); overflow=h1.overflow)
     end
 
     @eval function merge!(h1::$T, h2::$T)
