@@ -273,6 +273,10 @@ function Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D)
     convert_arguments(P, binedges(h2d)..., replace(counts, z => NaN))
 end
 
+function Makie.convert_arguments(P::Type{<:Contour}, h2d::Hist2D)
+    counts = bincounts(h2d)
+    z = zero(eltype(counts))
+    convert_arguments(P, bincenters(h2d)..., replace(counts, z => NaN))
 _to_endpoints(binedge) = (first(binedge), last(binedge))
 
 Makie.plottype(::Hist3D) = Volume
