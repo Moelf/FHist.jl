@@ -33,29 +33,24 @@ julia> pywith(up.recreate("./example.root")) do file
 ```
 
 ### Writing out a histogram with errors (sumW2)
-[ref](https://github.com/scikit-hep/uproot5/issues/696#issuecomment-1235918878)
+We need https://github.com/scikit-hep/hist for this:
 
-Unfourtunately `uproot` does not support this yet, so we have to use pyROOT:
 ```julia
-using PythonCall
-ROOT = pyimport("ROOT")
+julia> using PythonCall, FHist
 
-# h is a FHist.jl histogram but you just need two arrays
-bc = bincounts(h)
-be = binerrors(h)
-
-file = ROOT.TFile("/tmp/example.root", "recreate")
-# 100 bins from 0 to 1
-th1d = ROOT.TH1D("blah", "blah blah", 100, 0, 1)
-for i in eachindex(bc)
-    # ROOT has under/overflow bins outside of normal range
-    # so we're skipping `0`-th bin by adhering Julia's 1-based index
-    th1d.SetBinContent(i, bc[i])
-    # similarly, we're skipping overflow bin
-    th1d.SetBinError(i, be[i])
+julia> function to_pyhist(h::Hist1D)
+    pyhist = pyimport("hist")
+    bes, bcs, sumw2s = binedges(h), bincounts(h), sumw2(h)
+    h1 = pyhist.Hist.new.Variable(collect(bes)).Weight()
+    for idx in eachindex(bcs, sumw2s)
+        h1.view()[idx-1] = (bcs[idx], sumw2s[idx])
+    end
+    h1
 end
-th1d.Write()
-file.Close()
+
+julia> pywith(up.recreate("./example.root")) do file
+           file["myhist"] = to_pyhist(h)
+       end;
 ```
 
 we can veryfy the round trip gives us back the original number:

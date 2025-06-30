@@ -262,17 +262,33 @@ end
     @test ismissing(lookup(h1, last(binedges(h1)) + 0.1))
     @test ismissing(lookup(h1, first(binedges(h1)) - 0.1))
 
-    h1 = Hist2D((randn(100), randn(100)); binedges = (-3:3,-3:3))
-    cx, cy = bincenters(h1)
-    points = [(x,y) for x in cx, y in cy]
-    @test map(p->lookup(h1,p...), points) == bincounts(h1)
-    @test ismissing(lookup(h1, 10, 10))
+    h1_out = Hist1D([1,1,1,2,2,3], binedges=1:3)
+    @test lookup(h1_out, 1) == 3
+    @test ismissing(lookup(h1_out, 0.9))
+    @test ismissing(lookup(h1_out, 3))
+    @test ismissing(lookup(h1_out, 3.1))
 
-    h1 = Hist3D((randn(100), randn(100), randn(100)); binedges = (-3:3,-3:3,-3:3))
-    cx, cy, cz = bincenters(h1)
+    h2 = Hist2D((randn(100), randn(100)); binedges = (-3:3,-3:3))
+    cx, cy = bincenters(h2)
+    points = [(x,y) for x in cx, y in cy]
+    @test map(p->lookup(h2,p...), points) == bincounts(h2)
+
+    @test ismissing(lookup(h2, 10, 10))
+    @test ismissing(lookup(h2, 1, 10))
+    @test ismissing(lookup(h2, -4, 1))
+    @test !ismissing(lookup(h2, -3, -3))
+
+    h3 = Hist3D((randn(100), randn(100), randn(100)); binedges = (-3:3,-3:3,-3:3))
+    cx, cy, cz = bincenters(h3)
     points = [(x,y,z) for x in cx, y in cy, z in cz]
-    @test map(p->lookup(h1,p...), points) == bincounts(h1)
-    @test ismissing(lookup(h1, 10, 10, 10))
+    @test map(p->lookup(h3,p...), points) == bincounts(h3)
+    @test ismissing(lookup(h3, 10, 10, 10))
+    @test ismissing(lookup(h3, 0, 0, 10))
+    @test ismissing(lookup(h3, 0, -5, 0))
+    @test ismissing(lookup(h3, -3, -3, 10))
+    @test ismissing(lookup(h3, -4, 1, 2))
+    @test !ismissing(lookup(h3, -3, -3, 0))
+    @test !ismissing(lookup(h3, -3, -3, -3))
 end
 
 @testset "Sample" begin
@@ -348,10 +364,12 @@ end
         h = h1 / h2
         @test bincounts(h) == [1.0, 2.0, 0.5]
         @test sumw2(h) == [2.0, 6.0, 0.375]
+        @test nentries(h) == nentries(h1)
 
         h = h1 * 2
         @test bincounts(h) == [2.0, 4.0, 2.0]
         @test sumw2(h) == [4.0, 8.0, 4.0]
+        @test nentries(h) == nentries(h1)
 
         h = h1/(h1+h2*2)
         @test bincounts(h) ≈ [0.333333, 0.5, 0.2] atol=1e-6
@@ -611,5 +629,18 @@ end
 
     @test all(significance(h1,h2) .≈ (9.839916447569484, 0.30998654607114046))
 end
+
+@testset "Effective entries" begin
+    h = Hist1D(; binedges = 1:10)
+    push!(h, 3)
+    push!(h, 3)
+    @test FHist.effective_entries(h) == 2
+    push!(h, 8, 0.2)
+    @test FHist.effective_entries(h) ≈ 2.3725490196078436
+    push!(h, 4, 0.2)
+    @test FHist.effective_entries(h) ≈ 2.76923076923077
+end
+
+include("test-algebraic-content.jl")
 
 include("hdf5.jl")

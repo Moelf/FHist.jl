@@ -15,9 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.7'
-          - '1.8'
-          - '1.9'
+          - 'lts'
           - '1'
         os:
           - ubuntu-latest
@@ -25,7 +23,7 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -45,9 +43,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/setup-julia@v2
         with:
-          version: "~1.10.0-rc3"
+          version: "1"
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1

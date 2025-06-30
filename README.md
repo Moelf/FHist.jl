@@ -46,13 +46,13 @@ total count: 1000
 
 ## Speed
 
-Single-threaded filling happens at 400 MHz
+Single-threaded filling happens at ~1 GHz on modern CPU (Ryzen 7 7840HS)
 ```julia
 julia> a = randn(10^6);
 
 julia> @benchmark Hist1D(a; binedges = -3:0.01:3)
-BenchmarkTools.Trial: 2578 samples with 1 evaluation.
- Range (min … max):  1.871 ms …  3.360 ms  ┊ GC (min … max): 0.00% … 0.00%
+BenchmarkTools.Trial: 4624 samples with 1 evaluation.
+ Range (min … max):  1.049 ms …  2.035 ms  ┊ GC (min … max): 0.00% … 0.00%
 ```
 
 ## Features

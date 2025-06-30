@@ -65,16 +65,16 @@ end
 Base.broadcastable(h::Hist3D) = Ref(h)
 
 """
-    function lookup(h::Hist3D, x, y)
+    function lookup(h::Hist3D, x, y, z)
 
 For given x/y/z-axis value `x`, `y`, `z`, find the corresponding bin and return the bin content.
 If a value is out of the histogram range, return `missing`.
 """
 function lookup(h::Hist3D, x, y, z)
     rx, ry, rz = binedges(h)
-    !(first(rx) <= x <= last(rx)) && return missing
-    !(first(ry) <= y <= last(ry)) && return missing
-    !(first(rz) <= z <= last(rz)) && return missing
+    !(first(rx) <= x < last(rx)) && return missing
+    !(first(ry) <= y < last(ry)) && return missing
+    !(first(rz) <= z < last(rz)) && return missing
     return bincounts(h)[searchsortedlast(rx, x), searchsortedlast(ry, y), searchsortedlast(rz, z)]
 end
 
