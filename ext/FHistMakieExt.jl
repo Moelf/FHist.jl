@@ -1,10 +1,28 @@
 module FHistMakieExt
 using FHist, FHist.Measurements
-#using .Makie
-using MakieCore, Statistics
+using Statistics
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 import FHist: stackedhist, stackedhist!
+
+function __init__()
+    FHist.ATLASTHEME = Makie.Theme(
+        Axis=(
+            xtickalign=true, ytickalign=true,
+            xticksmirrored=true, yticksmirrored=true,
+            xminortickalign=1, yminortickalign=1,
+            xticksize=10, yticksize=10,
+            xminorticksize=6, yminorticksize=6,
+            xgridvisible=false, ygridvisible=false,
+            xminorticksvisible=true, yminorticksvisible=true,
+        ),
+        Colorbar=(
+            colormap=:haline,
+            highclip=:red,
+            lowclip=:black
+        )
+    )
+end
 
 function _clamp_counts!(c_vec)
     min_positive = eps()
@@ -20,7 +38,7 @@ function _clamp_counts_errors!(c_vec, el_vec, eh_vec)
     _clamp_counts!(c_vec)
 
     # clip lower errors
-    mask =  c_vec - el_vec .< min_positive
+    mask = c_vec - el_vec .< min_positive
     @views el_vec[mask] = c_vec[mask] .- min_positive
 
     # clip higher errors
@@ -57,13 +75,13 @@ fig
     The `gap` attribute is used to control the gap between the bars, it is set to `-0.01` by default to supress
     artifacts in Cairo backend.
 """
-@recipe(StackedHist) do scene 
+@recipe(StackedHist) do scene
     Attributes(
-        error_color = (:black, 0.5),
-        color = Makie.wong_colors(),
-        labels = nothing,
-        whiskerwidth = 10,
-        gap = -0.01
+        error_color=(:black, 0.5),
+        color=Makie.wong_colors(),
+        labels=nothing,
+        whiskerwidth=10,
+        gap=-0.01
     )
 end
 
@@ -81,24 +99,24 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     mes = mapreduce(h -> bincounts(h) .± binerrors(h), (.+), hs)
     totals = Measurements.value.(mes)
     errs = Measurements.uncertainty.(mes)
-    
+
     c = input[:color][]
     length(c) < Nhist && throw("provided $(length(c)) colors, not enough for $Nhist histograms")
     Makie.barplot!(input, xs, ys;
-        stack = grp,
-        color = c[grp],
-        gap = input[:gap],
+        stack=grp,
+        color=c[grp],
+        gap=input[:gap],
     )
-    
+
     error_color = input[:error_color]
     if error_color ∈ (true, :bar)
-        errorbars!(input, centers, totals, errs/2, whiskerwidth = input[:whiskerwidth])
+        errorbars!(input, centers, totals, errs / 2, whiskerwidth=input[:whiskerwidth])
     else
-        crossbar!(input, centers, totals, totals .+ errs/2, totals .- errs/2;
-            gap = input[:gap],
-            width = diff(_e),
-            show_midline = false,
-            color = error_color
+        crossbar!(input, centers, totals, totals .+ errs / 2, totals .- errs / 2;
+            gap=input[:gap],
+            width=diff(_e),
+            show_midline=false,
+            color=error_color
         )
     end
     input
@@ -111,11 +129,11 @@ import FHist: ratiohist, ratiohist!
 
 Plot a histogram that represents a ratio (i.e. `h = h1/h3`), you can pass `color` to fix the error bar colors, and use `error` to turn on or off the error bars in the ratio plot.
 """
-@recipe(RatioHist) do scene 
+@recipe(RatioHist) do scene
     Attributes(
-        errors = true,
-        whiskerwidth = 10,
-        color = :black
+        errors=true,
+        whiskerwidth=10,
+        color=:black
     )
 end
 
@@ -130,15 +148,15 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D}})
     if input[:errors][]
         errorbars!(input, xs, ys, binerrors(hratio); color=color, whiskerwidth=input[:whiskerwidth][])
     end
-    hlines!(input, 1; color=RGBf(0.2,0.2,0.2), linestyle=:dashdot)
+    hlines!(input, 1; color=RGBf(0.2, 0.2, 0.2), linestyle=:dashdot)
     input
 end
-function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D, <:Hist1D}})
+function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D,<:Hist1D}})
     hratio = input[1][] / input[2][]
     ratiohist!(input, hratio)
 end
 
-Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts, )
+Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts,)
 function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D; clamp_bincounts=false)
     ys = copy(bincounts(h))
     if clamp_bincounts
@@ -154,7 +172,7 @@ function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D; clamp_bincounts=
     convert_arguments(P, bincenters(h), ys)
 end
 
-Makie.MakieCore.plottype(::Hist1D) = Hist
+Makie.plottype(::Hist1D) = Hist
 function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D; clamp_bincounts=false)
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
@@ -196,25 +214,18 @@ end
 function Makie.convert_arguments(P::Type{<:CrossBar}, h::Hist1D)
     cs = bincounts(h)
     es = binerrors(h)
-    convert_arguments(P, bincenters(h), cs, cs .- es/2, cs .+ es/2)
+    convert_arguments(P, bincenters(h), cs, cs .- es / 2, cs .+ es / 2)
 end
 
 function Makie.plot!(plot::Hist{<:Tuple{<:Hist1D}})
-    scene = Makie.parent_scene(plot)
-    attributes = Makie.default_theme(scene, Makie.BarPlot)
-    for key in keys(attributes)
-        attributes[key] = get(plot.attributes, key, attributes[key])
-    end
-    attributes[:fillto][] = eps()
+    attributes = Makie.Attributes(plot)
     myhist = plot[1]
-    attributes[:width][] = diff(binedges(myhist[]))
-    barplot!(plot, attributes, myhist)
+    barplot!(plot, attributes, myhist; fillto=eps(), width=diff(binedges(myhist[])))
     plot
 end
 
 function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
-    scene = Makie.parent_scene(plot)
-    valid_attributes = Makie.shared_attributes(plot, Makie.Stairs)
+    valid_attributes = Makie.Attributes(plot)
     stairs!(plot, valid_attributes, plot[1])
     plot
 end
@@ -231,31 +242,31 @@ afp = hist(h1; label="a")
 statbox!(afp, h1)
 ```
 """
-function FHist.statbox!(fig::Makie.FigureAxisPlot, h; position = (1,2))
+function FHist.statbox!(fig::Makie.FigureAxisPlot, h; position=(1, 2))
     f, _, _ = fig
     statbox!(f, h; position)
     fig
 end
-function FHist.statbox!(fig::Makie.Figure, h::Hist1D; position = (1,2))
+function FHist.statbox!(fig::Makie.Figure, h::Hist1D; position=(1, 2))
     N = nentries(h)
-    M = round(mean(h); sigdigits= 2)
-    S = round(std(h); sigdigits= 2)
-    labels = ["Entries = $N", "Mean = $M", "Std Dev = $S", "Overflow = $(h.overflow)" ]
-    elements = fill(PolyElement(polycolor = :transparent), 4)
+    M = round(mean(h); sigdigits=2)
+    S = round(std(h); sigdigits=2)
+    labels = ["Entries = $N", "Mean = $M", "Std Dev = $S", "Overflow = $(h.overflow)"]
+    elements = fill(PolyElement(polycolor=:transparent), 4)
     Legend(getindex(fig, position...), elements, labels)
     fig
 end
-function FHist.statbox!(fig::Makie.Figure, h::Hist2D; position = (1,2))
+function FHist.statbox!(fig::Makie.Figure, h::Hist2D; position=(1, 2))
     N = nentries(h)
-    xM, yM = round.(mean(h); sigdigits= 2)
-    xS, yS = round.(std(h); sigdigits= 2)
-    labels = ["Entries = $N", "Mean x = $xM", "Mean y = $yM", "Std Dev x = $xS", "Std Dev y = $yS", "Overflow = $(h.overflow)" ]
-    elements = fill(PolyElement(polycolor = :transparent), 6)
+    xM, yM = round.(mean(h); sigdigits=2)
+    xS, yS = round.(std(h); sigdigits=2)
+    labels = ["Entries = $N", "Mean x = $xM", "Mean y = $yM", "Std Dev x = $xS", "Std Dev y = $yS", "Overflow = $(h.overflow)"]
+    elements = fill(PolyElement(polycolor=:transparent), 6)
     Legend(getindex(fig, position...), elements, labels)
     fig
 end
 
-Makie.MakieCore.plottype(::Hist2D) = Heatmap
+Makie.plottype(::Hist2D) = Heatmap
 function Makie.convert_arguments(P::Type{<:Heatmap}, h2d::Hist2D)
     counts = bincounts(h2d)
     z = zero(eltype(counts))
@@ -264,7 +275,7 @@ end
 
 _to_endpoints(binedge) = (first(binedge), last(binedge))
 
-Makie.MakieCore.plottype(::Hist3D) = Volume
+Makie.plottype(::Hist3D) = Volume
 function Makie.convert_arguments(P::Type{<:Volume}, h::Hist3D)
     counts = bincounts(h)
     z = zero(eltype(counts))
@@ -287,16 +298,16 @@ with_theme(ATLASTHEME) do
 end
 ```
 """
-function FHist.collabtext!(axis, colabname = "ATLAS", stage = "Preliminary"; position=:lt)
-    relative_projection = Makie.camrelative(axis.scene);
+function FHist.collabtext!(axis, colabname="ATLAS", stage="Preliminary"; position=:lt)
+    relative_projection = Makie.camrelative(axis.scene)
     pos = if position isa Symbol
         length(String(position)) != 2 && throw("`position` must be length == 2, support `lt` or `rt`")
         position == :lt ? Point2f(0.04, 0.94) : Point2f(0.70, 0.94)
     else
         position
     end
-    text!(relative_projection, "$colabname $stage", position = pos, 
-        font=[fill("TeX Gyre Heros Bold Italic Makie", length(colabname)); fill("TeX Gyre Heros Makie", length(stage)+1)]
+    text!(relative_projection, "$colabname $stage", position=pos,
+        font=[fill("TeX Gyre Heros Bold Italic Makie", length(colabname)); fill("TeX Gyre Heros Makie", length(stage) + 1)]
     )
 end
 

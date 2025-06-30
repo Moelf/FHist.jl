@@ -228,7 +228,6 @@ include("./hist3d.jl")
 include("./displays.jl")
 include("./arithmatics.jl")
 
-using MakieCore
 include("./MakieThemes.jl")
 export ATLASTHEME, stackedhist, stackedhist!, ratiohist, ratiohist!
 
