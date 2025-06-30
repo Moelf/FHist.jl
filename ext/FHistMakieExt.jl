@@ -277,7 +277,8 @@ function Makie.convert_arguments(P::Type{<:Contour}, h2d::Hist2D)
     counts = bincounts(h2d)
     z = zero(eltype(counts))
     convert_arguments(P, bincenters(h2d)..., replace(counts, z => NaN))
-_to_endpoints(binedge) = (first(binedge), last(binedge))
+    _to_endpoints(binedge) = (first(binedge), last(binedge))
+end
 
 Makie.plottype(::Hist3D) = Volume
 function Makie.convert_arguments(P::Type{<:Volume}, h::Hist3D)
