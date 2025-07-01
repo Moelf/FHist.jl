@@ -156,7 +156,7 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D,<:Hist1D}})
     ratiohist!(input, hratio)
 end
 
-Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts,)
+Makie.used_attributes(::Makie.PointBased, h::Hist1D) = (:clamp_bincounts,)
 function Makie.convert_arguments(P::Makie.PointBased, h::Hist1D; clamp_bincounts=false)
     ys = copy(bincounts(h))
     if clamp_bincounts
