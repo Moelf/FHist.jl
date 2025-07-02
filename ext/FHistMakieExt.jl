@@ -156,8 +156,8 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D,<:Hist1D}})
     ratiohist!(input, hratio)
 end
 
-Makie.used_attributes(::Makie.PointBased, h::Hist1D) = (:clamp_bincounts,)
-function Makie.convert_arguments(P::Makie.PointBased, h::Hist1D; clamp_bincounts=false)
+Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts,)
+function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D; clamp_bincounts=false)
     ys = copy(bincounts(h))
     if clamp_bincounts
         _clamp_counts!(ys)
@@ -277,12 +277,6 @@ function Makie.convert_arguments(p::VertexGrid, h2d::Hist2D)
     counts = bincounts(h2d)
     z = zero(eltype(counts))
     convert_arguments(p, bincenters(h2d)..., replace(counts, z => NaN))
-end
-
-function Makie.convert_arguments(::VertexGrid, h2d::Hist2D)
-    counts = bincounts(h2d)
-    z = zero(eltype(counts))
-    (bincenters(h2d)..., replace(counts, z => NaN))
 end
 
 _to_endpoints(binedge) = (first(binedge), last(binedge))
