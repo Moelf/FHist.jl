@@ -3,8 +3,8 @@ module FHistGPUExt
 using FHist
 import FHist: Hist1D, gpu_bincounts
 
-using KernelAbstractions as KA
-using KernelAbstractions: @atomic, @atomicswap, @atomicreplace, @Const
+using KernelAbstractions: KernelAbstractions as KA
+using KernelAbstractions: synchronize, get_backend, @kernel, @atomic, @atomicswap, @atomicreplace, @Const, @index, @groupsize, @uniform, @localmem, @synchronize
 
 @kernel unsafe_indices = true function histogram_naive_kernel!(histogram_output, @Const(output_L), @Const(input_raw), @Const(weights), @Const(firstr), @Const(invstep))
     gid = @index(Group, Linear)
@@ -65,15 +65,23 @@ end
     end
 end
 
-# `data` already on gpu
-function gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend)
+"""
+    gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
+
+Returns a new GPU array corresponds to the bin counts.
+"""
+function gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
+    cu_bincounts = KA.zeros(backend, Float32, length(binedges) - 1)
+    gpu_bincounts!(cu_bincounts, data; weights=weights, sync=sync, binedges=binedges, blocksize=blocksize, backend=backend)
+end
+
+function gpu_bincounts!(cu_bincounts, data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
     kernel! = histogram_sharemem_v2_kernel!(backend, (blocksize,))
 
     if !isnothing(weights)
         @assert get_backend(weights) == backend "Weights must be on the same backend as histogram_output"
     end
 
-    cu_bincounts = KA.zeros(backend, Float32, length(binedges) - 1)
     firstr = Float32(first(binedges))
     invstep = Float32(inv(step(binedges)))
 

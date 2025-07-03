@@ -244,6 +244,8 @@ export h5writehist, h5readhist
 function h5writehist end
 function h5readhist end
 
+function gpu_bincounts end
+
 function __init__()
 
     @static if !isdefined(Base, :get_extension)
