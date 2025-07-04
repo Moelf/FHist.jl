@@ -1,0 +1,12 @@
+[project]
+authors = ["Jerry Ling <proton@jling.dev>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "C_FHist"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+numpy = ">=2.3.1,<3"
