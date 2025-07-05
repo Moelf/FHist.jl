@@ -49,3 +49,42 @@ All close: True
 Numpy    time (μs): 4.397133179008961
 FHist.jl time (μs): 0.8317416533827782
 ```
+
+
+## Results on Linux x86_64
+
+```
+> julia +nightly -e "using InteractiveUtils; versioninfo()"
+Julia Version 1.13.0-DEV.819
+Commit 4846c3d938b (2025-07-04 15:43 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 24 × AMD Ryzen 9 3900X 12-Core Processor
+  WORD_SIZE: 64
+  LLVM: libLLVM-20.1.2 (ORCJIT, znver2)
+  GC: Built with stock GC
+
+> pixi run python test.py
+=====================================
+Input size: 1000
+All close: True
+Numpy    time (μs): 0.04856220039073378
+FHist.jl time (μs): 0.00662259990349412
+=====================================
+Input size: 10000
+All close: True
+Numpy    time (μs): 0.2016977989114821
+FHist.jl time (μs): 0.04962040111422539
+=====================================
+Input size: 100000
+All close: True
+Numpy    time (μs): 1.333067798987031
+FHist.jl time (μs): 0.12432239891495554
+=====================================
+Input size: 1000000
+All close: True
+Numpy    time (μs): 6.55430739861913
+FHist.jl time (μs): 1.6349460027413443
+```
