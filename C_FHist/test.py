@@ -27,10 +27,13 @@ def jlhist(a, bins, range):
     return bincounts
 
 
-input_data = np.random.randn(10**4)
-
-np_timer = timeit.Timer(lambda: np.histogram(input_data, bins=10, range=(0.0, 1.0)))
-print(np_timer.timeit(1000)/1000)
-
-jl_timer = timeit.Timer(lambda: jlhist(input_data, bins=10, range=(0.0, 1.0)))
-print(jl_timer.timeit(1000)/1000)
+for N_input in [10**3, 10**4, 10**5, 10**6]:
+    input_data = np.random.randn(N_input)
+    print("=====================================")
+    print(f"Input size: {N_input}")
+    print("All close:", np.allclose(np.histogram(input_data, bins=10, range=(0.0, 1.0))[0], jlhist(input_data, bins=10, range=(0.0,
+                                                                                                                 1.0))))
+    np_timer = timeit.Timer(lambda: np.histogram(input_data, bins=10, range=(0.0, 1.0)))
+    jl_timer = timeit.Timer(lambda: jlhist(input_data, bins=10, range=(0.0, 1.0)))
+    print(f"Numpy    time (μs): {np.min(np_timer.repeat(number=2, repeat=500)) * 1000}")
+    print(f"FHist.jl time (μs): {np.min(jl_timer.repeat(number=2, repeat=500)) * 1000}")
