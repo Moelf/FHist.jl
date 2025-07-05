@@ -28,12 +28,14 @@ def jlhist(a, bins, range):
 
 
 for N_input in [10**3, 10**4, 10**5, 10**6]:
-    input_data = np.random.randn(N_input)
+    input_data = np.random.rand(N_input)
+    bins = 20
     print("=====================================")
     print(f"Input size: {N_input}")
-    print("All close:", np.allclose(np.histogram(input_data, bins=10, range=(0.0, 1.0))[0], jlhist(input_data, bins=10, range=(0.0,
+    print("All close:", np.allclose(np.histogram(input_data, bins=bins, range=(0.0, 1.0))[0], jlhist(input_data,
+                                                                                                     bins=bins, range=(0.0,
                                                                                                                  1.0))))
-    np_timer = timeit.Timer(lambda: np.histogram(input_data, bins=10, range=(0.0, 1.0)))
-    jl_timer = timeit.Timer(lambda: jlhist(input_data, bins=10, range=(0.0, 1.0)))
-    print(f"Numpy    time (μs): {np.min(np_timer.repeat(number=2, repeat=500)) * 1000}")
-    print(f"FHist.jl time (μs): {np.min(jl_timer.repeat(number=2, repeat=500)) * 1000}")
+    np_timer = timeit.Timer(lambda: np.histogram(input_data, bins=bins, range=(0.0, 1.0)))
+    jl_timer = timeit.Timer(lambda: jlhist(input_data, bins=bins, range=(0.0, 1.0)))
+    print(f"Numpy    time (μs): {np.min(np_timer.repeat(number=5, repeat=200)) / 5 * 1000}")
+    print(f"FHist.jl time (μs): {np.min(jl_timer.repeat(number=5, repeat=200)) / 5 * 1000}")

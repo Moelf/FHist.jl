@@ -11,24 +11,41 @@ juliaup add nightly
 julia +nightly --project=.. ~/.julia/juliaup/julia-nightly/share/julia/juliac/juliac.jl --output-lib libfhistjl.so --compile-ccallable --experimental --trim C_FHist.jl
 
 > pixi run python test.py
+```
+
+
+## Results on macOS M4
+
+```
+> julia +nightly -e "using InteractiveUtils; versioninfo()"
+Julia Version 1.13.0-DEV.817
+Commit c0cc1e1022b (2025-07-04 12:09 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: macOS (arm64-apple-darwin24.0.0)
+  CPU: 10 × Apple M4
+  LLVM: libLLVM-20.1.2 (ORCJIT, apple-m4)
+
+> pixi run python test.py
 =====================================
 Input size: 1000
 All close: True
-Numpy    time (μs): 0.04149973392486572
-FHist.jl time (μs): 0.007666647434234619
+Numpy    time (μs): 0.02420824021100998
+FHist.jl time (μs): 0.004041567444801331
 =====================================
 Input size: 10000
 All close: True
-Numpy    time (μs): 0.10570790618658066
-FHist.jl time (μs): 0.02658367156982422
+Numpy    time (μs): 0.06623342633247375
+FHist.jl time (μs): 0.011583417654037476
 =====================================
 Input size: 100000
 All close: True
-Numpy    time (μs): 0.8217496797442436
-FHist.jl time (μs): 0.4670834168791771
+Numpy    time (μs): 0.5286000669002533
+FHist.jl time (μs): 0.09375009685754776
 =====================================
 Input size: 1000000
 All close: True
-Numpy    time (μs): 10.170875117182732
-FHist.jl time (μs): 7.914000190794468
+Numpy    time (μs): 4.397133179008961
+FHist.jl time (μs): 0.8317416533827782
 ```
