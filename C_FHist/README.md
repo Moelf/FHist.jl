@@ -74,21 +74,21 @@ Platform Info:
 =====================================
 Input size: 1000
 All close: True
-Numpy    time (μs): 0.04856220039073378
-FHist.jl time (μs): 0.00662259990349412
+Numpy    time (μs): 0.050083198584616184
+FHist.jl time (μs): 0.006594602018594742
 =====================================
 Input size: 10000
 All close: True
-Numpy    time (μs): 0.2016977989114821
-FHist.jl time (μs): 0.04962040111422539
+Numpy    time (μs): 0.1986411982215941
+FHist.jl time (μs): 0.01715040416456759
 =====================================
 Input size: 100000
 All close: True
-Numpy    time (μs): 1.333067798987031
-FHist.jl time (μs): 0.12432239891495554
+Numpy    time (μs): 1.3279114034958184
+FHist.jl time (μs): 0.12177939643152058
 =====================================
 Input size: 1000000
 All close: True
-Numpy    time (μs): 6.55430739861913
-FHist.jl time (μs): 1.6349460027413443
+Numpy    time (μs): 6.595311197452247
+FHist.jl time (μs): 1.4640979992691427
 ```
