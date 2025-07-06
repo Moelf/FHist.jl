@@ -8,13 +8,17 @@ juliaup add nightly
 ## How to test
 
 ```bash
-julia +nightly --project=.. ~/.julia/juliaup/julia-nightly/share/julia/juliac/juliac.jl --output-lib libfhistjl.so --compile-ccallable --experimental --trim C_FHist.jl
+>julia +nightly --project=.. ~/.julia/juliaup/julia-nightly/share/julia/juliac/juliac.jl --output-lib libfhistjl.so --compile-ccallable --experimental --trim C_FHist.jl
+
+>pixi ls -x
+Package  Version  Build            Size     Kind   Source
+numpy    2.3.1    py313h41a2e72_0  6.3 MiB  conda  numpy
 
 > pixi run python test.py
 ```
 
 
-## Results on macOS M4
+## Results on macOS ARM (Mac Mini M4)
 
 ```
 > julia +nightly -e "using InteractiveUtils; versioninfo()"
@@ -51,7 +55,7 @@ FHist.jl time (μs): 0.8317416533827782
 ```
 
 
-## Results on Linux x86_64
+## Results on Linux x86_64 (Ryzen 9 3900X)
 
 ```
 > julia +nightly -e "using InteractiveUtils; versioninfo()"
