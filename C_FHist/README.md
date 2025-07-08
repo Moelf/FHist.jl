@@ -2,13 +2,16 @@
 Follow instruction at https://julialang.org/install/
 ```
 curl -fsSL https://install.julialang.org | sh
-juliaup add nightly
+juliaup add 1.12
 ```
 
 ## How to test
 
 ```bash
->julia +nightly --project=.. ~/.julia/juliaup/julia-nightly/share/julia/juliac/juliac.jl --output-lib libfhistjl.so --compile-ccallable --experimental --trim C_FHist.jl
+>julia +1.12 --startup-file=no --project=.. -e "using Pkg; Pkg.update()"
+# the the -beta4+0 is the latest version at the time of writing, change it to the latest version
+# the x64.linux.gnu need to be changed to your platform
+>julia +1.12 --project=.. ~/.julia/juliaup/julia-1.12.0-beta4+0.x64.linux.gnu/share/julia/juliac.jl --output-lib libfhistjl.so --compile-ccallable --experimental --trim C_FHist.jl
 
 >pixi ls -x
 Package  Version  Build            Size     Kind   Source
@@ -17,78 +20,77 @@ numpy    2.3.1    py313h41a2e72_0  6.3 MiB  conda  numpy
 > pixi run python test.py
 ```
 
-
 ## Results on macOS ARM (Mac Mini M4)
-
 ```
-> julia +nightly -e "using InteractiveUtils; versioninfo()"
-Julia Version 1.13.0-DEV.817
-Commit c0cc1e1022b (2025-07-04 12:09 UTC)
+> julia +1.12 -e "using InteractiveUtils; versioninfo()"
+Julia Version 1.12.0-beta4
+Commit 600ac61d3d2 (2025-06-05 07:03 UTC)
 Build Info:
   Official https://julialang.org release
 Platform Info:
   OS: macOS (arm64-apple-darwin24.0.0)
   CPU: 10 × Apple M4
-  LLVM: libLLVM-20.1.2 (ORCJIT, apple-m4)
-
-> pixi run python test.py
-=====================================
-Input size: 1000
-All close: True
-Numpy    time (μs): 0.01876652240753174
-FHist.jl time (μs): 0.0034248456358909607
-=====================================
-Input size: 10000
-All close: True
-Numpy    time (μs): 0.05549192428588867
-FHist.jl time (μs): 0.010091438889503479
-=====================================
-Input size: 100000
-All close: True
-Numpy    time (μs): 0.4449000582098961
-FHist.jl time (μs): 0.08234996348619461
-=====================================
-Input size: 1000000
-All close: True
-Numpy    time (μs): 3.905266709625721
-FHist.jl time (μs): 0.7887914776802063
-```
-
-
-## Results on Linux x86_64 (Ryzen 9 3900X)
-
-```
-> julia +nightly -e "using InteractiveUtils; versioninfo()"
-Julia Version 1.13.0-DEV.819
-Commit 4846c3d938b (2025-07-04 15:43 UTC)
-Build Info:
-  Official https://julialang.org release
-Platform Info:
-  OS: Linux (x86_64-linux-gnu)
-  CPU: 24 × AMD Ryzen 9 3900X 12-Core Processor
   WORD_SIZE: 64
-  LLVM: libLLVM-20.1.2 (ORCJIT, znver2)
+  LLVM: libLLVM-18.1.7 (ORCJIT, apple-m1)
   GC: Built with stock GC
 
 > pixi run python test.py
 =====================================
 Input size: 1000
 All close: True
-Numpy    time (μs): 0.050083198584616184
-FHist.jl time (μs): 0.006594602018594742
+Numpy    time (μs): 0.021641701459884644
+FHist.jl time (μs): 0.003958120942115784
 =====================================
 Input size: 10000
 All close: True
-Numpy    time (μs): 0.1986411982215941
-FHist.jl time (μs): 0.01715040416456759
+Numpy    time (μs): 0.05824156105518341
+FHist.jl time (μs): 0.011725164949893951
 =====================================
 Input size: 100000
 All close: True
-Numpy    time (μs): 1.3279114034958184
-FHist.jl time (μs): 0.12177939643152058
+Numpy    time (μs): 0.438716821372509
+FHist.jl time (μs): 0.0859750434756279
 =====================================
 Input size: 1000000
 All close: True
-Numpy    time (μs): 6.595311197452247
-FHist.jl time (μs): 1.4640979992691427
+Numpy    time (μs): 3.94724179059267
+FHist.jl time (μs): 0.829133577644825
+```
+
+## Results on Linux x86_64 (Ryzen 9 3900X)
+
+```
+> julia +1.12 -e "using InteractiveUtils; versioninfo()"
+Julia Version 1.12.0-beta4
+Commit 600ac61d3d2 (2025-06-05 07:03 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 24 × AMD Ryzen 9 3900X 12-Core Processor
+  WORD_SIZE: 64
+  LLVM: libLLVM-18.1.7 (ORCJIT, znver2)
+  GC: Built with stock GC
+
+> pixi run python test.py
+=====================================
+Input size: 1000
+All close: True
+Numpy    time (μs): 0.05090880440548062
+FHist.jl time (μs): 0.007097609341144562
+=====================================
+Input size: 10000
+All close: True
+Numpy    time (μs): 0.19860140746459365
+FHist.jl time (μs): 0.020549201872199774
+=====================================
+Input size: 100000
+All close: True
+Numpy    time (μs): 1.3177349930629134
+FHist.jl time (μs): 0.19442759221419692
+=====================================
+Input size: 1000000
+All close: True
+Numpy    time (μs): 6.48591200588271
+FHist.jl time (μs): 1.8390380078926682
 ```
