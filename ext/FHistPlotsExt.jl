@@ -5,7 +5,7 @@ isdefined(Base, :get_extension) ? (using Plots) : (using ..Plots)
 
 #
 @recipe function f(h::Hist1D)
-    seriestype --> :barbins
+    seriestype := :barbins
     N = nentries(h)
     M = round(mean(h); sigdigits= 2)
     S = round(std(h); sigdigits= 2)
