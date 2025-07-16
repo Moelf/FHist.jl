@@ -22,5 +22,5 @@ for N_input in [10**4, 10**5, 10**6]:
     print("np.isclose:", np.isclose(np.sum(input_data), jlsum(input_data)))
     np_timer = timeit.Timer(lambda: np.sum(input_data))
     jl_timer = timeit.Timer(lambda: jlsum(input_data))
-    print(f"Numpy    time (μs): {np.min(np_timer.repeat(number=5, repeat=500)) / 5 * 1000}")
-    print(f"FHist.jl time (μs): {np.min(jl_timer.repeat(number=5, repeat=500)) / 5 * 1000}")
+    print(f"Numpy    time (ms): {np.min(np_timer.repeat(number=5, repeat=500)) / 5 * 1000}")
+    print(f"FHist.jl time (ms): {np.min(jl_timer.repeat(number=5, repeat=500)) / 5 * 1000}")
