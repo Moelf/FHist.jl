@@ -70,13 +70,17 @@ end
 
 Returns a new GPU array corresponds to the bin counts.
 """
-function gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
+function gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data), naive=false)
     cu_bincounts = KA.zeros(backend, Float32, length(binedges) - 1)
-    gpu_bincounts!(cu_bincounts, data; weights=weights, sync=sync, binedges=binedges, blocksize=blocksize, backend=backend)
+    gpu_bincounts!(cu_bincounts, data; weights=weights, sync=sync, binedges=binedges, blocksize=blocksize, backend=backend, naive)
 end
 
 function gpu_bincounts!(cu_bincounts, data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
-    kernel! = histogram_sharemem_v2_kernel!(backend, (blocksize,))
+    kernel! = if naive
+        histogram_naive_kernel!(backend, (blocksize,))
+    else
+        histogram_sharemem_v2_kernel!(backend, (blocksize,))
+    end
 
     if !isnothing(weights)
         @assert get_backend(weights) == backend "Weights must be on the same backend as histogram_output"
