@@ -14,7 +14,7 @@ using KernelAbstractions: synchronize, get_backend, @kernel, @atomic, @atomicswa
     tid = (gid - Int32(1)) * gs + lid
     if tid <= length(input_raw)
         x = input_raw[tid]
-        cursor = floor(Int32, (x - firstr) * invstep)
+        cursor = unsafe_trunc(Int32, (x - firstr) * invstep)
         bin = cursor + Int32(1)
         @atomic histogram_output[bin] += isnothing(weights) ? one(Float32) : weights[tid]
     end
