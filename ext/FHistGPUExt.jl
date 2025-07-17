@@ -75,7 +75,7 @@ function gpu_bincounts(data; weights=nothing, sync=false, binedges::AbstractRang
     gpu_bincounts!(cu_bincounts, data; weights=weights, sync=sync, binedges=binedges, blocksize=blocksize, backend=backend, naive)
 end
 
-function gpu_bincounts!(cu_bincounts, data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data))
+function gpu_bincounts!(cu_bincounts, data; weights=nothing, sync=false, binedges::AbstractRange, blocksize=512, backend=get_backend(data), naive=false)
     kernel! = if naive
         histogram_naive_kernel!(backend, (blocksize,))
     else
