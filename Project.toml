@@ -14,13 +14,12 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
 FHistHDF5Ext = "HDF5"
 FHistMakieExt = "Makie"
-FHistPlotsExt = "Plots"
+FHistPlotsExt = "RecipeBase"
 
 [compat]
 Aqua = "0.8"
@@ -30,7 +29,6 @@ HDF5 = "0.16, 0.17"
 LinearAlgebra = "1"
 Makie = "0.24"
 Measurements = "^2.7"
-Plots = "1"
 RecipesBase = "^1"
 Statistics = "1"
 StatsBase = "^0.33, 0.34"
