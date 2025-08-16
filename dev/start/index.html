@@ -37,17 +37,17 @@
 
 <div class="admonition is-info" id="Default-/-infer-strategy-for-empty-histogram-cd300b65105bb6f7"><header class="admonition-header">Default / infer strategy for empty histogram<a class="admonition-anchor" href="#Default-/-infer-strategy-for-empty-histogram-cd300b65105bb6f7" title="Permalink"></a></header><div class="admonition-body"><p>To see the full list of keyword arguments as well as how they are inferred, see <a href="../api/#FHist.Hist1D-Union{Tuple{E}, Tuple{T}} where {T, E&lt;:Tuple{Any}}"><code>Hist1D</code></a>. To summarize in words:</p><ol><li><code>counttype</code> defaults to <code>Float64</code> because <code>maxintfloat(Float64) ≈ 9e15</code></li><li><code>binedges</code> must be provided by user</li><li><code>bincounts</code> defaults to all zero, with <code>eltype == counttype</code> and appropriate shape</li><li><code>sumw2</code> defaults to all zero with appropriate shape</li><li><code>nentries</code> defaults to 0</li><li><code>overflow</code> defaults to <code>false</code></li></ol></div></div><h2 id="Make-a-filled-histogram-given-data"><a class="docs-heading-anchor" href="#Make-a-filled-histogram-given-data">Make a filled histogram given data</a><a id="Make-a-filled-histogram-given-data-1"></a><a class="docs-heading-anchor-permalink" href="#Make-a-filled-histogram-given-data" title="Permalink"></a></h2><p>The minimal information needed is <code>data</code>, which is a <strong>positional</strong> argument:</p><pre><code class="language-julia hljs">h3 = Hist1D(randn(2000))</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,179.0778097982709,40.625,179.0778097982709,40.625,174.00576368876082,68.75,174.00576368876082,68.75,122.5936599423631,96.875,122.5936599423631,96.875,21.844380403458217,125.0,21.844380403458217,125.0,19.999999999999996,153.125,19.999999999999996,153.125,112.91066282420749,181.25000000000003,112.91066282420749,181.25000000000003,169.85590778097983,209.375,169.85590778097983,209.375,178.61671469740634,237.50000000000003,178.61671469740634,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,179.77011494252875,37.50000000000001,179.77011494252875,37.50000000000001,179.54022988505747,62.5,179.54022988505747,62.5,169.42528735632186,87.50000000000001,169.42528735632186,87.50000000000001,120.00000000000001,112.5,120.00000000000001,112.5,23.21839080459771,137.5,23.21839080459771,137.5,19.999999999999996,162.50000000000003,19.999999999999996,162.50000000000003,118.39080459770115,187.50000000000003,118.39080459770115,187.50000000000003,170.34482758620692,212.50000000000003,170.34482758620692,212.50000000000003,179.54022988505747,237.50000000000003,179.54022988505747,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
-    <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
+    <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-5.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
 </svg>
 </div>
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
-            <li>edges: [-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0]</li>
-            <li>bin counts: [4.0, 26.0, 249.0, 686.0, 694.0, 291.0, 44.0, 6.0]</li>
-            <li>maximum count: 694.0</li>
+            <li>edges: [-5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0]</li>
+            <li>bin counts: [1.0, 2.0, 46.0, 261.0, 682.0, 696.0, 268.0, 42.0, 2.0]</li>
+            <li>maximum count: 696.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -55,17 +55,17 @@
 
 <p>You can provide more (in keyword arguments) if you want granular control over the binning behavior (e.g. number of bins, the exact bins to use):</p><pre><code class="language-julia hljs">h4 = Hist1D(randn(2000); nbins=4)</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,173.38842975206612,68.75,173.38842975206612,68.75,19.999999999999996,125.0,19.999999999999996,125.0,24.13223140495866,181.25000000000003,24.13223140495866,181.25000000000003,171.900826446281,237.50000000000003,171.900826446281,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,173.75128468653648,57.49999999999999,173.75128468653648,57.49999999999999,19.999999999999996,102.5,19.999999999999996,102.5,25.91983556012334,147.50000000000003,25.91983556012334,147.50000000000003,171.6135662898253,192.5,171.6135662898253,192.5,179.8355601233299,237.5,179.8355601233299,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">-4.0</text>
-    <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">4.0</text>
+    <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">6.0</text>
 </svg>
 </div>
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
-            <li>edges: [-4.0, -2.0, 0.0, 2.0, 4.0]</li>
-            <li>bin counts: [40.0, 968.0, 943.0, 49.0]</li>
-            <li>maximum count: 968.0</li>
+            <li>edges: [-4.0, -2.0, 0.0, 2.0, 4.0, 6.0]</li>
+            <li>bin counts: [38.0, 973.0, 937.0, 51.0, 1.0]</li>
+            <li>maximum count: 973.0</li>
             <li>total count: 2000.0</li>
         </ul>
     </div>
@@ -73,7 +73,7 @@
 
 <div class="admonition is-warning" id="Warning-cd4284be0a5c75d9"><header class="admonition-header">Warning<a class="admonition-anchor" href="#Warning-cd4284be0a5c75d9" title="Permalink"></a></header><div class="admonition-body"><p><code>nbins</code> is not strictly enforced, use <code>binedges</code> if you need exact control.</p></div></div><p>We can do non-uniform binning for example:</p><pre><code class="language-julia hljs">h5 = Hist1D(randn(2000); binedges = [0, 0.5, 0.8, 0.9, 1.0])</code></pre><div style="display: flex;">
     <div style="float:left; margin:5px"><svg width="250" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="12.5,180.0,12.5,20.000000000000018,125.0,20.000000000000018,125.0,99.17098445595856,192.50000000000003,99.17098445595856,192.50000000000003,158.4455958549223,215.00000000000003,158.4455958549223,215.00000000000003,153.88601036269432,237.50000000000003,153.88601036269432,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
+    <polyline points="12.5,180.0,12.5,20.000000000000018,125.0,20.000000000000018,125.0,95.36842105263158,192.50000000000003,95.36842105263158,192.50000000000003,152.63157894736844,215.00000000000003,152.63157894736844,215.00000000000003,157.26315789473685,237.50000000000003,157.26315789473685,237.5,180.0,12.5,180.0" stroke="black" fill="#ffffff00" stroke-width="1"/>
     <polyline points="12.5,180.0,237.5,180.0" stroke="black" stroke-width="1"/>
     <text x="12.5" y="190.0" dominant-baseline="middle" text-anchor="start" fill="black">0.0</text>
     <text x="237.5" y="190.0" dominant-baseline="middle" text-anchor="end" fill="black">1.0</text>
@@ -82,9 +82,9 @@
     <div style="float:left; margin:5px; max-width: 50%; display:flex; justify-content:center; align-items:center;">
         <ul>
             <li>edges: [0.0, 0.5, 0.8, 0.9, 1.0]</li>
-            <li>bin counts: [386.0, 195.0, 52.0, 63.0]</li>
-            <li>maximum count: 386.0</li>
-            <li>total count: 696.0</li>
+            <li>bin counts: [380.0, 201.0, 65.0, 54.0]</li>
+            <li>maximum count: 380.0</li>
+            <li>total count: 700.0</li>
         </ul>
     </div>
 </div>
