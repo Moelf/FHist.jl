@@ -20,7 +20,7 @@ RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 [extensions]
 FHistHDF5Ext = "HDF5"
 FHistMakieExt = "Makie"
-FHistPlotsExt = "RecipesBase, Plots"
+FHistPlotsExt = ["RecipesBase", "Plots"]
 
 [compat]
 Aqua = "0.8"
