@@ -50,10 +50,11 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
 
     @eval merge(h1::$T, h2::$T) = merge!(deepcopy(h1), h2)
 
-    @eval function merge(hists::$T...)
-        h = deepcopy(first(hists))
-        length(hists) == 1 && return h
-        foreach(x-> merge!(h, x), hists[2:end])
+    @eval function merge(hist1::$T, hists::$T...)
+        h = deepcopy(hist1)
+        for h_more in hists
+            merge!(h, h_more)
+        end
         h
     end
 end

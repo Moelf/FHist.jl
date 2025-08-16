@@ -13,9 +13,7 @@ export Weights
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
-if !isdefined(Base, :get_extension)
-    using Requires
-end
+# Julia >= 1.9 has package extensions; no Requires needed
 
 using BayesHistogram
 export BayesHistogram
