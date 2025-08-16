@@ -53,7 +53,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
     @eval function merge(hists::$T...)
         h = deepcopy(first(hists))
         length(hists) == 1 && return h
-        foreach(x-> merge!(h, x), (@view(hists[2:end])))
+        foreach(x-> merge!(h, x), hists[2:end])
         h
     end
 end
