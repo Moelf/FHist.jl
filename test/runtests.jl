@@ -1,5 +1,10 @@
 using FHist, StatsBase, Statistics, HDF5
 using Test
+using Aqua
+
+@testset "Aqua" begin
+    Aqua.test_all(FHist)
+end
 
 @testset "Fast route" begin
     a = rand(10^5)
