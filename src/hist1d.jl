@@ -212,10 +212,18 @@ end
 
 """
     rebin(h::Hist1D, n::Int=1)
-    rebin(n::Int) = h::Hist1D -> rebin(h, n)
+    rebin(h::Hist1D, edges::AbstractVector{<:Real})
+    rebin(n::Int)
+    rebin(edges::AbstractVector{<:Real})
 
-Merges `n` consecutive bins into one.
-The returned histogram will have `nbins(h)/n` bins.
+Rebin a histogram by merging existing bins. When provided an integer `n`, the
+function merges `n` consecutive bins and returns `nbins(h) / n` bins. When
+provided a collection of bin edges `edges`, the function returns a new
+histogram whose bin edges match `edges`; every element of `edges` must align
+with the original bin edges and span the full histogram range.
+
+If the `edges` is an array and doesn't include original histogram's leftmost
+and rightmost edges, those bins will be ignored.
 """
 function rebin(h::Hist1D, n::Int=1)
     if nbins(h) % n != 0
@@ -232,6 +240,47 @@ function rebin(h::Hist1D, n::Int=1)
     return Hist1D(; binedges = edges, bincounts = counts, sumw2, nentries = nentries(h), overflow = h.overflow)
 end
 rebin(n::Int) = h::Hist1D -> rebin(h, n)
+
+function rebin(h::Hist1D, new_edges::AbstractVector{<:Real})
+    length(new_edges) >= 2 || throw(ArgumentError("`edges` must contain at least two elements"))
+    allunique(new_edges) || throw(ArgumentError("`edges` must be all unique"))
+    issorted(new_edges) || throw(ArgumentError("`edges` must be sorted"))
+
+
+    old_edges = binedges(h)
+    for ne in new_edges
+        if !(ne in old_edges)
+            throw(ArgumentError("`edges` must be composed of existing histogram bin edges"))
+        end
+    end
+    include_overflow = (new_edges[begin] == first(old_edges)) && (new_edges[end] == last(old_edges))
+
+    nbins_new = length(new_edges) - 1
+    counts = similar(bincounts(h), nbins_new)
+    sumw2_vals = similar(sumw2(h), nbins_new)
+    bc = bincounts(h)
+    sw2 = sumw2(h)
+
+    l_val = new_edges[begin]
+    l_cur = findfirst(==(l_val), old_edges)
+
+    for i in 1:nbins_new
+        r_val = new_edges[i+1]
+        new_count = zero(eltype(bc))
+        new_sumw2 = zero(eltype(sw2))
+        while old_edges[l_cur] < r_val
+            new_count += bc[l_cur]
+            new_sumw2 += sw2[l_cur]
+            l_cur += 1
+        end
+        counts[i] = new_count
+        sumw2_vals[i] = new_sumw2
+    end
+
+    return Hist1D(; binedges = new_edges, bincounts = counts, sumw2 = sumw2_vals,
+        nentries = nentries(h), overflow = h.overflow && include_overflow)
+end
+rebin(edges::AbstractVector{<:Real}) = h::Hist1D -> rebin(h, edges)
 
 """
     bayes_rebin_edges(h::Hist1D; prior=BayesHistogram.Geometric(0.995))
