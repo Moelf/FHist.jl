@@ -29,9 +29,9 @@ Let's generate three dummy histograms sampled from three different distributions
 
 # ╔═╡ 8491f5c3-93b6-4670-8f6e-0d08d7afbf75
 begin
-	h1 = Hist1D(randn(10^3); binedges = -2:0.3:2)
-	h2 = Hist1D(randn(10^4); binedges = -2:0.3:2)
-	h3 = Hist1D(randn(10^3) .+ 0.5; binedges = -2:0.3:2)
+    h1 = Hist1D(randn(10^3); binedges = -2:0.3:2)
+    h2 = Hist1D(randn(10^4); binedges = -2:0.3:2)
+    h3 = Hist1D(randn(10^3) .+ 0.5; binedges = -2:0.3:2)
 end
 
 # ╔═╡ da61f742-b530-4aa4-9253-a23f6731f892
@@ -41,23 +41,23 @@ To plot a single histogram, you can do any of the following:
 
 # ╔═╡ 4c09d3a5-a034-49fb-aba3-1891c6f90b5a
 begin
-	fig = Figure()
-	p1, ax1= plot(fig[1, 1],h1; label = "plot(h1)")
-	p2, ax2 = stephist(fig[1, 2], h1, label = "stairs(h1)")
-	p3, ax3 = hist(fig[2, 1], h1, label = "hist(h1)")
-	p4, ax4 = errorbars(fig[2, 2], h1, color=:black, whiskerwidth=6, label = "errorbars(h1)")
-	axislegend.([p1, p2, p3, p4])
-	fig
+    fig = Figure()
+    p1, ax1= plot(fig[1, 1],h1; label = "plot(h1)")
+    p2, ax2 = stephist(fig[1, 2], h1, label = "stairs(h1)")
+    p3, ax3 = hist(fig[2, 1], h1, label = "hist(h1)")
+    p4, ax4 = errorbars(fig[2, 2], h1, color=:black, whiskerwidth=6, label = "errorbars(h1)")
+    axislegend.([p1, p2, p3, p4])
+    fig
 end
 
 # ╔═╡ 91a8b01a-54e7-4955-bb56-1803d3f2576a
 begin
-	h1_log = Hist1D(rand(10^5); binedges = [0.001, 0.01, 0.1, 1])
-	ax_log = plot(h1_log; axis=(;xscale=log10, yscale=log10), label = "log-log scale")
-	xlims!(0.0001, nothing)
-	ylims!(1, nothing)
-	axislegend()
-	ax_log
+    h1_log = Hist1D(rand(10^5); binedges = [0.001, 0.01, 0.1, 1])
+    ax_log = plot(h1_log; axis=(;xscale=log10, yscale=log10), label = "log-log scale")
+    xlims!(0.0001, nothing)
+    ylims!(1, nothing)
+    axislegend()
+    ax_log
 end
 
 # ╔═╡ 3b4d5b69-dbbb-49dd-b7ad-9ef1605f76eb
@@ -69,9 +69,9 @@ We provide a `statbox!()` function to add such box:
 
 # ╔═╡ 99f8bcde-b823-4c5b-8820-22c403c21d6b
 begin
-	f_s = stephist(h1)
-	statbox!(f_s, h1)
-	f_s
+    f_s = stephist(h1)
+    statbox!(f_s, h1)
+    f_s
 end
 
 # ╔═╡ c774440d-c7c1-4b75-b115-64038992174d
@@ -92,16 +92,16 @@ end
 
 # ╔═╡ 254c736a-79e3-4cf5-a662-77471c5aa465
 begin
-	even_edges = 0:0.1:1
-	uneven_edges = [0, 0.2, 0.5, 1]
-	data = (randn(10000), randn(10000))
-	h2d_even =   Hist2D(data; binedges = (even_edges, even_edges))
-	h2d_uneven = Hist2D(data; binedges = (uneven_edges, even_edges))
-	
-	f2_uneven = Figure()
-	plot(f2_uneven[2,1], h2d_even; axis=(title="even x-binning", ))
-	plot(f2_uneven[1,1], h2d_uneven; axis=(title="uneven x-binning", ))
-	f2_uneven
+    even_edges = 0:0.1:1
+    uneven_edges = [0, 0.2, 0.5, 1]
+    data = (randn(10000), randn(10000))
+    h2d_even =   Hist2D(data; binedges = (even_edges, even_edges))
+    h2d_uneven = Hist2D(data; binedges = (uneven_edges, even_edges))
+
+    f2_uneven = Figure()
+    plot(f2_uneven[2,1], h2d_even; axis=(title="even x-binning", ))
+    plot(f2_uneven[1,1], h2d_uneven; axis=(title="uneven x-binning", ))
+    f2_uneven
 end
 
 # ╔═╡ d549a735-12a4-443a-98c7-be5cce4e6789
@@ -113,13 +113,13 @@ You can freely combine these by using the bang `!` version to plot things on top
 begin
     pos_h2 = restrict(h2, 0, Inf)
     hist(pos_h2;
-         label = "fake bkg", 
-         axis=(
-		   limits=(nothing, nothing, 0.1, nothing),
-               yminorticks=IntervalsBetween(5),
-               yminorticksvisible = true,
-               yscale=log10
-              )
+         label = "fake bkg",
+         axis = (
+                 limits=(nothing, nothing, 0.1, nothing),
+                 yminorticks=IntervalsBetween(5),
+                 yminorticksvisible = true,
+                 yscale=log10
+                )
         )
 
     errorbars!(pos_h2; whiskerwidth=7)
@@ -137,12 +137,12 @@ We also have a recipe for that:
 
 # ╔═╡ 70a5ba34-53c5-4e12-93b9-49eace436524
 with_theme(ATLASTHEME) do
-	f, a, p = stackedhist([h2, h2, h1]; )
-	labels = ["proc1", "blah", "third one"]
-	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
-	title = "Legend title"
-	Legend(f[1,2], elements, labels, title)
-	f
+    f, a, p = stackedhist([h2, h2, h1]; )
+    labels = ["proc1", "blah", "third one"]
+    elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
+    title = "Legend title"
+    Legend(f[1,2], elements, labels, title)
+    f
 end
 
 # ╔═╡ 089fb6a1-3f2a-45f4-b4bf-4013dee3a6da
@@ -158,10 +158,10 @@ Finally, we have a recipe for ratio plot which is argubaly useful for the bottom
 # ╔═╡ b1188446-d16b-4e0c-93be-c5e3d0de379c
 begin
     f_ratio, a, p = stephist(h1; label="h1")
-	errorbars!(a, h1)
+    errorbars!(a, h1)
     stephist!(a, h3; label="h3")
-	errorbars!(a, h3)
-	
+    errorbars!(a, h3)
+
     axislegend()
     ratioax = Axis(f_ratio[2, 1], aspect = 5.5, xlabel = "my x-axis", ylabel="h1 / h3")
     linkxaxes!(ratioax, a)
@@ -187,24 +187,24 @@ md"""## Clamping/clipping bincounts and errorbars
 
 # ╔═╡ b9ae652e-75bf-454b-83c6-fa6b4ef74faa
 let h = Hist1D(;binedges=0:2, bincounts=[-0.1, 0.1], sumw2=[0.1, 0.1])
-	fig = Figure()
-	
-	scatter(fig[1,1], h;); errorbars!(h; clamp_errors=false);
-	scatter(fig[2,1], h;); errorbars!(h; clamp_errors=true);
-	scatter(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+    fig = Figure()
 
-	fig
+    scatter(fig[1,1], h;); errorbars!(h; clamp_errors=false);
+    scatter(fig[2,1], h;); errorbars!(h; clamp_errors=true);
+    scatter(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+
+    fig
 end
 
 # ╔═╡ f9255f7c-fd44-46cc-bccc-a8c4b5033502
 let h = Hist1D(;binedges=0:2, bincounts=[-0.1, 0.1], sumw2=[0.1, 0.1])
-	fig = Figure()
-	
-	stairs(fig[1,1], h;); errorbars!(h; clamp_errors=false);
-	stairs(fig[2,1], h;); errorbars!(h; clamp_errors=true);
-	stairs(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+    fig = Figure()
 
-	fig
+    stairs(fig[1,1], h;); errorbars!(h; clamp_errors=false);
+    stairs(fig[2,1], h;); errorbars!(h; clamp_errors=true);
+    stairs(fig[2,2], h; clamp_bincounts=true); errorbars!(h; clamp_bincounts=true, clamp_errors=true);
+
+    fig
 end
 
 # ╔═╡ 2f97d05b-9103-451e-8fce-bb7458acf2ba
@@ -215,19 +215,16 @@ md"""
 
 # ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
 let
-    f, a, p = stackedhist([h1, h1 ]; error_color=(:black, 0.5))
-	labels = ["proc1", "blah"]
-	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
-	title = "Legend title"
-	Legend(f[1,2], elements, labels, title)
-	f
+    fig, ax, plt = stackedhist([h1, h1 ]; error_color=(:black, 0.5))
+    labels = ["proc1", "blah"]
+    elements = [PolyElement(polycolor = plt.attributes.color[][i]) for i in 1:length(labels)]
+    title = "Legend title"
+    Legend(fig[1,2], elements, labels, title)
+    fig
 end
 
 # ╔═╡ fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
-let
-    f, a, p = stackedhist([h1, h1]; error_color=Pattern('/'; width=0.5, tilesize=(4,4)))
-	f
-end
+stackedhist([h1, h1]; error_color=Pattern('/'; width=0.5, tilesize=(4,4)))
 
 # ╔═╡ Cell order:
 # ╠═4cf8f502-eba2-11ec-275f-3f1858e4c2e6
