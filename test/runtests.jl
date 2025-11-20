@@ -454,7 +454,7 @@ end
     data = rand(10^3) .* 10
     h_manual = Hist1D(data; binedges = 1:10)
     new_edges1 = [1, 2, 5, 10]
-    new_edges2 = [3, 5, 7]
+    new_edges2 = [3., 5, 7]
     h_rebinned1 = rebin(h_manual, new_edges1)
     h_rebinned2 = rebin(h_manual, new_edges2)
     h_new1 = Hist1D(data; binedges = new_edges1)

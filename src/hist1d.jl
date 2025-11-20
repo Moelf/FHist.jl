@@ -249,8 +249,8 @@ function rebin(h::Hist1D, new_edges::AbstractVector{<:Real})
 
     old_edges = binedges(h)
     for ne in new_edges
-        if !(ne in old_edges)
-            throw(ArgumentError("`edges` must be composed of existing histogram bin edges"))
+        if isnothing(findfirst(==(ne), old_edges))
+            throw(ArgumentError("`edges` must be composed of existing histogram bin edges, $ne not found"))
         end
     end
     include_overflow = (new_edges[begin] == first(old_edges)) && (new_edges[end] == last(old_edges))
