@@ -451,6 +451,23 @@ end
 
     @test rebin(h1, 2) == (h1 |> rebin(2))
 
+    data = rand(10^3) .* 10
+    h_manual = Hist1D(data; binedges = 1:10)
+    new_edges1 = [1, 2, 5, 10]
+    new_edges2 = [3, 5, 7]
+    h_rebinned1 = rebin(h_manual, new_edges1)
+    h_rebinned2 = rebin(h_manual, new_edges2)
+    h_new1 = Hist1D(data; binedges = new_edges1)
+    h_new2 = Hist1D(data; binedges = new_edges2)
+
+    @test bincounts(h_rebinned1) == bincounts(h_new1)
+    @test sumw2(h_rebinned1) == sumw2(h_new1)
+    @test bincounts(h_rebinned2) == bincounts(h_new2)
+    @test sumw2(h_rebinned2) == sumw2(h_new2)
+
+    @test_throws ArgumentError rebin(h_manual, [1, 3.5, 10])
+    @test_throws ArgumentError rebin(h_manual, [0, 2, 10])
+
     h1 = Hist2D((rand(10^2),rand(10^2)); binedges = (0:0.1:1,0:0.1:1))
     @test h1 == rebin(h1, 1, 1)
     @test integral(h1) == integral(rebin(h1, 5))
@@ -543,19 +560,20 @@ end
     @test_throws AssertionError restrict(h, 10, Inf)
 end
 
-# https://github.com/Moelf/FHist.jl/issues/81
+
+function _pushloop(h,a)
+    for v in a
+        push!(h,v)
+    end
+end
+
 @testset "0-allocation" begin
     data = randn(100)
     h = Hist1D(; binedges =-10:1:10)
 
-    # warm up
-    for d in data
-        push!(h,d)
-    end
+    _pushloop(h, data)
 
-    aloc = @allocated for d in data
-        push!(h,d)
-    end
+    aloc = @allocated _pushloop(h, data)
 
     @test aloc == 0
 end
