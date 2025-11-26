@@ -7,7 +7,7 @@ ENV["JULIA_PYTHONCALL_EXE"] = readchomp(`which python`)
 ```
 before the `using PythonCall` line. Especially if you're using LCG or Athena or CMSSW environment.
 
-```julia
+```julia-repl
 julia> using PythonCall, FHist
 
 julia> np = pyimport("numpy")
@@ -35,18 +35,18 @@ julia> pywith(up.recreate("./example.root")) do file
 ### Writing out a histogram with errors (sumW2)
 We need https://github.com/scikit-hep/hist for this:
 
-```julia
+```julia-repl
 julia> using PythonCall, FHist
 
 julia> function to_pyhist(h::Hist1D)
-    pyhist = pyimport("hist")
-    bes, bcs, sumw2s = binedges(h), bincounts(h), sumw2(h)
-    h1 = pyhist.Hist.new.Variable(collect(bes)).Weight()
-    for idx in eachindex(bcs, sumw2s)
-        h1.view()[idx-1] = (bcs[idx], sumw2s[idx])
-    end
-    h1
-end
+           pyhist = pyimport("hist")
+           bes, bcs, sumw2s = binedges(h), bincounts(h), sumw2(h)
+           h1 = pyhist.Hist.new.Variable(collect(bes)).Weight()
+           for idx in eachindex(bcs, sumw2s)
+               h1.view()[idx-1] = (bcs[idx], sumw2s[idx])
+           end
+           h1
+       end
 
 julia> pywith(up.recreate("./example.root")) do file
            file["myhist"] = to_pyhist(h)
@@ -54,7 +54,7 @@ julia> pywith(up.recreate("./example.root")) do file
 ```
 
 we can veryfy the round trip gives us back the original number:
-```julia
+```julia-repl
 julia> binerrors(h)
 100-element Vector{Float64}:
  0.0
