@@ -30,8 +30,8 @@ including all the meta information needed to be able to recreate it. This is how
 it looks like when opening it with `HDF5.jl` (any other HDF5 library will look
 similarly):
 
-```
-f = HDF5.File: (read-only) foo.h5
+```julia-repl
+julia> f = HDF5.File: (read-only) foo.h5
 🗂️ HDF5.File: (read-only) foo.h5
 └─ 📂 some
    └─ 📂 path
