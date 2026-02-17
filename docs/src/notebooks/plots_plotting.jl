@@ -17,6 +17,11 @@ end;
 # ╔═╡ 5a884f80-7c0a-4345-b2d3-1785b1b5a46a
 using FHist, Statistics, Plots
 
+# ╔═╡ 92a9373e-7b27-4a8a-ac03-8f6be86063c9
+md"""
+# Plots plotting
+"""
+
 # ╔═╡ d604a07e-2179-4570-b6bb-df3b8f6cfc7e
 md"## Hist1D"
 
@@ -52,6 +57,7 @@ end
 
 # ╔═╡ Cell order:
 # ╠═be0b45f2-86dc-11ee-2dce-2994fb540eec
+# ╟─92a9373e-7b27-4a8a-ac03-8f6be86063c9
 # ╠═5a884f80-7c0a-4345-b2d3-1785b1b5a46a
 # ╟─d604a07e-2179-4570-b6bb-df3b8f6cfc7e
 # ╟─6ebafb79-448b-425a-890a-39ae454816be
