@@ -65,7 +65,7 @@ end
 Calculate the significance of signal vs. bkg histograms, this function uses a more
 accurate algorithm than the naive `S / sqrt(B)`
 
-Ref: https://cds.cern.ch/record/2736148/files/ATL-PHYS-PUB-2020-025.pdf
+Ref: <https://cds.cern.ch/record/2736148/files/ATL-PHYS-PUB-2020-025.pdf>
 
 ## Example:
 ```julia
