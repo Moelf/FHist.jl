@@ -1,5 +1,5 @@
 ### Write out a histogram
-Checkout configuration for PythonCall.jl: https://cjdoris.github.io/PythonCall.jl/stable/pythoncall/#pythoncall-config
+Checkout configuration for PythonCall.jl: <https://cjdoris.github.io/PythonCall.jl/stable/pythoncall/#pythoncall-config>
 
 Most importantly, you probably want to set:
 ```julia
@@ -33,7 +33,7 @@ julia> pywith(up.recreate("./example.root")) do file
 ```
 
 ### Writing out a histogram with errors (sumW2)
-We need https://github.com/scikit-hep/hist for this:
+We need <https://github.com/scikit-hep/hist> for this:
 
 ```julia-repl
 julia> using PythonCall, FHist
