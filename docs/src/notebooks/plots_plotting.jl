@@ -50,10 +50,10 @@ end
 md"## Hist2D"
 
 # ╔═╡ 53eacafc-71ac-4e70-a238-581335ac4729
-begin
-		h2d = Hist2D((randn(10000), randn(10000)))
-		p2d = plot(h2d)
-end
+h2d = Hist2D((randn(10000), randn(10000)));
+
+# ╔═╡ 8ebab27d-f213-487f-9467-beadcf5dc792
+p2d = plot(h2d)
 
 # ╔═╡ Cell order:
 # ╠═be0b45f2-86dc-11ee-2dce-2994fb540eec
@@ -65,3 +65,4 @@ end
 # ╠═2d857d08-f9c2-4a60-86dd-2afbd3b599f6
 # ╟─68d705dd-d0d9-4394-8d3c-f8b2113e6cef
 # ╠═53eacafc-71ac-4e70-a238-581335ac4729
+# ╠═8ebab27d-f213-487f-9467-beadcf5dc792
