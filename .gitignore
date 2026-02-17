@@ -1,2 +1,4 @@
 Manifest.toml
 docs/build/
+docs/src/notebooks/makie_plotting.md
+docs/src/notebooks/plots_plotting.md
