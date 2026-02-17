@@ -113,8 +113,9 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         Base.lock(h::$H) = lock(h.hlock)
         Base.unlock(h::$H) = unlock(h.hlock)
         @doc """
-                bincounts(h::$($H))
-            Get the bin counts (weights) of the histogram.
+            bincounts(h::$($H))
+
+        Get the bin counts (weights) of the histogram.
         """
         bincounts(h::$H) = h.bincounts
         @doc """
