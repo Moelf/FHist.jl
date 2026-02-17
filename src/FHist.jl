@@ -160,7 +160,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         Get the number of effective entries for the entire histogram:
 
         ```math
-        n_{eff} = \frac{(\sum Weights )^2}{(\sum Weight^2 )}
+        n_\text{eff} = \frac{(\sum \text{Weights} )^2}{(\sum \text{Weight}^2 )}
         ```
 
         This is also equivalent to `integral(hist)^2 / sum(sumw2(hist))`, this is the same as `TH1::GetEffectiveEntries()`
