@@ -13,7 +13,7 @@ let
     using Pkg: Pkg
     Pkg.activate(docs_dir)
     Pkg.develop(; path=pkg_dir)
-    Pkg.update()
+    Pkg.instantiate()
 end;
 
 # ╔═╡ 82a6fb18-e9c9-450d-9c93-e05bd6cf5859
