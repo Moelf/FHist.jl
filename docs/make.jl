@@ -11,7 +11,7 @@ include("build.jl")
 
 build()
 md_files = markdown_files()
-T = [t => f for (t, f) in zip(notebooks, md_files)]
+T = notebooks .=> md_files
 
 makedocs(;
     modules=[FHist],

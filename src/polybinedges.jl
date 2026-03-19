@@ -1,7 +1,7 @@
 """
     BinEdges <: AbstractVector{Float64}
 
-    This type implements a vector-like data structure to be used for histogram bin edges, it can handle both uniform and non-uniform binnings in a single type to reduce the amount of parametric types. It would switch to O(1) `searchsortedlast` if the binning is uniform.
+This type implements a vector-like data structure to be used for histogram bin edges, it can handle both uniform and non-uniform binnings in a single type to reduce the amount of parametric types. It would switch to O(1) `searchsortedlast` if the binning is uniform.
 
 !!! note
     Due to the usage of Float64, bin edges shouldn't contain element with absolute value larger than 9007199254740992, which is the `maxintfloat(Float64)`.

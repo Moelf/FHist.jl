@@ -13,7 +13,7 @@ Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible 
   - due to huge latency issue, UnicodePlots.jl (for text based terminal display) has been dropped.
 
 ## Quick Start
-```julia
+```julia-repl
 julia> using FHist
 
 julia> a = randn(1000);
@@ -37,7 +37,7 @@ true
 
 Additionally, one can specify `overflow=true` when creating a histogram to clamp out-of-bounds values into 
 the edge bins.
-```julia
+```julia-repl
 julia> Hist1D(rand(1000); binedges = 0:0.2:0.9, overflow=true)
 edges: 0.0:0.2:0.8
 bin counts: [218, 183, 198, 401]
@@ -47,7 +47,7 @@ total count: 1000
 ## Speed
 
 Single-threaded filling happens at ~1 GHz on modern CPU (Ryzen 7 7840HS)
-```julia
+```julia-repl
 julia> a = randn(10^6);
 
 julia> @benchmark Hist1D(a; binedges = -3:0.01:3)
@@ -59,7 +59,7 @@ BenchmarkTools.Trial: 4624 samples with 1 evaluation.
 
 ### 1D
 
-```julia
+```julia-repl
 julia> using FHist, Statistics
 
 julia> h1 = Hist1D(randn(10^4).+2; binedges = -5:0.5:5);
@@ -104,7 +104,7 @@ julia> h1 |> normalize |> integral
 
 ### 2D
 
-```julia
+```julia-repl
 julia> h2 = Hist2D((randn(10^4),randn(10^4)); binedges = (-5:5,-5:5))
 
 edges: (-5:5, -5:5)
@@ -134,7 +134,7 @@ total count: 10000
 
 ### 3D
 
-```julia
+```julia-repl
 julia> h3 = Hist3D((randn(10^4),randn(10^4),randn(10^4)); binedges = (-5:5,-5:5,-5:5))
 Hist3D{Int64}, edges=(-5:5, -5:5, -5:5), integral=10000
 

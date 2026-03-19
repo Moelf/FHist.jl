@@ -50,7 +50,7 @@ valid_rebin_values(h::Hist1D) = _factor(nbins(h))
 valid_rebin_values(h::Union{Hist2D, Hist3D}) = [_factor(x) for x in nbins(h)]
 
 """
-    function _factor(n::Integer)
+    _factor(n::Integer)
 
 Helper function to calculate the prime factors of a given integer.
 """
