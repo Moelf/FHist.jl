@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.8
+# v0.20.21
 
 using Markdown
 using InteractiveUtils
@@ -8,16 +8,19 @@ using InteractiveUtils
 # hideall
 let
     docs_dir = dirname(dirname(@__DIR__))
-    pkg_dir = dirname(docs_dir)
 
     using Pkg: Pkg
     Pkg.activate(docs_dir)
-    Pkg.develop(; path=pkg_dir)
-    Pkg.update()
+    Pkg.instantiate()
 end;
 
 # ╔═╡ 82a6fb18-e9c9-450d-9c93-e05bd6cf5859
 using FHist, CairoMakie
+
+# ╔═╡ 85400a26-57ba-4fd8-899d-654bd4ec8fd3
+md"""
+# Makie plotting
+"""
 
 # ╔═╡ 180e65b9-13db-4b0c-8b16-369b6978cec0
 md"""
@@ -209,28 +212,26 @@ end
 
 # ╔═╡ 2f97d05b-9103-451e-8fce-bb7458acf2ba
 md"""
-# Shading/Hatching errorbar band
+## Shading/Hatching errorbar band
 
 """
 
 # ╔═╡ b114c8a7-5f01-44fe-9660-b5021d359399
 let
-    f, a, p = stackedhist([h1, h1 ]; error_color=(:black, 0.5))
+	fig, ax, plt = stackedhist([h1, h1 ]; error_color=(:black, 0.5))
 	labels = ["proc1", "blah"]
-	elements = [PolyElement(polycolor = p.attributes.color[][i]) for i in 1:length(labels)]
+	elements = [PolyElement(polycolor = plt.attributes.color[][i]) for i in 1:length(labels)]
 	title = "Legend title"
-	Legend(f[1,2], elements, labels, title)
-	f
+	Legend(fig[1,2], elements, labels, title)
+	fig
 end
 
 # ╔═╡ fae56f0f-bac4-4dea-b33c-d45e6f3b51fc
-let
-    f, a, p = stackedhist([h1, h1]; error_color=Pattern('/'; width=0.5, tilesize=(4,4)))
-	f
-end
+stackedhist([h1, h1]; error_color=Pattern('/'; width=0.5, tilesize=(4,4)))
 
 # ╔═╡ Cell order:
 # ╠═4cf8f502-eba2-11ec-275f-3f1858e4c2e6
+# ╠═85400a26-57ba-4fd8-899d-654bd4ec8fd3
 # ╠═82a6fb18-e9c9-450d-9c93-e05bd6cf5859
 # ╠═180e65b9-13db-4b0c-8b16-369b6978cec0
 # ╠═8491f5c3-93b6-4670-8f6e-0d08d7afbf75
