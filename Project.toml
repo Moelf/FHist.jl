@@ -1,7 +1,7 @@
 name = "FHist"
 uuid = "68837c9b-b678-4cd5-9925-8a54edc8f695"
-authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
 version = "0.11.17"
+authors = ["Moelf <proton[at]jling.dev>", "Nick Amin <amin.nj[at]gmail.com>"]
 
 [deps]
 BayesHistogram = "000d9b38-65fe-4c81-bdb9-69f01f102479"
@@ -9,6 +9,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [weakdeps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -34,17 +35,18 @@ Plots = "1.40"
 RecipesBase = "^1"
 Statistics = "1"
 StatsBase = "^0.33, 0.34"
+StructArrays = "0.7.2"
 Test = "1"
 julia = "^1.10"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 
 [targets]
-test = ["Test", "HDF5", "Aqua"]
 docs = ["Test", "HDF5", "CairoMakie", "Plots"]
+test = ["Test", "HDF5", "Aqua"]

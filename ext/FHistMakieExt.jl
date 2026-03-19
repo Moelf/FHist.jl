@@ -1,6 +1,7 @@
 module FHistMakieExt
 using FHist, FHist.Measurements
 using Statistics
+using StructArrays
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
 import FHist: stackedhist, stackedhist!
@@ -81,8 +82,64 @@ fig
         color=Makie.wong_colors(),
         labels=nothing,
         whiskerwidth=10,
-        gap=-0.01
+        gap=-0.01,
+        direction=:y
     )
+end
+
+function _smart_log_clamp(ys, ref=ys)
+    # x-scale log and !(in_y_direction) is equiavlent to y-scale log in_y_direction
+    # use the minimal non-zero y divided by 2 as lower bound for log scale
+    smart_fillto = minimum(y -> y<=0 ? oftype(y, Inf) : y, ref) / 2
+    return clamp.(ys, smart_fillto, Inf), smart_fillto
+end
+
+
+function stack_from_to_sorted(y)
+    to = cumsum(y)
+    from = [0.0; to[firstindex(to):end-1]]
+
+    (from = from, to = to)
+end
+
+function stack_from_to(i_stack, y)
+    # save current order
+    order = 1:length(y)
+    # sort by i_stack
+    perm = sortperm(i_stack)
+    # restore original order
+    inv_perm = sortperm(order[perm])
+
+    from, to = stack_from_to_sorted(view(y, perm))
+
+    (from = view(from, inv_perm), to = view(to, inv_perm))
+end
+
+function stack_grouped_from_to(i_stack, y, grp; log_clamp=false)
+    from = Array{Float64}(undef, length(y))
+    to   = Array{Float64}(undef, length(y))
+
+    groupby = StructArray((; grp...))
+    grps = StructArrays.finduniquesorted(groupby)
+    last_pos = map(grps) do (g, inds)
+        g => any(y[inds] .> 0) || all(y[inds] .== 0)
+    end |> Dict
+    is_pos = map(y, groupby) do v, g
+        last_pos[g] = iszero(v) ? last_pos[g] : v > 0
+    end
+
+    groupby = StructArray((; grp..., is_pos))
+    grps = StructArrays.finduniquesorted(groupby)
+    for (grp, inds) in grps
+        fromto = stack_from_to(i_stack[inds], y[inds])
+        from[inds] .= fromto.from
+        to[inds] .= fromto.to
+    end
+
+    if log_clamp
+        from, _ = _smart_log_clamp(from, to)
+    end
+    (from = from, to = to)
 end
 
 function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
@@ -100,12 +157,29 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     totals = Measurements.value.(mes)
     errs = Measurements.uncertainty.(mes)
 
+    dir = input.direction[]
+    in_y_direction = get((y=true, x=false), dir) do
+        error("Invalid direction $dir. Options are :x and :y.")
+    end
+
+    transformation = input.transformation.transform_func[]
+    _logT = Union{typeof(log), typeof(log2), typeof(log10), Base.Fix1{typeof(log), <: Real}}
+    log_clamp = transformation isa Tuple && in_y_direction&& transformation[2] isa _logT || (!in_y_direction && transformation[1] isa _logT)
+
+    if log_clamp
+        ys, fillto = _smart_log_clamp(ys)
+    end
+
+    if length(hs) > 1
+        ys, fillto = stack_grouped_from_to(grp, ys, (x=xs,); log_clamp)
+    end
+
     c = input[:color][]
     length(c) < Nhist && throw("provided $(length(c)) colors, not enough for $Nhist histograms")
     Makie.barplot!(input, xs, ys;
-        stack=grp,
         color=c[grp],
         gap=input[:gap],
+        fillto
     )
 
     error_color = input[:error_color]
