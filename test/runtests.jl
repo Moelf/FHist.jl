@@ -1,9 +1,9 @@
-using FHist, StatsBase, Statistics, HDF5
+using FHist, StatsBase, Statistics, HDF5, CairoMakie
 using Test
 using Aqua
 
 @testset "Aqua" begin
-    Aqua.test_all(FHist)
+    Aqua.test_all(FHist; stale_deps=(; ignore=[:Measurements]))
 end
 
 @testset "Fast route" begin
@@ -667,3 +667,16 @@ end
 include("test-algebraic-content.jl")
 
 include("hdf5.jl")
+
+@testset "Makie extension" begin
+    h1 = Hist1D(randn(1000); binedges = -3:0.5:3)
+    h2 = Hist2D((randn(1000), randn(1000)); binedges = (-3:0.5:3, -3:0.5:3))
+    h3 = Hist3D((randn(1000), randn(1000), randn(1000)); binedges = (-3:3, -3:3, -3:3))
+
+    @test plot(h1) isa Makie.FigureAxisPlot
+    @test plot(h2) isa Makie.FigureAxisPlot
+    @test plot(h3) isa Makie.FigureAxisPlot
+    @test stairs(h1) isa Makie.FigureAxisPlot
+    @test stackedhist([h1, h1]) isa Makie.FigureAxisPlot
+    @test ratiohist(h1) isa Makie.FigureAxisPlot
+end

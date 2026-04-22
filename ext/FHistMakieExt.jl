@@ -1,5 +1,5 @@
 module FHistMakieExt
-using FHist, FHist.Measurements
+using FHist, Measurements
 using Statistics
 isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
 
