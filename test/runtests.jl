@@ -211,7 +211,7 @@ end
     @test integral(nt) == 1 # self-consistent requirement
 
     ntw = normalize(t; width = true)
-    @test bincounts(ntw) == bincounts(t) ./ 2
+    @test bincounts(ntw) == [4 / 6, 0, 1 / 6] # count [1, 0, 0.5] div by width [1, 1, 2] and area normalized
     @test integral(ntw; width=true) == 1 #self-consistent
 end
 
