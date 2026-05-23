@@ -188,7 +188,11 @@ resultant histogram has area under the curve equals 1.
     and the bin width is taken "as is".
 """
 function normalize(h::Hist1D; width=true)
-    return h*(1/integral(h; width=width))
+    h_prob_normalized = h*(1/integral(h; width=false))
+    if width
+        h_prob_normalized.bincounts ./= diff(binedges(h_prob_normalized))
+    end
+    return h_prob_normalized
 end
 
 """
