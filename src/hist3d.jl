@@ -12,6 +12,23 @@ function auto_bins(ary, ::Val{3}; nbins=nothing)
 end
 
 """
+    sample(h::Hist3D, n::Int=1)
+
+Sample a histogram's with weights equal to bin count, `n` times.
+The sampled values are the bins' lower edges.
+"""
+function StatsBase.sample(h::Hist3D; n::Int=1)
+    xedges, yedges, zedges = binedges(h)
+    counts = bincounts(h)
+    cis = CartesianIndices(counts)
+    sampled = StatsBase.sample(cis, Weights(vec(counts)), n)
+    xs = [xedges[I[1]] for I in sampled]
+    ys = [yedges[I[2]] for I in sampled]
+    zs = [zedges[I[3]] for I in sampled]
+    return (xs, ys, zs)
+end
+
+"""
     nbins(h::Hist3D)
 
 Get a 3-tuple of the number of x and y bins of a histogram.
