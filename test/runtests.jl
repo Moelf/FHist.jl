@@ -298,6 +298,17 @@ end
 
 @testset "Sample" begin
     @test mean(FHist.sample(Hist1D(rand(10^5); binedges = 0:0.1:1), n=10^5)) ≈ 0.5 atol=0.1
+    begin
+        xs, ys = FHist.sample(Hist2D((rand(10^5), rand(10^5)); binedges = (0:0.1:1, 0:0.1:1)), n=10^5)
+        @test mean(xs) ≈ 0.5 atol=0.1
+        @test mean(ys) ≈ 0.5 atol=0.1
+    end
+    begin
+        xs, ys, zs = FHist.sample(Hist3D((rand(10^5), rand(10^5), rand(10^5)); binedges = (0:0.1:1, 0:0.1:1, 0:0.1:1)), n=10^5)
+        @test mean(xs) ≈ 0.5 atol=0.1
+        @test mean(ys) ≈ 0.5 atol=0.1
+        @test mean(zs) ≈ 0.5 atol=0.1
+    end
 end
 
 @testset "Empty" begin

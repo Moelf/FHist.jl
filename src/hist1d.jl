@@ -40,9 +40,7 @@ end
 Sample a histogram's with weights equal to bin count, `n` times.
 The sampled values are the bins' lower edges.
 """
-function sample(h::Hist1D; n::Int=1)
-    StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
-end
+StatsBase.sample(h::Hist1D; n::Int=1) = StatsBase.sample(binedges(h)[1:end-1], Weights(bincounts(h)), n)
 
 """
     nbins(h::Hist1D)
