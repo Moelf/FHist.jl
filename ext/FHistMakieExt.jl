@@ -106,6 +106,7 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
         stack=grp,
         color=c[grp],
         gap=input[:gap],
+        width=mapreduce(diff ∘ binedges, vcat, hs),
     )
 
     error_color = input[:error_color]
