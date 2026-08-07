@@ -1,8 +1,8 @@
-function _fast_bincounts!(h::Hist1D, TA::Tuple{T}, r::AbstractRange, weights::Nothing) where T
-    A = TA[1]
+_fast_bincounts!(h::Hist1D, TA::Tuple{T}, r::AbstractRange, ::Nothing) where T = _fast_bincounts_1d!(h, TA[1], r)
+
+function _fast_bincounts_1d!(h::Hist1D, A, r::AbstractRange)
     overflow = h.overflow
     counts = bincounts(h)
-    s2 = sumw2(h)
     firstr = first(r)
     invstep = inv(step(r))
     L = nbins(h)
