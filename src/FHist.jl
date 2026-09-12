@@ -340,5 +340,6 @@ export h5writehist, h5readhist
 function h5writehist end
 function h5readhist end
 
+include("./gpu.jl")
 
 end

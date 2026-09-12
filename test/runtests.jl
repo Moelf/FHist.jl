@@ -1,4 +1,5 @@
 using FHist, StatsBase, Statistics, HDF5, CairoMakie
+using KernelAbstractions, GPUArraysCore  # triggers the GPU extension (tested on the CPU backend)
 using Test
 using Aqua
 
@@ -680,6 +681,8 @@ include("test-algebraic-content.jl")
 include("correctness.jl")
 
 include("hdf5.jl")
+
+include("gpu.jl")
 
 @testset "Makie extension" begin
     h1 = Hist1D(randn(1000); binedges = -3:0.5:3)
