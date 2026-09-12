@@ -85,21 +85,24 @@ function _uniform_lookup_ok(v::AbstractVector{F}, inv_step::F) where {F<:Abstrac
     return true
 end
 
-# Cheaper one-sided correction: the guess is biased downwards by `bias` so that it is never too
-# high, and then corrected upwards by at most one bin with a single (branchless) comparison.
-# For `x` in the bin `i` (`e_i <= x < e_{i+1}`) this is exact iff the biased guess
-# `gb(x) = trunc((x - e_1) * inv_step - bias) + 1` is in `{i-1, i}`; `gb` is monotonic in `x`,
-# so it suffices that `gb(e_i) >= i-1` and `gb(prevfloat(e_i)) <= i-1` for every edge.
+# Cheaper correction without touching the edge values in the common case: two guesses, biased
+# downwards and upwards by `bias`, `gl(x) = trunc(f(x) - bias) + 1` and `gu(x) = trunc(f(x) + bias) + 1`
+# with `f(x) = (x - e_1) * inv_step`. By construction (checked here) `gl(x) <= truth <= gu(x)` and
+# `gu - gl <= 1`, so whenever the two agree the answer is certain, and otherwise (only for `x`
+# within `bias` bins of an edge) a single comparison against the edge decides. Both guesses are
+# monotonic in `x`, so for `x` in bin `i` (`e_i <= x < e_{i+1}`) it suffices that for every edge
+# `gl(e_i) >= i-1`, `gu(e_i) >= i` and `gl(prevfloat(e_i)) <= i-1`.
 # Returns the smallest working bias out of a few candidates, or `NaN` if none works.
 function _find_bias(v::AbstractVector{Float64}, inv_step::Float64)
     x1 = first(v)
-    gb(x, δ) = unsafe_trunc(Int, (x - x1) * inv_step - δ) + 1
+    gl(x, δ) = unsafe_trunc(Int, (x - x1) * inv_step - δ) + 1
+    gu(x, δ) = unsafe_trunc(Int, (x - x1) * inv_step + δ) + 1
     for k in (0, 1, 4, 16, 64, 256)
         δ = k * eps(Float64) * length(v)
         ok = true
         for i in eachindex(v)
             e = v[i]
-            if !(gb(e, δ) >= i - 1 && (i == 1 || gb(prevfloat(e), δ) <= i - 1))
+            if !(gl(e, δ) >= i - 1 && gu(e, δ) >= i && (i == 1 || gl(prevfloat(e), δ) <= i - 1))
                 ok = false
                 break
             end
@@ -107,6 +110,16 @@ function _find_bias(v::AbstractVector{Float64}, inv_step::Float64)
         ok && return δ
     end
     return NaN
+end
+
+# The one-sided lookup for `first <= x < last`, see `_find_bias`; result in 1:L
+@inline function _biased_lookup(b::BinEdges, x::Float64)
+    f = (x - b.rfirst) * b.inv_step
+    g = unsafe_trunc(Int, f - b.bias) + 1
+    if g != unsafe_trunc(Int, f + b.bias) + 1  # rare: x within `bias` bins of an edge
+        @inbounds g += x >= b.padded[g+1]
+    end
+    return g
 end
 
 isuniform(b::BinEdges) = b.isuniform
@@ -128,22 +141,17 @@ Base.convert(::Type{BinEdges}, edges::AbstractVector) = BinEdges(edges)
     L = length(b.edges) - 1
     x < b.rfirst && return 0
     x < b.rlast || return L + 1  # x >= last, or NaN
+    b.twosided || return _biased_lookup(b, x)
+    # fallback: guess, then correct by at most one bin in either direction
     f = (x - b.rfirst) * b.inv_step
     e = b.padded  # e[L+2] == Inf, so `g + 1` is always in bounds below
-    if !b.twosided
-        g = unsafe_trunc(Int, f - b.bias) + 1  # in 1:L, never too high (see `_find_bias`)
-        @inbounds g += x >= e[g+1]
-        return g
-    else
-        # guess, then correct by at most one bin in either direction
-        g = unsafe_trunc(Int, f) + 1  # in 1:L+1 (see `_uniform_lookup_ok`)
-        @inbounds if x < e[g]
-            g -= 1
-        elseif x >= e[g+1]
-            g += 1
-        end
-        return g
+    g = unsafe_trunc(Int, f) + 1  # in 1:L+1 (see `_uniform_lookup_ok`)
+    @inbounds if x < e[g]
+        g -= 1
+    elseif x >= e[g+1]
+        g += 1
     end
+    return g
 end
 
 # Branchless binary search (the number of iterations only depends on the length), ~30% faster
