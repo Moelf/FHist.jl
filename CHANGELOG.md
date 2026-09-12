@@ -1,4 +1,4 @@
-## 0.11.20
+## 0.12.0
 - Exact bin assignment for values on uniform bin edges, `NaN`/`Inf` handling unified across uniform and non-uniform binnings.
 - `Hist2D`/`Hist3D` `nentries` no longer counts discarded entries; `empty!` resets `nentries`.
 - `Hist3D` auto binning fixed (was one bin per axis).

@@ -6,7 +6,7 @@
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Changelog
-- 0.11.20
+- 0.12.0
   - Values exactly on a bin edge of a *uniform* binning now always land in the correct bin (they
     could previously fall into the bin below due to floating point rounding); `NaN`/`Inf` no
     longer throw for uniform binnings (they are discarded, or clamped into the edge bins with
