@@ -27,7 +27,6 @@ makedocs(;
             "Using Histogram" => "usage.md",
         ],
         "APIs Reference" => "api.md",
-        "GPU histogramming" => "gpu.md",
         "Writing to `.root`" => "writingtoroot.md",
         "Writing to `HDF5`" => "writingtohdf5.md",
         "Plotting Tutorials" => T,

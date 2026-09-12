@@ -6,7 +6,7 @@
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Changelog
-- 0.12.0
+- 0.11.20
   - Values exactly on a bin edge of a *uniform* binning now always land in the correct bin (they
     could previously fall into the bin below due to floating point rounding); `NaN`/`Inf` no
     longer throw for uniform binnings (they are discarded, or clamped into the edge bins with
@@ -20,8 +20,6 @@ Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible 
   - New: `rebin`/`restrict`/`append!`/`mean`/`std`/`median` for `Hist3D`, edge based `rebin` for
     `Hist2D`/`Hist3D`, `integral(h; width=true)` and `normalize(h; width=true)` for `Hist2D`/`Hist3D`,
     `nbins` may be a single integer for `Hist2D`/`Hist3D`, `hash` for histograms.
-  - New: GPU histogramming via a `KernelAbstractions` extension: `Hist1D(cu_array; binedges)` and
-    `gpu_bincounts`, see the documentation.
 - 0.11
   - Breaking change to the main constructor API, now the API is sanely divided into "constructor for
     empty histogram" and "make histogram given data". See documentation.
