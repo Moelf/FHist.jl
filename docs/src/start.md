@@ -65,6 +65,11 @@ h4 = Hist1D(randn(2000); nbins=4)
 !!! warning
     `nbins` is not strictly enforced, use `binedges` if you need exact control.
 
+Values that fall outside of the bin edges are discarded (and not counted in `nentries`), unless
+`overflow=true` is passed, in which case they are clamped into the first/last bin. `NaN` is
+treated like `+Inf`. A value sitting exactly on a bin edge belongs to the bin on its right, i.e.
+bins are `[left, right)`, like `StatsBase.fit(Histogram, ...)`.
+
 We can do non-uniform binning for example:
 ```@example fh
 h5 = Hist1D(randn(2000); binedges = [0, 0.5, 0.8, 0.9, 1.0])

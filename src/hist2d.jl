@@ -1,16 +1,11 @@
 function auto_bins(ary, ::Val{2}; nbins=nothing)
     xs, ys = ary
-    E = eltype(xs)
-    xnbins, ynbins = isnothing(nbins) ? _sturges.((xs, ys)) : nbins
-    F = E <: Number ? float(E) : Float64
-    lo, hi = minimum(xs), maximum(xs)
-    loy, hiy = minimum(ys), maximum(ys)
-    (StatsBase.histrange(F(lo), F(hi), xnbins),
-        StatsBase.histrange(F(loy), F(hiy), ynbins),)
+    xnbins, ynbins = isnothing(nbins) ? _sturges.((xs, ys)) : _nbins_per_axis(nbins, Val(2))
+    return (_auto_range(xs, xnbins), _auto_range(ys, ynbins))
 end
 
 """
-    sample(h::Hist2D, n::Int=1)
+    sample(h::Hist2D; n::Int=1)
 
 Sample a histogram's with weights equal to bin count, `n` times.
 The sampled values are the bins' lower edges.
@@ -34,8 +29,13 @@ function nbins(h::Hist2D)
     size(bincounts(h))
 end
 
-function integral(h::Hist2D)
-    sum(bincounts(h))
+function integral(h::Hist2D; width=false)
+    if width
+        wx, wy = map(diff, h.binedges)
+        return sum(bincounts(h) .* wx .* wy')
+    else
+        return sum(bincounts(h))
+    end
 end
 
 """
@@ -46,6 +46,9 @@ Adding one value at a time into histogram.
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
 `atomic_push!` is a slower version of `push!` that is thread-safe.
 
+Entries where any coordinate is outside of the bin edges are discarded (and not counted in
+`nentries`), unless the histogram was created with `overflow=true`, in which case the
+coordinates are clamped into the first/last bin along each axis. `NaN` is treated like `+Inf`.
 """
 @inline function atomic_push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
     lock(h)
@@ -55,26 +58,41 @@ Adding one value at a time into histogram.
 end
 
 @inline function Base.push!(h::Hist2D, valx::Real, valy::Real, wgt::Real=1)
-    rx, ry = binedges(h)
     Lx, Ly = nbins(h)
-    binidxx = searchsortedlast(rx, valx)
-    binidxy = searchsortedlast(ry, valy)
+    ix = _binindex(h.binedges[1], Lx, h.overflow, valx)
+    iy = _binindex(h.binedges[2], Ly, h.overflow, valy)
+    (ix == 0 || iy == 0) && return nothing
     h.nentries[] += 1
-    if h.overflow
-        binidxx = clamp(binidxx, 1, Lx)
-        binidxy = clamp(binidxy, 1, Ly)
-        @inbounds bincounts(h)[binidxx,binidxy] += wgt
-        @inbounds sumw2(h)[binidxx,binidxy] += wgt^2
-    else
-        if (unsigned(binidxx - 1) < Lx) && (unsigned(binidxy - 1) < Ly)
-            @inbounds bincounts(h)[binidxx,binidxy] += wgt
-            @inbounds sumw2(h)[binidxx,binidxy] += wgt^2
-        end
-    end
+    @inbounds bincounts(h)[ix, iy] += wgt
+    @inbounds sumw2(h)[ix, iy] += wgt^2
     return nothing
 end
 
-Base.broadcastable(h::Hist2D) = Ref(h)
+function Base.append!(h::Hist2D, xs::AbstractVector, ys::AbstractVector, wgts::AbstractVector)
+    length(xs) == length(ys) == length(wgts) || throw(DimensionMismatch("append! to histogram expect same length values and weights"))
+    lock(h)
+    try
+        for (x, y, w) in zip(xs, ys, wgts)
+            push!(h, x, y, w)
+        end
+    finally
+        unlock(h)
+    end
+    return h
+end
+
+function Base.append!(h::Hist2D, xs::AbstractVector, ys::AbstractVector)
+    length(xs) == length(ys) || throw(DimensionMismatch("append! to histogram expect same length values along each axis"))
+    lock(h)
+    try
+        for (x, y) in zip(xs, ys)
+            push!(h, x, y)
+        end
+    finally
+        unlock(h)
+    end
+    return h
+end
 
 for op in (:mean, :std, :median)
     @eval function Statistics.$op(h::Hist2D)
@@ -99,37 +117,54 @@ end
 
 
 """
-    normalize(h::Hist2D)
+    normalize(h::Hist2D; width=false)
 
-Create a normalized histogram via division by `integral(h)`.
+Create a normalized histogram via division by `integral(h)`. When `width==true`, each bin is
+additionally divided by its area such that `integral(normalize(h; width=true); width=true) == 1`.
+
+!!! note
+    Unlike for `Hist1D`, `width` defaults to `false` for backward compatibility.
 """
-function normalize(h::Hist2D)
-    return h*(1/integral(h))
+function normalize(h::Hist2D; width=false)
+    hn = h*(1/integral(h; width=false))
+    if width
+        wx, wy = map(diff, h.binedges)
+        hn.bincounts ./= wx .* wy'
+        hn.sumw2 ./= (wx .* wy') .^ 2
+    end
+    return hn
 end
 
 """
     rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
+    rebin(h::Hist2D, xedges::AbstractVector{<:Real}, yedges::AbstractVector{<:Real})
     rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
-Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing.
+Merges `nx` (`ny`) consecutive bins into one along the x (y) axis by summing. Alternatively,
+provide the new bin edges along each axis; they must be a subset of the existing edges (see
+the `Hist1D` method of [`rebin`](@ref)).
 """
 function rebin(h::Hist2D, nx::Int=1, ny::Int=nx)
     sx, sy = nbins(h)
-    if !(sx % nx == sy % ny == 0)
-        rebin_values_x, rebin_values_y = map(x->join(sort(collect(x)), ", ", " or "), valid_rebin_values(h))
-        error("Invalid rebin values (nx: $nx, ny: $ny) for a 2D histogram with $(nbins(h)) bins. They have to be powers of nx: $(rebin_values_x) and ny: $(rebin_values_y)")
-    end
-    p1d = (x,n)->Iterators.partition(x, n)
-    p2d = x->(x[i:i+(nx-1),j:j+(ny-1)] for i=1:nx:sx, j=1:ny:sy)
-    counts = sum.(p2d(bincounts(h)))
-    sumw2 = sum.(p2d(h.sumw2))
-    ex = first.(p1d(binedges(h)[1], nx))
-    ey = first.(p1d(binedges(h)[2], ny))
-    _is_uniform_bins(ex) && (ex = range(first(ex), last(ex), length=length(ex)))
-    _is_uniform_bins(ey) && (ey = range(first(ey), last(ey), length=length(ey)))
-    return Hist2D(; binedges = (ex,ey), bincounts = counts, sumw2, nentries = nentries(h), overflow=h.overflow)
+    (sx % nx == 0 && sy % ny == 0) || _rebin_error(h, (nx, ny))
+    bx, by = h.binedges
+    blocks = (_rebin_blocks(sx, nx), _rebin_blocks(sy, ny))
+    counts = _block_sum(bincounts(h), blocks)
+    s2 = _block_sum(sumw2(h), blocks)
+    ex = _subedges(bx, 1:nx:length(bx))
+    ey = _subedges(by, 1:ny:length(by))
+    return Hist2D(; binedges = (ex, ey), bincounts = counts, sumw2 = s2, nentries = nentries(h), overflow=h.overflow)
 end
-rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
+rebin(nx::Int, ny::Int) = h -> rebin(h, nx, ny)
+
+function rebin(h::Hist2D, xedges::AbstractVector{<:Real}, yedges::AbstractVector{<:Real})
+    bx, spans_x = _edge_blocks(h.binedges[1], xedges)
+    by, spans_y = _edge_blocks(h.binedges[2], yedges)
+    counts = _block_sum(bincounts(h), (bx, by))
+    s2 = _block_sum(sumw2(h), (bx, by))
+    return Hist2D(; binedges = (xedges, yedges), bincounts = counts, sumw2 = s2,
+        nentries = nentries(h), overflow = h.overflow && spans_x && spans_y)
+end
 
 
 """
@@ -138,15 +173,18 @@ rebin(nx::Int, ny::Int) = h::Hist2D -> rebin(h, nx, ny)
 
 Computes the `:x` (`:y`) axis projection of the 2D histogram by
 summing over the y (x) axis. Returns a `Hist1D`.
+
+!!! note
+    Beware that the `Hist3D` method of `project` has the opposite convention: there the given
+    axis is the one being summed over (removed).
 """
 function project(h::Hist2D, axis::Symbol=:x)
-    @assert axis ∈ (:x, :y)
+    axis ∈ (:x, :y) || throw(ArgumentError("axis must be ∈ `(:x, :y)`, got $axis"))
     dim = axis == :x ? 2 : 1
-    ex, ey = binedges(h)
-    counts = [sum(bincounts(h), dims=dim)...]
-    sumw2 = [sum(h.sumw2, dims=dim)...]
-    edges = axis == :x ? ex : ey
-    return Hist1D(; binedges = edges, bincounts = counts, sumw2, nentries = nentries(h), overflow=h.overflow)
+    counts = vec(sum(bincounts(h), dims=dim))
+    s2 = vec(sum(sumw2(h), dims=dim))
+    edges = axis == :x ? h.binedges[1] : h.binedges[2]
+    return Hist1D(; binedges = edges, bincounts = counts, sumw2 = s2, nentries = nentries(h), overflow=h.overflow)
 end
 
 """
@@ -155,10 +193,10 @@ end
 Reverses the x and y axes.
 """
 function transpose(h::Hist2D)
-    edges = reverse(binedges(h))
-    counts = collect(bincounts(h)')
-    sumw2 = collect(h.sumw2')
-    return Hist2D(; binedges = edges, bincounts = counts, sumw2, nentries = nentries(h), overflow=h.overflow)
+    edges = reverse(h.binedges)
+    counts = permutedims(bincounts(h))
+    s2 = permutedims(sumw2(h))
+    return Hist2D(; binedges = edges, bincounts = counts, sumw2 = s2, nentries = nentries(h), overflow=h.overflow)
 end
 
 """
@@ -170,12 +208,12 @@ calculating the weighted mean over the other axis.
 `profile(h, :x)` will return a `Hist1D` with the y-axis edges of `h`.
 """
 function profile(h::Hist2D, axis::Symbol=:x)
-    axis ∈ (:x, :y) || throw("axis must be ∈ `(:x, :y)`, got $axis")
+    axis ∈ (:x, :y) || throw(ArgumentError("axis must be ∈ `(:x, :y)`, got $axis"))
     if axis == :y
         h = transpose(h)
     end
 
-    edges = binedges(h)[1]
+    edges = h.binedges[1]
     centers = bincenters(h)[2]
     counts = bincounts(h)
     _sumw2 = sumw2(h)
@@ -204,36 +242,13 @@ Returns a new histogram with a restricted x-axis.
 will return a slice of `h` where the bin centers are in `[0, 3]` (inclusive).
 """
 function restrict(h::Hist2D, xlow=-Inf, xhigh=Inf, ylow=-Inf, yhigh=Inf)
-    xsel = xlow .<= bincenters(h)[1] .<= xhigh
-    ysel = ylow .<= bincenters(h)[2] .<= yhigh
-    @assert count(xsel) > 0 "No bin centers contained in [$(xlow), $(xhigh)]"
-    @assert count(ysel) > 0 "No bin centers contained in [$(ylow), $(yhigh)]"
-    xedgesel = push!(copy(xsel), false)
-    yedgesel = push!(copy(ysel), false)
-
-    xlastidx = findlast(xedgesel)
-    if xlastidx !== nothing
-        xedgesel[xlastidx+1] = 1
-    end
-
-    ylastidx = findlast(yedgesel)
-    if ylastidx !== nothing
-        yedgesel[ylastidx+1] = 1
-    end
-
-    xedges = binedges(h)[1][xedgesel]
-    if _is_uniform_bins(xedges)
-        xedges = range(first(xedges), last(xedges), length=length(xedges))
-    end
-
-    yedges = binedges(h)[2][yedgesel]
-    if _is_uniform_bins(yedges)
-        yedges = range(first(yedges), last(yedges), length=length(yedges))
-    end
-
-    c = bincounts(h)[xsel,ysel]
-    s2 = sumw2(h)[xsel,ysel]
-
+    bx, by = h.binedges
+    xsel = _restrict_bins(bx, xlow, xhigh)
+    ysel = _restrict_bins(by, ylow, yhigh)
+    xedges = _subedges(bx, first(xsel):last(xsel)+1)
+    yedges = _subedges(by, first(ysel):last(ysel)+1)
+    c = bincounts(h)[xsel, ysel]
+    s2 = sumw2(h)[xsel, ysel]
     Hist2D(; binedges = (xedges, yedges), bincounts = c, sumw2 = s2, nentries = nentries(h), overflow=h.overflow)
 end
 restrict(xlow, xhigh, ylow, yhigh) = h::Hist2D -> restrict(h, xlow, xhigh, ylow, yhigh)

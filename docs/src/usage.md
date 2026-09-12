@@ -25,4 +25,16 @@ rebin
 restrict
 profile
 project
+normalize
 ```
+
+All of the above work for `Hist1D`, `Hist2D` and `Hist3D` alike (except `cumulative`, `profile`
+and `transpose`); `rebin` and `restrict` take one argument (pair of arguments) per axis. See
+also `append!` (bulk `push!`, thread-safe) and `empty!` (reset counts, `sumw2` and `nentries`)
+in the [API reference](api.md).
+
+## GPU
+
+Histograms can be filled from GPU arrays (`Hist1D(cu_array; binedges = ...)`), and bin counts can
+be computed on the device with [`gpu_bincounts`](@ref) / [`gpu_bincounts!`](@ref), see
+[GPU histogramming](@ref).

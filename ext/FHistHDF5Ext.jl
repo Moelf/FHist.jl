@@ -1,9 +1,7 @@
 module FHistHDF5Ext
 
 using FHist
-import FHist: stackedhist, stackedhist!
-isdefined(Base, :get_extension) ? (using HDF5) : (using ..HDF5)
-using StatsBase
+using HDF5
 
 import FHist: h5readhist, h5writehist
 

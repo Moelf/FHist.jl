@@ -13,8 +13,6 @@ export Weights
 import LinearAlgebra: normalize, normalize!
 using Base.Threads: SpinLock
 
-# Julia >= 1.9 has package extensions; no Requires needed
-
 using BayesHistogram
 export BayesHistogram
 
@@ -45,6 +43,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
                 overflow=false) where {T}
 
                 es = _to_tuple(binedges)
+                length(es) == $N || throw(DimensionMismatch("Binedges must be a tuple of $($N) vectors, got $(length(es))"))
                 all(length.(es) .- 1 .== size(bincounts) .== size(sumw2)) ||
                     throw(DimensionMismatch("Binedges must be tuple of each axes, and each dimension has one more than the corresponding
                     dimension of `bincounts`"))
@@ -55,7 +54,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
         @doc """
             # To make an __empty__ histogram
-            
+
             use the all-keyword-arguments constructor:
             ```julia
             $($H)(;
@@ -73,7 +72,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
 
             # To make an histogram given data (and weights etc.)
-            
+
             use the a positional argument for data and keyword-arguments for the rest:
             ```julia
             $($H)(array::E;
@@ -87,6 +86,12 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
             !!! note
                 Everything other than data (`array`) is optional (infered from data).
+
+            `nbins` can be a single integer (used for every axis) or a tuple with one integer per axis.
+
+            Values that fall outside of `binedges` are discarded (and not counted in `nentries`)
+            unless `overflow=true`, in which case they are clamped into the first/last bin along
+            each axis. `NaN` is treated like `+Inf`.
             """
         function $H(ary::E;
             counttype::Type{T}=Float64,
@@ -106,7 +111,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
             bs = _to_tuple(binedges)
             h = $H(; counttype, binedges=bs, overflow=overflow)
-            _fast_bincounts!(h, ary, binedges, weights)
+            _fast_bincounts!(h, ary, weights)
             return h
         end
 
@@ -135,10 +140,12 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         !!! note
             For 1D histogram, it returns just a vector. For others, it returns a tuple of vectors.
         """
-        bincenters(h::$H) = _from_tuple(StatsBase.midpoints.(h.binedges))
+        bincenters(h::$H) = _from_tuple(map(b -> StatsBase.midpoints(b.edges), h.binedges))
         @doc """
             nentries(h::$($H))
-        Get the number of times a histogram is filled (`push!`ed)
+        Get the number of entries that were filled (`push!`ed) into the histogram. Values that
+        were discarded because they fell outside of the bin edges (with `overflow=false`) are not
+        counted.
         """
         nentries(h::$H) = h.nentries[]
         @doc """
@@ -153,7 +160,7 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
         """
         binerrors(f::T, h::$H) where T<:Function = f.(sumw2(h))
         binerrors(h::$H) = binerrors(sqrt, h)
-        
+
         @doc raw"""
             effective_entries(h) -> scalar
 
@@ -169,55 +176,136 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
 
         function Base.:(==)(h1::$H, h2::$H)
             bincounts(h1) == bincounts(h2) &&
-                binedges(h1) == binedges(h2) &&
+                h1.binedges == h2.binedges &&
                 nentries(h1) == nentries(h2) &&
                 sumw2(h1) == sumw2(h2) &&
                 h1.overflow == h2.overflow
         end
 
-        function Base.empty!(h1::$H)
-            bincounts(h1) .= false
-            sumw2(h1) .= false
+        Base.hash(h::$H, x::UInt) = hash(h.overflow, hash(nentries(h), hash(sumw2(h), hash(h.binedges, hash(bincounts(h), x)))))
+
+        @doc """
+            empty!(h)
+
+        Reset the histogram in place: bin counts, `sumw2` and `nentries` are all set to zero. The
+        bin edges and `overflow` setting are kept. Returns `h`.
+        """
+        function Base.empty!(h::$H)
+            bincounts(h) .= false
+            sumw2(h) .= false
+            h.nentries[] = 0
+            return h
         end
+
+        Base.broadcastable(h::$H) = Ref(h)
     end
 end
 
-# fall back one-shot implementation
-function _fast_bincounts!(h::Hist1D, A, binedges, weights)
+# The bin index along one axis (1-based, `0` when the value is to be discarded), given the
+# `BinEdges` of that axis, the number of bins `L` and the `overflow` policy.
+@inline function _binindex(b::BinEdges, L::Int, overflow::Bool, x::Real)
+    i = searchsortedlast(b, x)
+    if overflow
+        return clamp(i, 1, L)
+    else
+        return unsigned(i - 1) < unsigned(L) ? i : 0
+    end
+end
+
+# `_fast_bincounts!` fills a *freshly constructed, empty* histogram with data; this is what
+# the "fit like" constructors call. Unweighted fills only touch `bincounts` in the loop and set
+# `sumw2 = bincounts` afterwards (valid only because `h` starts empty).
+function _fast_bincounts!(h::Hist1D, A, weights)
     xs = A[1]
+    b = h.binedges[1]
+    L = nbins(h)
+    overflow = h.overflow
+    counts = bincounts(h)
+    n = 0
     if isnothing(weights)
         for x in xs
-            push!(h, x)
+            i = _binindex(b, L, overflow, x)
+            i == 0 && continue
+            n += 1
+            @inbounds counts[i] += one(eltype(counts))
         end
+        sumw2(h) .= counts
     else
+        s2 = sumw2(h)
         for (x, w) in zip(xs, weights)
-            push!(h, x, w)
+            i = _binindex(b, L, overflow, x)
+            i == 0 && continue
+            n += 1
+            @inbounds counts[i] += w
+            @inbounds s2[i] += w^2
         end
     end
+    h.nentries[] += n
+    return h
 end
-function _fast_bincounts!(h::Hist2D, A, binedges, weights)
+
+function _fast_bincounts!(h::Hist2D, A, weights)
     xs, ys = A
+    bx, by = h.binedges
+    Lx, Ly = nbins(h)
+    overflow = h.overflow
+    counts = bincounts(h)
+    n = 0
     if isnothing(weights)
         for (x, y) in zip(xs, ys)
-            push!(h, x,y)
+            ix = _binindex(bx, Lx, overflow, x)
+            iy = _binindex(by, Ly, overflow, y)
+            (ix == 0 || iy == 0) && continue
+            n += 1
+            @inbounds counts[ix, iy] += one(eltype(counts))
         end
+        sumw2(h) .= counts
     else
+        s2 = sumw2(h)
         for (x, y, w) in zip(xs, ys, weights)
-            push!(h, x, y, w)
+            ix = _binindex(bx, Lx, overflow, x)
+            iy = _binindex(by, Ly, overflow, y)
+            (ix == 0 || iy == 0) && continue
+            n += 1
+            @inbounds counts[ix, iy] += w
+            @inbounds s2[ix, iy] += w^2
         end
     end
+    h.nentries[] += n
+    return h
 end
-function _fast_bincounts!(h::Hist3D, A, binedges, weights)
+
+function _fast_bincounts!(h::Hist3D, A, weights)
     xs, ys, zs = A
+    bx, by, bz = h.binedges
+    Lx, Ly, Lz = nbins(h)
+    overflow = h.overflow
+    counts = bincounts(h)
+    n = 0
     if isnothing(weights)
         for (x, y, z) in zip(xs, ys, zs)
-            push!(h, x, y, z)
+            ix = _binindex(bx, Lx, overflow, x)
+            iy = _binindex(by, Ly, overflow, y)
+            iz = _binindex(bz, Lz, overflow, z)
+            (ix == 0 || iy == 0 || iz == 0) && continue
+            n += 1
+            @inbounds counts[ix, iy, iz] += one(eltype(counts))
         end
+        sumw2(h) .= counts
     else
+        s2 = sumw2(h)
         for (x, y, z, w) in zip(xs, ys, zs, weights)
-            push!(h, x, y, z, w)
+            ix = _binindex(bx, Lx, overflow, x)
+            iy = _binindex(by, Ly, overflow, y)
+            iz = _binindex(bz, Lz, overflow, z)
+            (ix == 0 || iy == 0 || iz == 0) && continue
+            n += 1
+            @inbounds counts[ix, iy, iz] += w
+            @inbounds s2[ix, iy, iz] += w^2
         end
     end
+    h.nentries[] += n
+    return h
 end
 
 include("./utils.jl")
@@ -243,13 +331,6 @@ export h5writehist, h5readhist
 function h5writehist end
 function h5readhist end
 
-function __init__()
+include("./gpu.jl")
 
-    @static if !isdefined(Base, :get_extension)
-        @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("../ext/FHistPlotsExt.jl")
-        @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("../ext/FHistMakieExt.jl")
-        @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" include("../ext/FHistHDF5Ext.jl")
-    end
-
-end
 end

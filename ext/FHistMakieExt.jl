@@ -1,7 +1,7 @@
 module FHistMakieExt
 using FHist, Measurements
 using Statistics
-isdefined(Base, :get_extension) ? (using Makie) : (using ..Makie)
+using Makie
 
 import FHist: stackedhist, stackedhist!
 
@@ -49,10 +49,11 @@ end
 
 
 """
-    stackedhist(hs:AbstractVector{<:Hist1D}; errors=true|:bar|:shade, color=Makie.wong_colors(), gap=-0.01)
+    stackedhist(hs:AbstractVector{<:Hist1D}; errors=:shade, error_color=(:black, 0.5), color=Makie.wong_colors(), gap=-0.01)
 
-Plot a vector of 1D histograms stacked, use `errors` to show or hide error bar in the plot.
-`errors = true` and `errors = :bar` are equivalent.
+Plot a vector of 1D histograms stacked, use `errors` to control how the (total) uncertainty is
+drawn: `:shade` (default) draws a shaded box of total ± error/2 in `error_color`, `true` or `:bar`
+draws error bars of total ± error, and `false` hides the uncertainty.
 
 `color` should be a vector of colors that is at least `length(hs)` long. See below example
 regarding how to make legends semi-manually.
@@ -77,6 +78,7 @@ fig
 """
 @recipe(StackedHist) do scene
     Attributes(
+        errors=:shade,
         error_color=(:black, 0.5),
         color=Makie.wong_colors(),
         labels=nothing,
@@ -110,15 +112,18 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     )
 
     error_color = input[:error_color]
-    if error_color ∈ (true, :bar)
-        errorbars!(input, centers, totals, errs / 2, whiskerwidth=input[:whiskerwidth])
-    else
+    errors = input[:errors][]
+    if errors === true || errors === :bar
+        errorbars!(input, centers, totals, errs; whiskerwidth=input[:whiskerwidth], color=error_color)
+    elseif errors === :shade
         crossbar!(input, centers, totals, totals .+ errs / 2, totals .- errs / 2;
             gap=input[:gap],
             width=diff(_e),
             show_midline=false,
             color=error_color
         )
+    elseif !(errors === false || errors === nothing)
+        throw(ArgumentError("`errors` must be one of `true`, `:bar`, `:shade` or `false`, got $errors"))
     end
     input
 end
@@ -158,15 +163,19 @@ function Makie.plot!(input::RatioHist{<:Tuple{<:Hist1D,<:Hist1D}})
 end
 
 Makie.used_attributes(::Type{<:Makie.Plot}, h::Hist1D) = (:clamp_bincounts,)
+# `float.(x)` always makes a copy, and makes the Int count types work with `eps()`/`NaN`
+_float_counts(h) = float.(bincounts(h))
+_nan_zeros(counts) = map(c -> iszero(c) ? NaN : float(c), counts)
+
 function Makie.convert_arguments(P::Type{<:Scatter}, h::Hist1D; clamp_bincounts=false)
-    ys = copy(bincounts(h))
+    ys = _float_counts(h)
     if clamp_bincounts
         _clamp_counts!(ys)
     end
     convert_arguments(P, bincenters(h), ys)
 end
 function Makie.convert_arguments(P::Type{<:BarPlot}, h::Hist1D; clamp_bincounts=false)
-    ys = copy(bincounts(h))
+    ys = _float_counts(h)
     if clamp_bincounts
         _clamp_counts!(ys)
     end
@@ -178,19 +187,18 @@ function Makie.convert_arguments(P::Type{<:Stairs}, h::Hist1D; clamp_bincounts=f
     edges = binedges(h)
     phantomedge = edges[end] # to bring step back to baseline
     bot = eps()
-    bc = copy(bincounts(h))
+    bc = _float_counts(h)
     if clamp_bincounts
         _clamp_counts!(bc)
     end
-    z = zero(eltype(bc))
-    nonzero_bincounts = replace(bc, z => bot)
+    nonzero_bincounts = map(c -> iszero(c) ? bot : c, bc)
     convert_arguments(P, vcat(edges, phantomedge), vcat(bot, nonzero_bincounts, bot))
 end
 
 Makie.used_attributes(::Type{<:Errorbars}, h::Hist1D) = (:clamp_bincounts, :clamp_errors, :error_function)
 function Makie.convert_arguments(P::Type{<:Makie.Errorbars}, h::FHist.Hist1D; clamp_bincounts=false, clamp_errors=true, error_function=nothing)
     xs = FHist.bincenters(h)
-    ys = copy(FHist.bincounts(h))
+    ys = _float_counts(h)
     errs = if isnothing(error_function)
         FHist.binerrors(FHist.sqrt, h)
     else
@@ -232,7 +240,7 @@ function Makie.plot!(plot::StepHist{<:Tuple{<:Hist1D}})
 end
 
 """
-    statbox!(fig::Uiont{Figure, AxisFigurePlot}, h::Union{Hist1D, Hist2D}; position = (1,2))
+    statbox!(fig::Union{Figure, FigureAxisPlot}, h::Union{Hist1D, Hist2D}; position = (1,2))
 
 Add a CERN ROOT style statbox to an existing figure.
 
@@ -269,24 +277,18 @@ end
 
 Makie.plottype(::Hist2D) = Heatmap
 function Makie.convert_arguments(p::CellGrid, h2d::Hist2D)
-    counts = bincounts(h2d)
-    z = zero(eltype(counts))
-    convert_arguments(p, binedges(h2d)..., replace(counts, z => NaN))
+    convert_arguments(p, FHist._range_or_vector.(h2d.binedges)..., _nan_zeros(bincounts(h2d)))
 end
 
 function Makie.convert_arguments(p::VertexGrid, h2d::Hist2D)
-    counts = bincounts(h2d)
-    z = zero(eltype(counts))
-    convert_arguments(p, bincenters(h2d)..., replace(counts, z => NaN))
+    convert_arguments(p, bincenters(h2d)..., _nan_zeros(bincounts(h2d)))
 end
 
 _to_endpoints(binedge) = (first(binedge), last(binedge))
 
 Makie.plottype(::Hist3D) = Volume
 function Makie.convert_arguments(P::Type{<:Volume}, h::Hist3D)
-    counts = bincounts(h)
-    z = zero(eltype(counts))
-    convert_arguments(P, _to_endpoints.(binedges(h))..., replace(counts, z => NaN))
+    convert_arguments(P, _to_endpoints.(binedges(h))..., _nan_zeros(bincounts(h)))
 end
 
 """
@@ -298,7 +300,7 @@ Inject collaboration text such as `ATLAS/CMS Preliminary` into the plot. The pos
 ```julia
 h1 = Hist1D(randn(10^4))
 with_theme(ATLASTHEME) do
-    fig, ax, p = tairs(h1)
+    fig, ax, p = stairs(h1)
     errorbars!(h1)
     collabtext!(ax)
     fig
