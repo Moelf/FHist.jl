@@ -204,6 +204,18 @@ end
 # The bin index along one axis (1-based, `0` when the value is to be discarded), given the
 # `BinEdges` of that axis, the number of bins `L` and the `overflow` policy.
 @inline function _binindex(b::BinEdges, L::Int, overflow::Bool, x::Real)
+    if b.isuniform & !b.twosided
+        # fused fast path: one (branchless) accept test, a biased guess and a branchless
+        # one-sided correction, see `_find_bias`
+        xf = Float64(x)
+        if (xf >= b.rfirst) & (xf < b.rlast)  # false for NaN
+            g = unsafe_trunc(Int, (xf - b.rfirst) * b.inv_step - b.bias) + 1
+            @inbounds g += xf >= b.padded[g+1]
+            return g
+        else
+            return overflow ? (xf < b.rfirst ? 1 : L) : 0  # NaN -> L
+        end
+    end
     i = searchsortedlast(b, x)
     if overflow
         return clamp(i, 1, L)
