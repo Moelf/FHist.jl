@@ -168,19 +168,64 @@ end
 
 """
     cumulative(h::Hist1D; forward=true)
+    cumulative(h::Union{Hist2D, Hist3D}; forward=true, dims=:)
 
-Create a cumulative histogram. If `forward`, start
-summing from the left.
+Create a cumulative histogram. If `forward`, start summing from the left
+(low edge) of each accumulated axis, otherwise from the right (high edge).
+
+For `Hist2D` and `Hist3D`, `dims` selects the axis (or axes) to accumulate
+along; the default `:` accumulates along every axis, so that bin `(i, j)`
+holds the sum of all bins with `x-index <= i` and `y-index <= j` (this
+matches ROOT's `TH2::GetCumulative`). Pass `dims=1` (or `dims=2`) to
+accumulate along a single axis only. `forward` may be a `Bool` applied to
+every accumulated axis, or a tuple of `Bool`s with one entry per axis in
+`dims`.
+
+`sumw2` is accumulated the same way, `nentries` and `overflow` are kept.
+
+# Examples
+```julia-repl
+julia> h = Hist2D(; bincounts = [1 2; 3 4], binedges = (0:2, 0:2));
+
+julia> bincounts(cumulative(h))
+2×2 Matrix{Float64}:
+ 1.0   3.0
+ 4.0  10.0
+
+julia> bincounts(cumulative(h; dims=1, forward=false))
+2×2 Matrix{Float64}:
+ 4.0  6.0
+ 3.0  4.0
+```
 """
-function cumulative(h::Hist1D; forward=true)
-    # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
-    f = forward ? identity : reverse
-    h = deepcopy(h)
-    bc = bincounts(h)
-    bc .= f(cumsum(f(bc)))
+function cumulative(h::Hist1D; forward::Bool=true)
+    return _cumulative(h, (1,), (forward,))
+end
 
-    s2 = sumw2(h)
-    s2 .= f(cumsum(f(s2)))
+function cumulative(h::Union{Hist2D, Hist3D}; forward=true, dims=Colon())
+    N = ndims(bincounts(h))
+    ds = dims isa Colon ? ntuple(identity, N) : _to_tuple(dims)
+    all(d -> d isa Integer && 1 <= d <= N, ds) ||
+        throw(ArgumentError("`dims` must be `:` or axis index(es) in 1:$N, got $dims"))
+    allunique(ds) || throw(ArgumentError("`dims` must not repeat an axis, got $dims"))
+    fs = forward isa Bool ? ntuple(_ -> forward, length(ds)) : _to_tuple(forward)
+    length(fs) == length(ds) ||
+        throw(ArgumentError("`forward` must be a `Bool` or have one entry per accumulated axis"))
+    return _cumulative(h, ds, fs)
+end
+
+function _cumulative(h, dims::Tuple, forward::Tuple)
+    # https://root.cern.ch/doc/master/TH1_8cxx_source.html#l02608
+    h = deepcopy(h)
+    for arr in (bincounts(h), sumw2(h))
+        for (d, f) in zip(dims, forward)
+            if f
+                arr .= cumsum(arr; dims=d)
+            else
+                arr .= reverse(cumsum(reverse(arr; dims=d); dims=d); dims=d)
+            end
+        end
+    end
     return h
 end
 
