@@ -228,6 +228,49 @@ end
     @test bincounts(cumulative(h1, forward=true)) == sumw2(cumulative(h1, forward=true))
     @test bincounts(cumulative(h1, forward=false)) == [6, 5, 3]
     @test bincounts(cumulative(h1, forward=false)) == sumw2(cumulative(h1, forward=false))
+
+    # Hist2D
+    h2 = Hist2D(; bincounts = [1.0 2.0; 3.0 4.0], sumw2 = [1.0 4.0; 9.0 16.0],
+                binedges = (0:2, 0:2), nentries = 10)
+    c = cumulative(h2)
+    @test bincounts(c) == [1 3; 4 10]
+    @test sumw2(c) == [1 5; 10 30]
+    @test nentries(c) == 10
+    @test binedges(c) == binedges(h2)
+    @test bincounts(cumulative(h2; forward=false)) == [10 6; 7 4]
+    # single axis, matches the manual cumsum in issue #141
+    m = bincounts(h2)
+    @test bincounts(cumulative(h2; dims=1)) == cumsum(m; dims=1)
+    @test bincounts(cumulative(h2; dims=1, forward=false)) == reverse(cumsum(reverse(m; dims=1); dims=1); dims=1)
+    @test sumw2(cumulative(h2; dims=1, forward=false)) == reverse(cumsum(reverse(sumw2(h2); dims=1); dims=1); dims=1)
+    @test bincounts(cumulative(h2; dims=2)) == cumsum(m; dims=2)
+    @test bincounts(cumulative(h2; dims=(1, 2))) == bincounts(cumulative(h2))
+    @test bincounts(cumulative(h2; dims=(2, 1))) == bincounts(cumulative(h2))
+    # per-axis direction
+    @test bincounts(cumulative(h2; forward=(true, false))) == [3 2; 10 6]
+    @test bincounts(cumulative(h2; dims=2, forward=(false,))) == [3 2; 7 4]
+    # last bin of an all-forward cumulative equals the integral
+    @test bincounts(cumulative(h2))[end, end] == integral(h2)
+    @test bincounts(cumulative(h2))[end] == bincounts(cumulative(project(h2, :x)))[end]
+    # input untouched, overflow flag preserved
+    @test bincounts(h2) == [1 2; 3 4]
+    ho = Hist2D((randn(100), randn(100)); binedges=(-1:1, -1:1), overflow=true)
+    @test cumulative(ho).overflow
+    @test bincounts(cumulative(ho))[end, end] == integral(ho) == 100
+    # invalid arguments
+    @test_throws ArgumentError cumulative(h2; dims=3)
+    @test_throws ArgumentError cumulative(h2; dims=0)
+    @test_throws ArgumentError cumulative(h2; dims=(1, 1))
+    @test_throws ArgumentError cumulative(h2; forward=(true,))
+    @test_throws ArgumentError cumulative(h2; dims=1, forward=(true, false))
+
+    # Hist3D
+    a3 = reshape(1.0:8.0, 2, 2, 2)
+    h3 = Hist3D(; bincounts = collect(a3), binedges = (0:2, 0:2, 0:2))
+    @test bincounts(cumulative(h3)) == cumsum(cumsum(cumsum(a3; dims=1); dims=2); dims=3)
+    @test bincounts(cumulative(h3))[end, end, end] == integral(h3)
+    @test bincounts(cumulative(h3; dims=3)) == cumsum(a3; dims=3)
+    @test bincounts(cumulative(h3; dims=2, forward=false)) == reverse(cumsum(reverse(a3; dims=2); dims=2); dims=2)
 end
 
 @testset "Bin errors" begin

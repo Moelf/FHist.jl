@@ -189,14 +189,12 @@ end
     @test first(binedges(h2)[2]) >= 60 && last(binedges(h2)[2]) <= 140
 end
 
-cumulative_or_self(h::Hist1D) = cumulative(h)
-cumulative_or_self(h) = h
 @testset "Arithmetic keeps uniform bin edges" begin
     h = Hist1D(randn(100); binedges=-3:0.5:3)
     h2 = Hist2D((randn(100), randn(100)); binedges=(-3:1:3, -3:1:3))
     h3 = Hist3D((randn(100), randn(100), randn(100)); binedges=(-3:1:3, -3:1:3, -3:1:3))
     for hh in (h, h2, h3)
-        for r in (hh + hh, hh - hh, hh * 2, 2 * hh, hh / hh, normalize(hh), merge(hh, hh), cumulative_or_self(hh))
+        for r in (hh + hh, hh - hh, hh * 2, 2 * hh, hh / hh, normalize(hh), merge(hh, hh), cumulative(hh))
             @test all(FHist.isuniform, r.binedges)
             @test all(b -> b.isrange, r.binedges)
             @test binedges(r) == binedges(hh)
