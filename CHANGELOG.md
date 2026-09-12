@@ -1,3 +1,6 @@
+## 0.12.0
+- GPU histogramming extension (`Hist1D(gpu_array; ...)`, `gpu_bincounts`), see docs.
+
 ## 0.11.20
 - Exact bin assignment for values on uniform bin edges, `NaN`/`Inf` handling unified across uniform and non-uniform binnings.
 - `Hist2D`/`Hist3D` `nentries` no longer counts discarded entries; `empty!` resets `nentries`.

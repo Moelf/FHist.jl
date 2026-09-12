@@ -6,6 +6,10 @@
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Changelog
+- 0.12.0
+  - New: GPU histogramming via a `KernelAbstractions` extension, loaded automatically with any GPU
+    array package: `Hist1D(cu_array; binedges)` fills a histogram from device data, `gpu_bincounts`
+    keeps the counts on the device. See the documentation.
 - 0.11.20
   - Values exactly on a bin edge of a *uniform* binning now always land in the correct bin (they
     could previously fall into the bin below due to floating point rounding); `NaN`/`Inf` no
