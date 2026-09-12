@@ -6,6 +6,20 @@
 Fast, error-aware, and thread-safe 1D/2D/3D histograms that are also compatible with `StatsBase.Histogram`
 
 ## Changelog
+- 0.11.20
+  - Values exactly on a bin edge of a *uniform* binning now always land in the correct bin (they
+    could previously fall into the bin below due to floating point rounding); `NaN`/`Inf` no
+    longer throw for uniform binnings (they are discarded, or clamped into the edge bins with
+    `overflow=true`, like for non-uniform binnings).
+  - `Hist2D`/`Hist3D` no longer count discarded out-of-range entries in `nentries` (consistent
+    with `Hist1D`); `empty!` resets `nentries` and returns the histogram.
+  - `Hist3D` automatic binning uses one Sturges rule per axis (it used to produce a single bin).
+  - Arithmetic (`+`, `-`, `*`, `/`, `normalize`, ...) keeps uniform bin edges uniform, scaling a
+    histogram with negative bin contents is allowed; uniform edges given as a `Vector` use the
+    O(1) lookup; weighted and multi-dimensional filling is 2-3x faster.
+  - New: `rebin`/`restrict`/`append!`/`mean`/`std`/`median` for `Hist3D`, edge based `rebin` for
+    `Hist2D`/`Hist3D`, `integral(h; width=true)` and `normalize(h; width=true)` for `Hist2D`/`Hist3D`,
+    `nbins` may be a single integer for `Hist2D`/`Hist3D`, `hash` for histograms.
 - 0.11
   - Breaking change to the main constructor API, now the API is sanely divided into "constructor for
     empty histogram" and "make histogram given data". See documentation.

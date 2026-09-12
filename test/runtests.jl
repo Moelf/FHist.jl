@@ -677,6 +677,8 @@ end
 
 include("test-algebraic-content.jl")
 
+include("correctness.jl")
+
 include("hdf5.jl")
 
 @testset "Makie extension" begin
@@ -689,5 +691,19 @@ include("hdf5.jl")
     @test plot(h3) isa Makie.FigureAxisPlot
     @test stairs(h1) isa Makie.FigureAxisPlot
     @test stackedhist([h1, h1]) isa Makie.FigureAxisPlot
+    @test stackedhist([h1, h1]; errors=:bar) isa Makie.FigureAxisPlot
+    @test stackedhist([h1, h1]; errors=false) isa Makie.FigureAxisPlot
+    @test_throws ArgumentError stackedhist([h1, h1]; errors=:nope)
     @test ratiohist(h1) isa Makie.FigureAxisPlot
+    @test errorbars(h1) isa Makie.FigureAxisPlot
+
+    # integer count types used to fail in the conversions (`NaN`/`eps()` into an `Int` array)
+    h1i = Hist1D(randn(1000); binedges = -3:0.5:3, counttype = Int)
+    h2i = Hist2D((randn(1000), randn(1000)); binedges = (-3:0.5:3, -3:0.5:3), counttype = Int)
+    h3i = Hist3D((randn(1000), randn(1000), randn(1000)); binedges = (-3:3, -3:3, -3:3), counttype = Int)
+    @test plot(h1i) isa Makie.FigureAxisPlot
+    @test stairs(h1i) isa Makie.FigureAxisPlot
+    @test errorbars(h1i) isa Makie.FigureAxisPlot
+    @test heatmap(h2i) isa Makie.FigureAxisPlot
+    @test plot(h3i) isa Makie.FigureAxisPlot
 end

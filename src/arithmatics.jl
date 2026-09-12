@@ -1,5 +1,7 @@
 import Base: ==, +, -, *, /, merge, merge!
 
+# Bin edges are immutable (copied on construction), so they are shared between the input and
+# the result of arithmetic operations, which also keeps uniform edges uniform.
 for T in (:Hist1D,:Hist2D,:Hist3D)
     for op in (:+, :-)
         @eval function ($op)(h1::($T), h2::($T))
@@ -8,15 +10,14 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
             h1.overflow != h2.overflow && throw("Can't $op histograms with different overflow settings.")
             newcounts = broadcast($op, bincounts(h1),  bincounts(h2))
 
-            ($T)(; binedges = copy.(edge1), bincounts = newcounts, sumw2 = sumw2(h1) + sumw2(h2), nentries = nentries(h1) + nentries(h2), overflow = h1.overflow)
+            ($T)(; binedges = edge1, bincounts = newcounts, sumw2 = sumw2(h1) + sumw2(h2), nentries = nentries(h1) + nentries(h2), overflow = h1.overflow)
         end
     end
 
     @eval function *(h1::($T), num::Real)
-        any(<(0), bincounts(h1)) && error("Can't scale (*) a histogram when some bin count is negative")
         newcounts = bincounts(h1) * num
 
-        ($T)(; bincounts = newcounts, binedges = copy.(binedges(h1)), sumw2 = sumw2(h1) * num^2, nentries = nentries(h1), overflow = h1.overflow)
+        ($T)(; bincounts = newcounts, binedges = h1.binedges, sumw2 = sumw2(h1) * num^2, nentries = nentries(h1), overflow = h1.overflow)
     end
     @eval *(num::Real, h1::($T)) = h1 * num
 
@@ -25,15 +26,16 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         _f(counts) = any(x -> x<0, counts)
         counts1 = bincounts(h1)
         counts2 = bincounts(h2)
-        edge1 = binedges(h1)
-        edge1 != binedges(h2) && throw(DimensionMismatch("Binedges don't match in h1/h2"))
+        edge1 = h1.binedges
+        edge1 != h2.binedges && throw(DimensionMismatch("Binedges don't match in h1/h2"))
         (_f(counts1) || _f(counts2)) && error("Can't divide (/) when some bin counts are negative")
         h1.overflow != h2.overflow && throw("Can't divide two histograms with different overflow settings")
 
+        s2_1 = sumw2(h1)
+        s2_2 = sumw2(h2)
         newcounts = counts1 ./ counts2
-        _sumw2 =  sumw2(h1) ./ (counts2 .^ 2) .+
-            (sqrt.(sumw2(h2)) .* counts1 ./ (counts2 .^ 2)) .^ 2
-                       
+        _sumw2 = @. s2_1 / counts2^2 + s2_2 * counts1^2 / counts2^4
+
         ($T)(bincounts = newcounts, binedges = edge1, sumw2 = _sumw2, nentries = nentries(h1); overflow=h1.overflow)
     end
 
@@ -41,10 +43,13 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         edge1 = h1.binedges
         edge1 != h2.binedges && throw(DimensionMismatch("The dimension doesn't match"))
         lock(h1)
-        bincounts(h1) .+= bincounts(h2)
-        sumw2(h1) .+= sumw2(h2)
-        h1.nentries[] += nentries(h2)
-        unlock(h1)
+        try
+            bincounts(h1) .+= bincounts(h2)
+            sumw2(h1) .+= sumw2(h2)
+            h1.nentries[] += nentries(h2)
+        finally
+            unlock(h1)
+        end
         h1
     end
 

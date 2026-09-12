@@ -1,7 +1,7 @@
 module FHistPlotsExt
 using FHist, RecipesBase, Statistics
 
-isdefined(Base, :get_extension) ? (using Plots) : (using ..Plots)
+using Plots
 
 #
 @recipe function f(h::Hist1D)
