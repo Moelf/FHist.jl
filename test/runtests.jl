@@ -740,6 +740,46 @@ include("gpu.jl")
     @test stackedhist([h1, h1]; errors=:bar) isa Makie.FigureAxisPlot
     @test stackedhist([h1, h1]; errors=false) isa Makie.FigureAxisPlot
     @test_throws ArgumentError stackedhist([h1, h1]; errors=:nope)
+
+    # https://github.com/Moelf/FHist.jl/issues/124: stacked bars must survive a log-scaled axis,
+    # including empty bins and an entirely empty histogram in the middle of the stack
+    hempty = Hist1D(Float64[]; binedges = -3:0.5:3)
+    n = nbins(h1)
+    fig = Figure()
+    ax = Axis(fig[1, 1]; yscale = log10)
+    p = stackedhist!(ax, [h1, hempty, h1])
+    rects = p.plots[1].plots[1][1][] # StackedHist -> BarPlot -> Poly rectangles
+    bottoms = [r.origin[2] for r in rects]
+    tops = [r.origin[2] + r.widths[2] for r in rects]
+    baseline = minimum(filter(>(0), bincounts(h1))) / 2 # half the smallest positive stack total
+    @test length(rects) == 3n
+    @test all(>(0), bottoms)
+    @test all(bottoms .<= tops)
+    @test bottoms[1:n] == fill(baseline, n)
+    @test tops[1:n] ≈ max.(bincounts(h1), baseline)
+    @test bottoms[2n + 1:3n] ≈ max.(bincounts(h1), baseline)
+    @test tops[2n + 1:3n] ≈ max.(2 .* bincounts(h1), baseline) # top of the stack is the total
+    Makie.update_state_before_display!(fig)
+    @test ax.finallimits[].origin[2] > baseline / 10 # autolimits stay near the data
+    @test colorbuffer(fig) isa AbstractMatrix
+
+    # on a linear axis the stack starts at zero, as with Makie's `barplot(; stack)`
+    fig = Figure()
+    ax = Axis(fig[1, 1])
+    p = stackedhist!(ax, [h1, hempty, h1])
+    rects = p.plots[1].plots[1][1][]
+    @test [r.origin[2] for r in rects][1:n] == zeros(n)
+    @test [r.origin[2] + r.widths[2] for r in rects][2n + 1:3n] ≈ 2 .* bincounts(h1)
+
+    # negative contents stack downwards from zero, like Makie's `barplot(; stack)`
+    hneg = Hist1D(randn(1000); binedges = -3:0.5:3) * -1
+    from, to = Base.get_extension(FHist, :FHistMakieExt)._stack_from_to([h1, hneg, h1])
+    @test from[1:n] == zeros(n)
+    @test to[1:n] == bincounts(h1)
+    @test from[n + 1:2n] == zeros(n)
+    @test to[n + 1:2n] == bincounts(hneg)
+    @test from[2n + 1:3n] == bincounts(h1)
+    @test to[2n + 1:3n] == 2 .* bincounts(h1)
     @test ratiohist(h1) isa Makie.FigureAxisPlot
     @test errorbars(h1) isa Makie.FigureAxisPlot
 

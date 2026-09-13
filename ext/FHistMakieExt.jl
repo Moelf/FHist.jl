@@ -49,6 +49,57 @@ end
 
 
 """
+    _stack_from_to(hs)
+
+Compute the lower (`from`) and upper (`to`) edges of the stacked bars of `hs`, laid out in the same
+histogram-major order as `mapreduce(bincounts, vcat, hs)`. Like Makie's `barplot(; stack)`, positive
+bin contents are stacked upwards from zero and negative ones downwards.
+"""
+function _stack_from_to(hs)
+    ys = reduce(hcat, (float.(bincounts(h)) for h in hs)) # Nbin × Nhist
+    from = similar(ys)
+    to = similar(ys)
+    for i in axes(ys, 1)
+        pos = neg = zero(eltype(ys))
+        for j in axes(ys, 2)
+            v = ys[i, j]
+            if v >= 0
+                from[i, j] = pos
+                pos += v
+                to[i, j] = pos
+            else
+                from[i, j] = neg
+                neg += v
+                to[i, j] = neg
+            end
+        end
+    end
+    return vec(from), vec(to)
+end
+
+"""
+    _stack_baseline(transform_func, to)
+
+Baseline of the stacked bars for the given y-axis transformation: `0` on a linear axis and, on a
+log-scaled axis (where zero maps to `-Inf`), half the smallest positive stack total. This is the
+same rule Makie's `barplot` uses for its automatic `fillto` on log axes.
+"""
+function _stack_baseline(tf, to)
+    _logT = Union{typeof(log), typeof(log2), typeof(log10), Base.Fix1{typeof(log), <:Real}}
+    (tf isa Tuple && tf[2] isa _logT) || return 0.0
+    m = minimum(v -> v <= 0 ? oftype(v, Inf) : v, to; init=Inf)
+    return isfinite(m) ? m / 2 : 0.0
+end
+
+"""
+    _clamp_stack(v, to, baseline)
+
+Raise the edges `v` of the upward (positive, `to >= 0`) stacks to at least `baseline`; the
+downward stacks are left alone.
+"""
+_clamp_stack(v, to, baseline) = @. ifelse(to >= 0, max(v, baseline), v)
+
+"""
     stackedhist(hs:AbstractVector{<:Hist1D}; errors=:shade, error_color=(:black, 0.5), color=Makie.wong_colors(), gap=-0.01)
 
 Plot a vector of 1D histograms stacked, use `errors` to control how the (total) uncertainty is
@@ -96,7 +147,6 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
     centers = bincenters(first(hs))
     Nbin = length(centers)
     xs = repeat(centers; outer=Nhist)
-    ys = mapreduce(bincounts, vcat, hs)
     grp = repeat(eachindex(hs); inner=Nbin)
     mes = mapreduce(h -> bincounts(h) .± binerrors(h), (.+), hs)
     totals = Measurements.value.(mes)
@@ -104,8 +154,13 @@ function Makie.plot!(input::StackedHist{<:Tuple{AbstractVector{<:Hist1D}}})
 
     c = input[:color][]
     length(c) < Nhist && throw("provided $(length(c)) colors, not enough for $Nhist histograms")
-    Makie.barplot!(input, xs, ys;
-        stack=grp,
+    # Stack manually instead of `barplot(; stack=grp)`: Makie hard-codes a zero baseline for stacks,
+    # which becomes `-Inf` on a log-scaled axis and makes the bottom bars disappear
+    # (https://github.com/Moelf/FHist.jl/issues/124, https://github.com/MakieOrg/Makie.jl/issues/4549).
+    from, to = _stack_from_to(hs)
+    baseline = lift(tf -> _stack_baseline(tf, to), input.transformation.transform_func)
+    Makie.barplot!(input, xs, lift(b -> _clamp_stack(to, to, b), baseline);
+        fillto=lift(b -> _clamp_stack(from, to, b), baseline),
         color=c[grp],
         gap=input[:gap],
         width=mapreduce(diff ∘ binedges, vcat, hs),
