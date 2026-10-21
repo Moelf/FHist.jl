@@ -202,7 +202,7 @@ function cumulative(h::Hist1D; forward::Bool=true)
     return _cumulative(h, (1,), (forward,))
 end
 
-function cumulative(h::Union{Hist2D, Hist3D}; forward=true, dims=Colon())
+function cumulative(h::Union{Hist2D, Hist3D, HistND}; forward=true, dims=Colon())
     N = ndims(bincounts(h))
     ds = dims isa Colon ? ntuple(identity, N) : _to_tuple(dims)
     all(d -> d isa Integer && 1 <= d <= N, ds) ||

@@ -284,3 +284,11 @@ function Base.show(io::IO, m::MIME"text/html", h::Hist3D)
     </div>
     """)
 end
+
+function Base.show(io::IO, h::HistND{T, N}) where {T, N}
+    print(io, "HistND{$T, $N}, ")
+    print(io, "edges=$(repr(binedges(h), context=:limit => true)), ")
+    print(io, "integral=$(integral(h))")
+end
+
+# TODO: text/html show

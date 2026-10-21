@@ -36,3 +36,31 @@ SUITE["Non-Uniform Binning"]["One-shot Uniform input"] = @benchmarkable Hist1D(u
 SUITE["Non-Uniform Binning"]["One-shot Gaussian input"] = @benchmarkable Hist1D(gauss_xs; binedges = [0, 0.1, 0.3, 0.5, 1.0])
 SUITE["Non-Uniform Binning"]["One-shot Uniform input with weights"] = @benchmarkable Hist1D(uniform_xs; weights, binedges = [0, 0.1, 0.3, 0.5, 1.0])
 SUITE["Non-Uniform Binning"]["One-shot Gaussian input with weights"] = @benchmarkable Hist1D(gauss_xs; weights, binedges = [0, 0.1, 0.3, 0.5, 1.0])
+
+function histnd_loop(xs; binedges)
+    hist = HistND{Float64, 1}(; binedges)
+    for x in xs
+        push!(hist, (x,))
+    end
+    hist
+end
+
+function histnd_loop_atomic(xs; binedges)
+    hist = HistND{Float64, 1}(; binedges)
+    for x in xs
+        atomic_push!(hist, (x,))
+    end
+    hist
+end
+
+SUITE["HistND Uniform Binning"]["One-shot Uniform input"] = @benchmarkable HistND{Float64, 1}((uniform_xs,); binedges = (0:0.1:1,))
+SUITE["HistND Uniform Binning"]["One-shot Gaussian input"] = @benchmarkable HistND{Float64, 1}((gauss_xs,); binedges = (0:0.1:1,))
+SUITE["HistND Uniform Binning"]["One-shot Uniform input with weights"] = @benchmarkable HistND{Float64, 1}((uniform_xs,); weights, binedges = (0:0.1:1,))
+SUITE["HistND Uniform Binning"]["One-shot Gaussian input with weights"] = @benchmarkable HistND{Float64, 1}((gauss_xs,); weights, binedges = (0:0.1:1,))
+SUITE["HistND Uniform Binning"]["push!-loop Uniform input"] = @benchmarkable histnd_loop(uniform_xs; binedges = (0:0.1:1,))
+SUITE["HistND Uniform Binning"]["atomic_push!-loop Gaussian input"] = @benchmarkable histnd_loop_atomic(gauss_xs; binedges = (0:0.1:1,))
+
+SUITE["HistND Non-Uniform Binning"]["One-shot Uniform input"] = @benchmarkable HistND{Float64, 1}((uniform_xs,); binedges = ([0, 0.1, 0.3, 0.5, 1.0],))
+SUITE["HistND Non-Uniform Binning"]["One-shot Gaussian input"] = @benchmarkable HistND{Float64, 1}((gauss_xs,); binedges = ([0, 0.1, 0.3, 0.5, 1.0],))
+SUITE["HistND Non-Uniform Binning"]["One-shot Uniform input with weights"] = @benchmarkable HistND{Float64, 1}((uniform_xs,); weights, binedges = ([0, 0.1, 0.3, 0.5, 1.0],))
+SUITE["HistND Non-Uniform Binning"]["One-shot Gaussian input with weights"] = @benchmarkable HistND{Float64, 1}((gauss_xs,); weights, binedges = ([0, 0.1, 0.3, 0.5, 1.0],))

@@ -96,7 +96,7 @@ function _restrict_bins(b::BinEdges, low, high)
 end
 
 _range_or_vector(b::BinEdges) = b.isrange ? b.range : b.edges
-Base.convert(::Type{StatsBase.Histogram}, h::Union{Hist1D, Hist2D, Hist3D}) = StatsBase.Histogram(map(_range_or_vector, h.binedges), bincounts(h))
+Base.convert(::Type{StatsBase.Histogram}, h::Union{Hist1D, Hist2D, Hist3D, HistND}) = StatsBase.Histogram(map(_range_or_vector, h.binedges), bincounts(h))
 
 """
     valid_rebin_values(h::Union{Hist1D, Hist2D, Hist3D})
@@ -107,6 +107,7 @@ dimensional histograms a `Vector{Set}` for each dimension.
 """
 valid_rebin_values(h::Hist1D) = _factor(nbins(h))
 valid_rebin_values(h::Union{Hist2D, Hist3D}) = [_factor(x) for x in nbins(h)]
+valid_rebin_values(h::HistND) = [_factor(x) for x in nbins(h)]
 
 """
     _factor(n::Integer)

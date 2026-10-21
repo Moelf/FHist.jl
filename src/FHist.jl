@@ -1,12 +1,14 @@
 module FHist
 
 export Hist1D, binedges, bincounts, bincenters, binerrors, nbins, integral, nentries, significance
-export sample, lookup, cumulative, normalize, restrict, rebin, bayes_rebin_edges, sumw2
+export sample, lookup, cumulative, normalize, restrict, rebin, bayes_rebin_edges, sumw2, slices
 export atomic_push!
 
 export Hist2D, project, profile, transpose
 
 export Hist3D, collabtext!, statbox!
+
+export HistND
 
 using StatsBase, Statistics
 export Weights
@@ -201,6 +203,124 @@ for (H, N) in ((:Hist1D, 1), (:Hist2D, 2), (:Hist3D, 3))
     end
 end
 
+struct HistND{T<:Real, N} <: AbstractHistogram{T, N, NTuple{N, BinEdges}}
+    binedges::NTuple{N, BinEdges}
+    bincounts::Array{T, N}
+    sumw2::Array{Float64, N}
+    nentries::Base.RefValue{Int}
+    overflow::Bool
+    hlock::SpinLock
+    function HistND{T, N}(;
+        binedges,
+        bincounts=zeros(T, length.(binedges) .- 1),
+        sumw2=zero(bincounts),
+        nentries=0,
+        overflow=false) where {N, T}
+        N == 0 && throw(ArgumentError("N must be larger than 0"))
+        length(binedges) == N || throw(DimensionMismatch("Binedges must be a tuple of $(N) vectors, got $(length(binedges))"))
+        all(length.(binedges) .- 1 .== size(bincounts) .== size(sumw2)) ||
+            throw(DimensionMismatch("Binedges must be tuple of each axes, and each dimension has one more than the corresponding
+            dimension of `bincounts`"))
+        return new{T, N}(convert(NTuple{N, BinEdges}, binedges), bincounts, sumw2, Ref(round(Int, nentries)), overflow, SpinLock())
+    end
+end
+
+function HistND{T, N}(
+    ary::E;
+    binedges=nothing,
+    weights=nothing,
+    nbins=nothing,
+    overflow=false) where {T,N,E<:NTuple{N,Any}}
+    isnothing(weights) || length(ary[1]) == length(weights) || throw(DimensionMismatch("Data and weights must have the same length"))
+
+    binedges::NTuple{N} = if !isnothing(binedges)
+        binedges
+    else
+        auto_bins(ary, Val{N}(); nbins)
+    end
+    h = HistND{T, N}(; binedges, overflow)
+    _fast_bincounts!(h, ary, weights)
+    return h
+end
+
+Base.lock(h::HistND{T, N}) where {T,N} = lock(h.hlock)
+Base.unlock(h::HistND{T, N}) where {T,N} = unlock(h.hlock)
+"""
+    bincounts(h::Hist)
+
+Get the bin counts (weights) of the histogram.
+"""
+bincounts(h::HistND{T, N}) where {T<:Real, N} = h.bincounts
+"""
+    binedges(h)
+
+Get the bin edges of the histogram
+"""
+binedges(h::HistND) = h.binedges
+
+"""
+    bincenters(h::Hist)
+Get the bin centers of the histogram
+"""
+bincenters(h::HistND) = map(b -> StatsBase.midpoints(b.edges), h.binedges)
+"""
+    nentries(h::Hist)
+Get the number of entries that were filled (`push!`ed) into the histogram. Values that
+were discarded because they fell outside of the bin edges (with `overflow=false`) are not
+counted.
+"""
+nentries(h::HistND) = h.nentries[]
+"""
+    sumw2(h)
+Get the sum of weights squared of the histogram, it has the same shape as `bincounts(h)`.
+"""
+sumw2(h::HistND) = h.sumw2
+
+"""
+    binerrors(f=sqrt, h)
+Get the error (uncertainty) of each bin. By default, calls `sqrt` on `sumw2(h)` bin by bin as an approximation.
+"""
+binerrors(f::T, h::HistND) where T<:Function = f.(sumw2(h))
+binerrors(h::HistND) = binerrors(sqrt, h)
+
+@doc raw"""
+    effective_entries(h) -> scalar
+
+Get the number of effective entries for the entire histogram:
+
+```math
+n_\text{eff} = \frac{(\sum \text{Weights} )^2}{(\sum \text{Weight}^2 )}
+```
+
+This is also equivalent to `integral(hist)^2 / sum(sumw2(hist))`, this is the same as `TH1::GetEffectiveEntries()`
+"""
+effective_entries(h::HistND) = abs2(integral(h)) / sum(sumw2(h))
+
+function Base.:(==)(h1::HistND{T, N}, h2::HistND{T, N}) where {T, N}
+    bincounts(h1) == bincounts(h2) &&
+        h1.binedges == h2.binedges &&
+        nentries(h1) == nentries(h2) &&
+        sumw2(h1) == sumw2(h2) &&
+        h1.overflow == h2.overflow
+end
+
+Base.hash(h::HistND, x::UInt) = hash(h.overflow, hash(nentries(h), hash(sumw2(h), hash(h.binedges, hash(bincounts(h), x)))))
+
+@doc """
+    empty!(h)
+
+Reset the histogram in place: bin counts, `sumw2` and `nentries` are all set to zero. The
+bin edges and `overflow` setting are kept. Returns `h`.
+"""
+function Base.empty!(h::HistND)
+    bincounts(h) .= false
+    sumw2(h) .= false
+    h.nentries[] = 0
+    return h
+end
+
+Base.broadcastable(h::HistND) = Ref(h)
+
 # The bin index along one axis (1-based, `0` when the value is to be discarded), given the
 # `BinEdges` of that axis, the number of bins `L` and the `overflow` policy.
 @inline function _binindex(b::BinEdges, L::Int, overflow::Bool, x::Real)
@@ -317,10 +437,46 @@ function _fast_bincounts!(h::Hist3D, A, weights)
     return h
 end
 
+function _fast_bincounts!(h::HistND{T, N}, A, weights) where {T, N}
+    allequal(length, A) || throw(ArgumentError("Input `A` must have a tuple of same-length vectors"))
+    bs = h.binedges
+    Ls = nbins(h)
+    overflow = h.overflow
+    counts = bincounts(h)
+    n = 0
+    if isnothing(weights)
+        for j_input in eachindex(first(A))
+            ks_bin = ntuple(Val{N}()) do i_dim
+                @inline
+                _binindex(bs[i_dim], Ls[i_dim], overflow, A[i_dim][j_input])
+            end
+            any(==(0), ks_bin) && continue
+            n += 1
+            @inbounds counts[ks_bin...] += one(eltype(counts))
+        end
+        sumw2(h) .= counts
+    else
+        s2 = sumw2(h)
+        for j_input in eachindex(first(A))
+            ks_bin = ntuple(Val{N}()) do i_dim
+                @inline
+                _binindex(bs[i_dim], Ls[i_dim], overflow, A[i_dim][j_input])
+            end
+            any(==(0), ks_bin) && continue
+            n += 1
+            @inbounds counts[ks_bin...] += weights[j_input]
+            @inbounds s2[ks_bin...] += weights[j_input]^2
+        end
+    end
+    h.nentries[] += n
+    return h
+end
+
 include("./utils.jl")
 include("./hist1d.jl")
 include("./hist2d.jl")
 include("./hist3d.jl")
+include("./histnd.jl")
 include("./displays.jl")
 include("./arithmatics.jl")
 

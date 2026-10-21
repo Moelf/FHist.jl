@@ -2,9 +2,9 @@ import Base: ==, +, -, *, /, merge, merge!
 
 # Bin edges are immutable (copied on construction), so they are shared between the input and
 # the result of arithmetic operations, which also keeps uniform edges uniform.
-for T in (:Hist1D,:Hist2D,:Hist3D)
+for (T, generic_params) in ((:Hist1D, ()), (:Hist2D, ()), (:Hist3D, ()), (:(HistND{T, N}), (:T, :N)))
     for op in (:+, :-)
-        @eval function ($op)(h1::($T), h2::($T))
+        @eval function ($op)(h1::($T), h2::($T)) where {$(generic_params...)}
             edge1 = h1.binedges
             edge1 != h2.binedges && throw(DimensionMismatch("Binedges don't match"))
             h1.overflow != h2.overflow && throw("Can't $op histograms with different overflow settings.")
@@ -14,15 +14,15 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         end
     end
 
-    @eval function *(h1::($T), num::Real)
+    @eval function *(h1::($T), num::Real) where {$(generic_params...)}
         newcounts = bincounts(h1) * num
 
         ($T)(; bincounts = newcounts, binedges = h1.binedges, sumw2 = sumw2(h1) * num^2, nentries = nentries(h1), overflow = h1.overflow)
     end
-    @eval *(num::Real, h1::($T)) = h1 * num
+    @eval *(num::Real, h1::($T)) where {$(generic_params...)} = h1 * num
 
     # https://github.com/aminnj/yahist/blob/4a5767f181ec7fdcc4af18cf15ceedd1c2f89019/yahist/hist1d.py#L427-L430
-    @eval function /(h1::($T), h2::($T))
+    @eval function /(h1::($T), h2::($T)) where {$(generic_params...)}
         _f(counts) = any(x -> x<0, counts)
         counts1 = bincounts(h1)
         counts2 = bincounts(h2)
@@ -39,7 +39,7 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         ($T)(bincounts = newcounts, binedges = edge1, sumw2 = _sumw2, nentries = nentries(h1); overflow=h1.overflow)
     end
 
-    @eval function merge!(h1::$T, h2::$T)
+    @eval function merge!(h1::$T, h2::$T) where {$(generic_params...)}
         edge1 = h1.binedges
         edge1 != h2.binedges && throw(DimensionMismatch("The dimension doesn't match"))
         lock(h1)
@@ -53,9 +53,9 @@ for T in (:Hist1D,:Hist2D,:Hist3D)
         h1
     end
 
-    @eval merge(h1::$T, h2::$T) = merge!(deepcopy(h1), h2)
+    @eval merge(h1::$T, h2::$T) where {$(generic_params...)} = merge!(deepcopy(h1), h2)
 
-    @eval function merge(hist1::$T, hists::$T...)
+    @eval function merge(hist1::$T, hists::$T...) where {$(generic_params...)}
         h = deepcopy(hist1)
         for h_more in hists
             merge!(h, h_more)

@@ -149,6 +149,58 @@ end
     @test h1 == h3
 end
 
+@testset "HistND" begin
+    @testset "N=1" begin
+        vals = rand(10)
+        rs = 0:0.1:1
+        h1 = Hist1D(vals; binedges = rs)
+        h2 = HistND{Float64, 1}((vals,); binedges = (rs,))
+        @test h1 == convert(Hist1D, h2)
+    end
+
+    @testset "N=2" begin
+        vals = (rand(10), rand(10))
+        rs = (0:0.1:1, 0:0.1:1)
+        h1 = Hist2D(vals; binedges = rs)
+        h2 = HistND{Float64, 2}(vals; binedges = rs)
+        @test h1 == convert(Hist2D, h2)
+    end
+
+    @testset "N=4,5" begin
+        for N in (4, 5)
+            vals = ntuple(_ -> rand(10), N)
+            h = HistND{Float64, N}(vals)
+            @test integral(h) == 10
+            @test nentries(h) == 10
+
+            rs = ntuple(i -> 0:(1 / 2^i):1, N)
+            wgts = weights(2*ones(length(vals[1])))
+            h = HistND{Float64, N}(vals; weights = wgts, binedges = rs)
+            @test nentries(h) == 10
+            @test integral(h) == sum(wgts)
+            @test nbins(h) == ntuple(i -> length(rs[i]) - 1, N)
+
+            @test bincenters(HistND{Float64, N}(vals; binedges = ntuple(_ -> 0:1,N))) == ntuple(_ -> [0.5], N)
+            @test bincenters(HistND{Float64, N}(vals; weights = wgts, binedges = ntuple(_ -> 0:1, N))) == ntuple(_ -> [0.5], N)
+            @test nbins(HistND{Float64, N}(vals; binedges =ntuple(_ -> [0,0.5,1],N))) == ntuple(_ -> 2, N)
+            @test nbins(HistND{Float64, N}(vals; binedges =ntuple(_ -> [0,0.3,1],N))) == ntuple(_ -> 2,N)
+            @test nbins(HistND{Float64, N}(vals; weights = wgts, binedges =ntuple(_ -> [0,0.5,1],N))) == ntuple(_ -> 2,N)
+            @test nbins(HistND{Float64, N}(vals; weights = wgts, binedges =ntuple(_ -> [0,0.3,1],N))) == ntuple(_ -> 2,N)
+
+            @test integral(HistND{Float64, N}(vals; weights = wgts, nbins=ntuple(_ -> 5,N))) == sum(wgts)
+            @test integral(HistND{Float64, N}(vals; nbins=ntuple(_ -> 5,N))) == length(vals[1])
+
+            h1 = HistND{Float64, N}(vals; weights=wgts, binedges=rs)
+            h2 = HistND{Float64, N}(; binedges=rs)
+            h3 = HistND{Float64, N}(; binedges=rs)
+            push!.(h2, zip(vals...), wgts)
+            atomic_push!.(h3, zip(vals...), wgts)
+            @test h1 == h2
+            @test h1 == h3
+        end
+    end
+end
+
 @testset "Iterable fall back" begin
     # 1D
     a = Iterators.flatten([[1,2], [], [3]])
@@ -195,6 +247,10 @@ end
     h1 = Hist3D((a,a,a); weights = wgts1, binedges = (0:0.1:1,0:0.1:1,0:0.1:1))
     @test integral(h1) ≈ sum(wgts1) atol=1e-8
     @test integral(normalize(h1)) ≈ 1 atol=1e-8
+
+    h1 = HistND{Float64, 4}((a, a, a, a); weights = wgts1, binedges = ntuple(_ -> 0:0.1:1, 4))
+    @test integral(h1) ≈ sum(wgts1) atol=1e-8
+    @test integral(normalize(h1)) ≈ 1 atol=1e-8
 end
 
 @testset "Normalize with width" begin
@@ -214,6 +270,40 @@ end
     ntw = normalize(t; width = true)
     @test bincounts(ntw) == [4 / 6, 0, 1 / 6] # count [1, 0, 0.5] div by width [1, 1, 2] and area normalized
     @test integral(ntw; width=true) == 1 #self-consistent
+
+    @testset "HistND{T, 1}" begin
+        t = HistND{Float64, 1}(; binedges = ([0, 1, 2, 4],))
+        push!(t, (0.5,), 0.5);
+        push!(t, (0.5,), 0.5);
+        push!(t, (2.5,), 0.5);
+        # 0.5 + 0.5 + 0.5 = 1.5
+
+        @test integral(t) == 1.5
+        @test integral(t; width=true) == 2
+
+        nt = normalize(t; width=false)
+        @test bincounts(nt) == bincounts(t) ./ 1.5
+        @test integral(nt) == 1 # self-consistent requirement
+
+        ntw = normalize(t; width = true)
+        @test bincounts(ntw) == [4 / 6, 0, 1 / 6] # count [1, 0, 0.5] div by width [1, 1, 2] and area normalized
+        @test integral(ntw; width=true) == 1 #self-consistent
+    end
+
+    @testset "Hist{T, 2}" begin
+        t = HistND{Float64, 2}(; binedges = ([0, 1, 2, 4], [0, 1, 2, 4]))
+        push!(t, (0.5, 0.5), 0.5)
+        push!(t, (0.5, 1.5), 0.5)
+        push!(t, (2.5, 2.5), 0.5)
+
+        @test integral(t) == 1.5
+        @test integral(t; width = true) == 0.5 * 1 * 1 + 0.5 * 1 * 1 + 0.5 * 2 * 2
+
+        ntw = normalize(t; width = true)
+        # bincouts divided by areas and sum of weight
+        @test bincounts(ntw) == [0.5 0.5 0; 0 0 0; 0 0 0.5] ./ ([1, 1, 2] * [1, 1, 2]') / 1.5
+        @test integral(ntw; width = true) == 1
+    end
 end
 
 
@@ -271,6 +361,15 @@ end
     @test bincounts(cumulative(h3))[end, end, end] == integral(h3)
     @test bincounts(cumulative(h3; dims=3)) == cumsum(a3; dims=3)
     @test bincounts(cumulative(h3; dims=2, forward=false)) == reverse(cumsum(reverse(a3; dims=2); dims=2); dims=2)
+
+    # HistND
+    N = 4
+    a4 = reshape(1.0:16.0, 2, 2, 2, 2)
+    h4 = HistND{Float64, N}(; bincounts = collect(a4), binedges = ntuple(_ -> 0:2, N))
+    @test bincounts(cumulative(h4)) == cumsum(cumsum(cumsum(cumsum(a4; dims=1); dims=2); dims=3); dims=4)
+    @test bincounts(cumulative(h4))[end, end, end, end] == integral(h4)
+    @test bincounts(cumulative(h4; dims=3)) == cumsum(a4; dims=3)
+    @test bincounts(cumulative(h4; dims=2, forward=false)) == reverse(cumsum(reverse(a4; dims=2); dims=2); dims=2)
 end
 
 @testset "Bin errors" begin
@@ -281,6 +380,9 @@ end
     @test h1.sumw2 == binerrors(identity, h1)
     @test sqrt.(h1.sumw2) == binerrors(h1)
     h1 = Hist3D((randn(100), randn(100), randn(100)); binedges = (-3:3,-3:3,-3:3))
+    @test h1.sumw2 == binerrors(identity, h1)
+    @test sqrt.(h1.sumw2) == binerrors(h1)
+    h1 = HistND{Float64, 4}(ntuple(_ -> randn(100), 4); binedges = ntuple(_ -> -3:3, 4))
     @test h1.sumw2 == binerrors(identity, h1)
     @test sqrt.(h1.sumw2) == binerrors(h1)
 
@@ -338,6 +440,18 @@ end
     @test ismissing(lookup(h3, -4, 1, 2))
     @test !ismissing(lookup(h3, -3, -3, 0))
     @test !ismissing(lookup(h3, -3, -3, -3))
+
+    h3 = HistND{Float64, 3}((randn(100), randn(100), randn(100)); binedges = (-3:3,-3:3,-3:3))
+    cx, cy, cz = bincenters(h3)
+    points = [(x,y,z) for x in cx, y in cy, z in cz]
+    @test map(p->lookup(h3,p), points) == bincounts(h3)
+    @test ismissing(lookup(h3, (10, 10, 10)))
+    @test ismissing(lookup(h3, (0, 0, 10)))
+    @test ismissing(lookup(h3, (0, -5, 0)))
+    @test ismissing(lookup(h3, (-3, -3, 10)))
+    @test ismissing(lookup(h3, (-4, 1, 2)))
+    @test !ismissing(lookup(h3, (-3, -3, 0)))
+    @test !ismissing(lookup(h3, (-3, -3, -3)))
 end
 
 @testset "Sample" begin
@@ -352,6 +466,13 @@ end
         @test mean(xs) ≈ 0.5 atol=0.1
         @test mean(ys) ≈ 0.5 atol=0.1
         @test mean(zs) ≈ 0.5 atol=0.1
+    end
+    begin
+        N = 4
+        vals = FHist.sample(HistND{Float64, N}(ntuple(_ -> rand(10^5), N); binedges = ntuple(_ -> 0:0.1:1, N)), n=10^5)
+        for i in 1:N
+            @test mean(vals[i]) ≈ 0.5 atol=0.1
+        end
     end
 end
 
@@ -370,6 +491,12 @@ end
     @test maximum(sumw2(h1)) == 0
 
     h1 = Hist3D((randn(10),randn(10),randn(10)); binedges = (-3:3,-3:3,-3:3))
+    empty!(h1)
+    @test maximum(bincounts(h1)) == 0
+    @test maximum(sumw2(h1)) == 0
+
+    N = 4
+    h1 = HistND{Float64, N}(ntuple(_ -> randn(10),N); binedges = ntuple(_ -> -3:3,N))
     empty!(h1)
     @test maximum(bincounts(h1)) == 0
     @test maximum(sumw2(h1)) == 0
@@ -470,6 +597,15 @@ end
         @test vec(sumw2(h)) ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
     end
 
+    @testset "HistND" begin
+        N = 4
+        h1 = HistND{Float64, N}(ntuple(i -> i == 1 ? [0.5,1.5,1.5,2.5] : [0.5,0.5,0.5,0.5], N); binedges = ntuple(i -> i == 1 ? (0:3) : (0:1), N))
+        h2 = HistND{Float64, N}(ntuple(i -> i == 1 ? [0.5,1.5,2.5,2.5] : [0.5,0.5,0.5,0.5], N); binedges = ntuple(i -> i == 1 ? (0:3) : (0:1), N))
+        h = h1/(h1+h2*2)
+        @test vec(bincounts(h)) ≈ [0.333333, 0.5, 0.2] atol=1e-6
+        @test vec(sumw2(h)) ≈ [0.17284, 0.21875, 0.0544] atol=1e-6
+    end
+
 end
 
 @testset "Merging" begin
@@ -484,6 +620,11 @@ end
 
     h1 = Hist3D((randn(10),randn(10),randn(10)); binedges = (-3:3,-3:3,-3:3))
     h2 = Hist3D((randn(10),randn(10),randn(10)); binedges = (-3:3,-3:3,-3:3))
+    @test merge(h1,h2) == h1+h2
+
+    N = 4
+    h1 = HistND{Float64, N}(ntuple(_ -> randn(10),N); binedges = ntuple(_ -> -3:3,N))
+    h2 = HistND{Float64, N}(ntuple(_ -> randn(10),N); binedges = ntuple(_ -> -3:3,N))
     @test merge(h1,h2) == h1+h2
 end
 
@@ -564,6 +705,7 @@ end
     xs = rand(10)
     ys = rand(10)
     zs = rand(10)
+    ws = rand(10)
     r = 0:0.1:1
     h1x = Hist1D(xs; binedges =  r)
     h1y = Hist1D(ys; binedges =  r)
@@ -574,6 +716,11 @@ end
     h3 = Hist3D((xs,ys,zs); binedges = (r,r,r))
     @test (h3 |> project(:z)) == h2
     @test (h3 |> project(:y) |> project(:x)) == (h2 |> project(:x))
+    h3 = HistND{Float64, 4}((xs, ys, zs, ws); binedges = (r,r,r,r))
+    h1x = HistND{Float64, 1}((xs,); binedges = (r,))
+    h1y = HistND{Float64, 1}((ys,); binedges = (r,))
+    @test h1x == project(h3, (2, 3, 4))
+    @test h1y == project(h3, (1, 3, 4))
 end
 
 @testset "Transpose" begin
@@ -597,6 +744,9 @@ end
         @test all(occursin.(["edges:", "total count:", "bin counts:", "<svg"], repr("text/html", h1)))
         @test all(occursin.(["edges=", "integral=", "Hist"], repr(h1, context=:compact=>true)))
     end
+
+    hn = HistND{Float64, 4}((randn(10), randn(10), randn(10), randn(10)); binedges = (-3:0.1:3, -3:0.1:3, -3:0.1:3, -3:0.1:3))
+    @test all(occursin.(["HistND{Float64, 4}", "edges=", "integral="], repr(hn)))
 end
 
 @testset "Restrict" begin
@@ -613,6 +763,17 @@ end
 
     @test all(-1 .<= bincenters(restrict(h,-1,1)) .<= 1)
     @test_throws AssertionError restrict(h, 10, Inf)
+end
+
+@testset "Slices" begin
+    h = HistND{Float64, 2}(([0.25, 0.25, 0.75], [0.25, 0.75, 0.75]); binedges = (0:0.5:1, 0:0.5:1))
+    h_slices = slices(h, 1)
+    @test length(h_slices) == 2
+    # Keep `nentries`
+    @test first(first(h_slices)) == (0, 0.5)
+    @test last(first(h_slices)) == HistND{Float64, 1}(; binedges = (0:0.5:1,), bincounts = [1; 1], sumw2 = [1; 1], nentries = nentries(h))
+    @test first(last(h_slices)) == (0.5, 1)
+    @test last(last(h_slices)) == HistND{Float64, 1}(; binedges = (0:0.5:1,), bincounts = [0; 1], sumw2 = [0; 1], nentries = nentries(h))
 end
 
 
@@ -637,11 +798,13 @@ end
     a = randn(10^5)
     b = randn(10^5)
     c = randn(10^5)
+    d = randn(10^5)
     ϵ = 1e-6
     edges = -3:0.5:3
     aclip = clamp.(a,nextfloat(first(edges)),prevfloat(last(edges)))
     bclip = clamp.(b,nextfloat(first(edges)),prevfloat(last(edges)))
     cclip = clamp.(c,nextfloat(first(edges)),prevfloat(last(edges)))
+    dclip = clamp.(d,nextfloat(first(edges)),prevfloat(last(edges)))
     sh1 = fit(Histogram, aclip, edges)
     h1 = Hist1D(a; binedges = edges, overflow=true)
     @test convert(Histogram, h1) == sh1
@@ -667,6 +830,12 @@ end
     @test convert(Histogram, h3) == sh3
     @test h3.sumw2 == bincounts(h3)
     @test project(h3, :x).overflow == h3.overflow
+
+    sh4 = fit(Histogram, (aclip,bclip,cclip,dclip), (edges,edges,edges,edges))
+    h4 = HistND{Float64, 4}((a,b,c,d); binedges = (edges,edges,edges,edges), overflow=true)
+    @test convert(Histogram, h4) == sh4
+    @test h4.sumw2 == bincounts(h4)
+    @test project(h4, (1,)).overflow == h4.overflow
 end
 
 @testset "Utils" begin

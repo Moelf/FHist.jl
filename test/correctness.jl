@@ -222,6 +222,8 @@ end
     @test empty!(h2) === h2 && nentries(h2) == 0
     h3 = Hist3D((randn(10), randn(10), randn(10)); binedges=(-3:3, -3:3, -3:3))
     @test empty!(h3) === h3 && nentries(h3) == 0
+    h4 = HistND{Float64, 4}((randn(10), randn(10), randn(10), randn(10)); binedges=(-3:3, -3:3, -3:3, -3:3))
+    @test empty!(h4) === h4 && nentries(h4) == 0
 
     ha = Hist1D([0.5]; binedges=0:1)
     hb = Hist1D([0.5]; binedges=[0, 1.0])
@@ -230,6 +232,13 @@ end
     @test length(Set([ha, hb])) == 1
     @test hash(ha) != hash(Hist1D([0.5]; binedges=0:1, overflow=true))
     @test ha != Hist1D([0.5]; binedges=0:1, overflow=true)
+    hna = HistND{Float64, 1}(([0.5],); binedges=(0:1,))
+    hnb = HistND{Float64, 1}(([0.5],); binedges=([0, 1.0],))
+    @test hna == hnb
+    @test hash(hna) == hash(hnb)
+    @test length(Set([hna, hnb])) == 1
+    @test hash(hna) != hash(HistND{Float64, 1}(([0.5],); binedges=(0:1,), overflow=true))
+    @test hna != HistND{Float64, 1}(([0.5],); binedges=(0:1,), overflow=true)
 end
 
 @testset "append! for all dimensions" begin
@@ -247,8 +256,15 @@ end
     h3w = Hist3D(; binedges=(-3:3, -3:3, -3:3))
     append!(h3w, x, y, z, w)
     @test h3w == Hist3D((x, y, z); binedges=(-3:3, -3:3, -3:3), weights=w)
+    hn = HistND{Float64, 4}(; binedges=(-3:3, -3:3, -3:3, -3:3))
+    @test append!(hn, (x, y, z, w)) === hn
+    @test hn == HistND{Float64, 4}((x, y, z, w); binedges=(-3:3, -3:3, -3:3, -3:3))
+    hnw = HistND{Float64, 4}(; binedges=(-3:3, -3:3, -3:3, -3:3))
+    append!(hnw, (x, y, z, w), w)
+    @test hnw == HistND{Float64, 4}((x, y, z, w); binedges=(-3:3, -3:3, -3:3, -3:3), weights=w)
     @test_throws DimensionMismatch append!(h2, x, y[1:10])
     @test_throws DimensionMismatch append!(h3, x, y, z, w[1:10])
+    @test_throws DimensionMismatch append!(hn, (x, y, z, w[1:10]))
     h1 = Hist1D(; binedges=-3:3)
     @test append!(h1, x) === h1
     # a failing push! (InexactError for Int counts) must not leave the lock held
@@ -282,7 +298,7 @@ end
 
 @testset "rebin / restrict for all dimensions" begin
     Random.seed!(9)
-    x, y, z = rand(1000), rand(1000), rand(1000)
+    x, y, z, w = rand(1000), rand(1000), rand(1000), rand(1000)
     r = 0:0.1:1
     v = [0.0, 0.1, 0.3, 0.6, 1.0]
 
@@ -290,6 +306,7 @@ end
     h1 = Hist1D(x; binedges=r)
     h2 = Hist2D((x, y); binedges=(r, r))
     h3 = Hist3D((x, y, z); binedges=(r, r, r))
+    h4 = HistND{Float64, 4}((x, y, z, w); binedges=(r, r, r, r))
     @test (h2 |> rebin(5)) == rebin(h2, 5, 5)
     @test (h3 |> rebin(5)) == rebin(h3, 5, 5, 5)
     @test (h3 |> rebin(5, 2, 10)) == rebin(h3, 5, 2, 10)
@@ -306,6 +323,18 @@ end
     @test_throws ErrorException rebin(h3, 3)
     @test rebin(h3, 1) == h3
 
+    # 4D integer rebin
+    r4 = rebin(h4, (1, 2, 5, 10))
+    @test nbins(r4) == (10, 5, 2, 1)
+    @test integral(r4) == integral(h4)
+    @test sum(sumw2(r4)) == sum(sumw2(h4))
+    @test nentries(r4) == nentries(h4)
+    @test binedges(r4) == (0:0.1:1, 0:0.2:1, 0:0.5:1, 0:1.0:1)
+    @test all(b -> b.isrange, r4.binedges)
+    @test r4 == HistND{Float64, 4}((x, y, z, w); binedges=(0:0.1:1, 0:0.2:1, 0:0.5:1, 0:1.:1))
+    @test_throws ErrorException rebin(h4, 3)
+    @test rebin(h4, 1) == h4
+
     # edge based rebin, 1D/2D/3D
     @test rebin(h1, [0.0, 0.2, 0.5, 1.0]) == Hist1D(x; binedges=[0.0, 0.2, 0.5, 1.0])
     hsub = rebin(h1, [0.2, 0.5])
@@ -314,18 +343,22 @@ end
     @test nentries(hsub) == nentries(h1)  # nentries is carried over as is
     @test rebin(h2, [0.0, 0.5, 1.0], [0.0, 0.2, 1.0]) == Hist2D((x, y); binedges=([0.0, 0.5, 1.0], [0.0, 0.2, 1.0]))
     @test rebin(h3, [0.0, 0.5, 1.0], [0.0, 0.2, 1.0], [0.0, 1.0]) == Hist3D((x, y, z); binedges=([0.0, 0.5, 1.0], [0.0, 0.2, 1.0], [0.0, 1.0]))
+    @test rebin(h4, ([0.0, 0.7, 1.0], [0.0, 0.5, 1.0], [0.0, 0.2, 1.0], [0.0, 1.0])) == HistND{Float64, 4}((x, y, z, w); binedges=([0.0, 0.7, 1.0], [0.0, 0.5, 1.0], [0.0, 0.2, 1.0], [0.0, 1.0]))
     @test_throws ArgumentError rebin(h2, [0.0, 0.55, 1.0], [0.0, 1.0])
     # the overflow flag is dropped when the new edges do not span the full range
     ho = Hist1D(x; binedges=r, overflow=true)
     @test rebin(ho, [0.0, 0.5, 1.0]).overflow
     @test !rebin(ho, [0.2, 0.5]).overflow
     @test rebin(Hist2D((x, y); binedges=(r, r), overflow=true), 2).overflow
+    @test rebin(HistND{Float64, 2}((x, y); binedges=(r, r), overflow=true), 2).overflow
 
     # rebinning keeps the exact original edge values (no re-derivation from first/last)
     hv = Hist1D(x; binedges=v)
     @test binedges(rebin(hv, 2)) == [0.0, 0.3, 1.0]
     hv2 = Hist2D((x, y); binedges=(v, v))
     @test binedges(rebin(hv2, 2)) == ([0.0, 0.3, 1.0], [0.0, 0.3, 1.0])
+    hv4 = HistND{Float64, 4}((x, y, z, w); binedges=(v, v, v, v))
+    @test binedges(rebin(hv4, 2)) == ([0.0, 0.3, 1.0], [0.0, 0.3, 1.0], [0.0, 0.3, 1.0], [0.0, 0.3, 1.0])
 
     # 3D restrict
     rs = restrict(h3, 0.2, 0.55, -Inf, Inf, 0.5, Inf)
@@ -336,6 +369,14 @@ end
     @test rs == (h3 |> restrict(0.2, 0.55, -Inf, Inf, 0.5, Inf))
     @test restrict(h3) == h3
     @test_throws AssertionError restrict(h3, 5, 6)
+    # 4D restrict
+    rs4 = restrict(h4, (0.2, -Inf, 0.5, -Inf), (0.55, Inf, Inf, Inf))
+    @test nbins(rs4) == (4, 10, 5, 10)
+    @test binedges(rs4)[1] == 0.2:0.1:0.6
+    @test binedges(rs4)[3] == 0.5:0.1:1.0
+    @test integral(rs4) == count((0.2 .<= x .< 0.6) .& (0.5 .<= z))
+    @test restrict(h4) == h4
+    @test_throws AssertionError restrict(h4, (5., -Inf, -Inf, -Inf), (6., Inf, Inf, Inf))
     # 1D/2D restrict keep ranges as ranges
     @test binedges(restrict(h1, 0.2, 0.55)) == 0.2:0.1:0.6
     @test restrict(h1, 0.2, 0.55).binedges[1].isrange
@@ -357,6 +398,18 @@ end
     @test median(h3) isa NTuple{3,Float64}
     @test mean(h3)[1] == mean(project(project(h3, :z), :x))
     @test mean(h3)[3] == mean(project(project(h3, :x), :y))
+end
+
+@testset "Statistics for HistND" begin
+    r = -3:0.1:3
+    N = 10^5
+    hn = HistND{Float64, 4}((randn(N), randn(N), randn(N), randn(N)); binedges = (r, r, r, r))
+    @test all(zip(mean(hn), (0, 0, 0, 0))) do (x, y)
+        isapprox(x, y; atol = 0.05)
+    end
+    @test all(zip(std(hn), (1, 1, 1, 1))) do (x, y)
+        isapprox(x, y; atol = 0.1)
+    end
 end
 
 @testset "Display" begin
